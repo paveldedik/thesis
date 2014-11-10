@@ -79,7 +79,7 @@ def decay_rate(strength, c=0.2, a=0.18):
     return c * np.exp(strength) + a
 
 
-def memory_strength(practices, c=0.2, a=0.18):
+def memory_strength(practices, spacing_rate=0.2, decay_rate=0.18):
     """Calculates memory strength based on given vector of practices.
     Each element *t_i* in the vector indicates how long ago the *i*-th
     practice occured.
@@ -87,8 +87,10 @@ def memory_strength(practices, c=0.2, a=0.18):
     decays = []
     strengths = [-np.inf]
 
+    get_decay = lambda x: decay_rate(x, c=spacing_rate, a=decay_rate)
+
     for i in range(len(practices)):
-        decays.append(decay_rate(strengths[i], c, a))
+        decays.append(get_decay(strengths[i]))
         rates = practices[:i+1] ** -np.array(decays)
         strengths.append(np.log(sum(rates)))
 
@@ -96,7 +98,7 @@ def memory_strength(practices, c=0.2, a=0.18):
 
 
 def retrieval_prob(strength, tau=-0.704, s=0.255):
-    """Returns the probability of iterm retrieval based on the *strength*
+    """Returns the probability of item retrieval based on the *strength*
     of the memory.
     """
     val = (tau - strength) / s
