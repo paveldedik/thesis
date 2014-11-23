@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from scipy import optimize
 
-from . import tools, EloModel, PfaModel
+from . import tools, EloModel, PFAModel
 
 
 class GridResult(object):
@@ -99,8 +99,8 @@ class GridSearch(object):
     def search_pfa(self, gammas, deltas):
         """Performes grid search on ELO model using given parameters.
 
-        :param gammas: Gamma parameters (see :class:`PfaModel`).
-        :param deltas: Delta paramters (see :class:`PfaModel`).
+        :param gammas: Gamma parameters (see :class:`PFAModel`).
+        :param deltas: Delta paramters (see :class:`PFAModel`).
         """
         minimum = (0, 0)
         m, n = len(gammas), len(deltas)
@@ -112,7 +112,7 @@ class GridSearch(object):
         for x, y in itertools.product(range(m), range(n)):
             gamma, delta = gammas[x], deltas[y]
 
-            pfa = PfaModel(self.data, elo, gamma=gamma, delta=delta)
+            pfa = PFAModel(self.data, elo, gamma=gamma, delta=delta)
             pfa.train()
 
             y_true, y_pred = pfa.data['correct'], pfa.data['prediction']
@@ -186,14 +186,14 @@ class RandomSearch(object):
         """Performes random search on ELO model using given initial
         parameters.
 
-        :param gamma: Initial gamma value (see :class:`PfaModel`).
-        :param delta: Initial delta value (see :class:`PfaModel`).
+        :param gamma: Initial gamma value (see :class:`PFAModel`).
+        :param delta: Initial delta value (see :class:`PFAModel`).
         """
         elo = EloModel(self.data)
         elo.train()
 
         def fun(x):
-            pfa = PfaModel(self.data, elo, gamma=x[0], beta=x[1])
+            pfa = PFAModel(self.data, elo, gamma=x[0], beta=x[1])
             pfa.train()
 
             y_true, y_pred = pfa.data['correct'], pfa.data['prediction']
