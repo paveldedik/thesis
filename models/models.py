@@ -119,11 +119,11 @@ class EloModel(Model):
         self.data.apply(self.update, axis=1)
 
 
-class PfaModel(Model):
+class PFAModel(Model):
     """PFA model for estimation of current knowledge."""
 
     def __init__(self, data, prior_model, gamma=3.4, delta=0.3):
-        super(PfaModel, self).__init__(data)
+        super(PFAModel, self).__init__(data)
         self.data = tools.prepare_data(data)
 
         self.gamma = gamma
@@ -173,7 +173,7 @@ class PfaModel(Model):
         sorted_data.apply(self.update, axis=1)
 
 
-class PfaExtended(PfaModel):
+class PFAWithSpacing(PFAModel):
     """Extended version of PFA."""
 
     def __init__(self, *args, **kwargs):
@@ -184,7 +184,7 @@ class PfaExtended(PfaModel):
         self.spacing_rate = kwargs.pop('spacing_rate', 0.2)
         self.decay_rate = kwargs.pop('decay_rate', 0.05)
 
-        super(PfaExtended, self).__init__(*args, **kwargs)
+        super(PFAWithSpacing, self).__init__(*args, **kwargs)
 
     def get_times(self, user, place, inserted):
         """Returns list of previous responses of the given user on
@@ -232,4 +232,4 @@ class PfaExtended(PfaModel):
         for index, group in self.data.groupby(['user', 'place_asked']):
             times = sorted(self.to_datetime(time) for time in group)
             self.times[index] = times
-        super(PfaExtended, self).train()
+        super(PFAWithSpacing, self).train()

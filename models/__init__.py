@@ -3,4 +3,4 @@
 
 from __future__ import division
 
-from models import EloModel, PfaModel, PfaExtended  # noqa
+from models import EloModel, PFAModel, PFAWithSpacing  # noqa
