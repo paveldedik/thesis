@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+"""
+Optimization Methods
+====================
+
+"""
 
 import itertools
 
@@ -8,7 +13,8 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from scipy import optimize
 
-from . import tools, EloModel, PFAModel
+from . import tools
+from .tests import PFATest, EloTest
 
 
 class GridResult(object):
@@ -53,8 +59,7 @@ class GridSearch(object):
     """
 
     def __init__(self, data):
-        self.data = tools.prepare_data(data)
-        self.data = self.data[self.data['number_of_options'] == 0]
+        self.data = data
 
         self.elo_result = None
         self.pfa_result = None
@@ -66,19 +71,15 @@ class GridSearch(object):
         :param betas: Beta paramters (see :class:`EloModel`).
         """
         minimum = (0, 0)
-        train_set, valid_set = tools.split_data(self.data)
+        test = EloTest(self.data, train=False)
 
         m, n = len(alphas), len(betas)
         grid = np.matrix([[0] * m] * n, dtype=float)
 
         for x, y in itertools.product(range(m), range(n)):
-            alpha, beta = alphas[x], betas[y]
-            elo = EloModel(train_set, alpha=alpha, beta=beta)
-            elo.train()
-
-            valid_set['prediction'] = valid_set.apply(elo.predict, axis=1)
-            y_true, y_pred = valid_set['correct'], valid_set['prediction']
-            grid[y, x] = tools.rmse(y_true, y_pred)
+            kwargs = {'alpha': alphas[x], 'beta': betas[y]}
+            test.retrain_model(model_kwargs=kwargs)
+            grid[y, x] = test.rmse()
 
             minimum = (y, x) if grid[minimum] > grid[y, x] else minimum
             tools.echo('ELO: {}/{} {}/{}'.format(x+1, n, y+1, n))
@@ -103,20 +104,15 @@ class GridSearch(object):
         :param deltas: Delta paramters (see :class:`PFAModel`).
         """
         minimum = (0, 0)
+        test = PFATest(self.data, train=False)
+
         m, n = len(gammas), len(deltas)
         grid = np.matrix([[0] * m] * n, dtype=float)
 
-        elo = EloModel(self.data)
-        elo.train()
-
         for x, y in itertools.product(range(m), range(n)):
-            gamma, delta = gammas[x], deltas[y]
-
-            pfa = PFAModel(self.data, elo, gamma=gamma, delta=delta)
-            pfa.train()
-
-            y_true, y_pred = pfa.data['correct'], pfa.data['prediction']
-            grid[y, x] = tools.rmse(y_true, y_pred)
+            kwargs = {'gamma': gammas[x], 'delta': deltas[y]}
+            test.retrain_model(model_kwargs=kwargs)
+            grid[y, x] = test.rmse()
 
             minimum = (y, x) if grid[minimum] > grid[y, x] else minimum
             tools.echo('PFA: {}/{} {}/{}'.format(x+1, m, y+1, n))
@@ -154,8 +150,7 @@ class RandomSearch(object):
     """
 
     def __init__(self, data):
-        self.data = tools.prepare_data(data)
-        self.data = self.data[self.data['number_of_options'] == 0]
+        self.data = data
 
         self.elo_result = None
         self.pfa_result = None
@@ -167,17 +162,14 @@ class RandomSearch(object):
         :param alpha: Initial alpha value (see :class:`EloModel`).
         :param beta: Initial beta value (see :class:`EloModel`).
         """
-        train_set, valid_set = tools.split_data(self.data)
+        test = EloTest(self.data, train=False)
 
         def fun(x):
-            elo = EloModel(train_set, alpha=x[0], beta=x[1])
-            elo.train()
-
-            valid_set['prediction'] = valid_set.apply(elo.predict, axis=1)
-            y_true, y_pred = valid_set['correct'], valid_set['prediction']
+            kwargs = {'alpha': x[0], 'beta': x[1]}
+            test.retrain_model(model_kwargs=kwargs)
 
             tools.echo('alpha={x[0]} beta={x[1]}'.format(x=x))
-            return tools.rmse(y_true, y_pred)
+            return test.rmse()
 
         self.elo_result = optimize.minimize(fun, [alpha, beta])
         return self.elo_result
@@ -189,17 +181,14 @@ class RandomSearch(object):
         :param gamma: Initial gamma value (see :class:`PFAModel`).
         :param delta: Initial delta value (see :class:`PFAModel`).
         """
-        elo = EloModel(self.data)
-        elo.train()
+        test = PFATest(self.data, train=False)
 
         def fun(x):
-            pfa = PFAModel(self.data, elo, gamma=x[0], beta=x[1])
-            pfa.train()
-
-            y_true, y_pred = pfa.data['correct'], pfa.data['prediction']
+            kwargs = {'gamma': x[0], 'delta': x[1]}
+            test.retrain_model(model_kwargs=kwargs)
 
             tools.echo('gamma={x[0]} delta={x[1]}'.format(x=x))
-            return tools.rmse(y_true, y_pred)
+            return test.rmse()
 
         self.pfa_result = optimize.minimize(fun, [gamma, delta])
         return self.pfa_result
