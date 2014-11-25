@@ -18,7 +18,13 @@ from .tests import PFATest, EloTest
 
 
 class GridResult(object):
-    """Represents grid search result."""
+    """Represents a GRID search result.
+
+    :param grid: A matrix representing the results of the search.
+    :type grid: :class:`numpy.matrix`
+    :param minimum: The parameters which result in the lowest value.
+    :type minimum: :class:`numpy.matrix`
+    """
 
     def __init__(self, grid, extent, minimum, xlabel=None, ylabel=None):
         self.grid = grid
@@ -28,7 +34,7 @@ class GridResult(object):
         self.ylabel = ylabel
 
     def plot(self):
-        """Plots the result of grid search.
+        """Plots the result of the GRID search.
         Uses :func:`~matplotlib.pyplot.imshow` to plot the data.
         """
         plot = plt.imshow(self.grid,
@@ -53,7 +59,7 @@ class GridResult(object):
 
 
 class GridSearch(object):
-    """Encapsulates grid searches for various models.
+    """Encapsulates GRID searches for various models.
 
     :param data: Data with answers in a DataFrame.
     """

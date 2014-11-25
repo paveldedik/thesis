@@ -21,6 +21,7 @@ class DataSet(object):
     :type data: :class:`pandas.DataFrame`.
     """
 
+    #: DateTime format of the field `inserted`.
     datetime_format = '%Y-%m-%d %H:%M:%S'
 
     def __init__(self, data):
@@ -228,7 +229,10 @@ class Model(object):
 
 
 class EloModel(Model):
-    """Predicts correctness of answers using Elo Rating System."""
+    """Predicts correctness of answers using Elo Rating System.
+    The model is parametrized with `alpha` and `beta`. These parameters
+    affect the uncertainty function.
+    """
 
     def __init__(self, alpha=1, beta=0.05):
         super(EloModel, self).__init__()
@@ -236,7 +240,13 @@ class EloModel(Model):
         self.alpha = alpha
         self.beta = beta
 
-    def uncertanty(self, n):
+    def uncertainty(self, n):
+        """Uncertainty function. The purpose is to make each update on
+        the model trained with larger data set less significant.
+
+        :param n: Number of users or places.
+        :type n: int
+        """
         return self.alpha / (1 + self.beta * n)
 
     def predict(self, question):
@@ -258,10 +268,10 @@ class EloModel(Model):
         :param question: Asked question.
         :type question: :class:`pandas.Series`
         """
-        shift = question.correct - self.predict(question)
+        shift = question.is_correct - self.predict(question)
 
-        q_u = self.uncertanty(self.data_set.user_asked(question.user))
-        q_d = self.uncertanty(self.data_set.place_asked(question.place_asked))
+        q_u = self.uncertainty(self.data_set.user_asked(question.user))
+        q_d = self.uncertainty(self.data_set.place_asked(question.place_asked))
 
         skill = self.data_set.get_skill(question.user)
         diffi = self.data_set.get_difficulty(question.place_asked)
@@ -280,7 +290,15 @@ class EloModel(Model):
 
 
 class PFAModel(Model):
-    """PFA model for estimation of current knowledge."""
+    """PFA model for estimation of current knowledge.
+
+    :param gamma: The significance of the update when the student
+        answered correctly.
+    :type gamma: float
+    :param delta: The significance of the update when the student
+        answered incorrectly.
+    :type delta: float
+    """
 
     def __init__(self, gamma=3.4, delta=0.3):
         super(PFAModel, self).__init__()
@@ -311,7 +329,7 @@ class PFAModel(Model):
         knowledge = self.data_set.get_knowledge(*args)
 
         prediction = self.predict(question)
-        result = knowledge + self.gamma * (question.correct - prediction)
+        result = knowledge + self.gamma * (question.is_correct - prediction)
 
         self.data_set.set_knowledge(*(args + [result]))
 
@@ -328,6 +346,21 @@ class PFAModel(Model):
 class PFAWithSpacing(PFAModel):
     """Extended version of PFA that takes into account the effect of
     forgetting and spacing.
+
+    :param gamma: The significance of the update when the student
+        answers correctly.
+    :type gamma: float
+    :param delta: The significance of the update when the student
+        answers incorrectly.
+    :type delta: float
+    :param spacing_rate: The significance of the spacing effect. Lower
+        values make the effect less significant. If the spacing rate
+        is set to zero, the model is unaware of the spacing effect.
+    :type spacing_rate: float
+    :param decay_rate: The significance of the forgetting effect. Higher
+        values of decay rate make the students forget the item faster
+        and vice versa.
+    :type decay_rate: float
     """
 
     def __init__(self, *args, **kwargs):
