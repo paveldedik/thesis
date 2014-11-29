@@ -6,57 +6,69 @@ Tools for Model Accuracy Estimation
 
 """
 
-from . import tools, EloModel, PFAModel, PFAWithSpacing
+from sklearn import metrics
+
+from . import tools
 
 
-class Test(object):
+class PrecisionResult(object):
+    """Represents estimated accuracy of a model.
 
-    def __init__(self, data, model_kwargs=None, train=True):
-        self.model_kwargs = model_kwargs or {}
-        self.train_set, self.test_set = self.split_data(data)
+    :param value: Estimated accuracy.
+    :type value: float
+    :param method: Name of the used method (e.g. *RMES* or *AUC*).
+    :type method: string
+    :param size: Size of the training set.
+    :type size: int
+    """
 
-        if train:
-            self.model = self.train_model()
+    def __init__(self, value, method, size):
+        self.value = value
+        self.method = method
+        self.size = size
 
-    def retrain_with(self, model_kwargs=None):
-        self.model_kwargs = model_kwargs or {}
-        self.model = self.train_model()
+    def __str__(self):
+        return self.__repr__()
 
-    def split_data(self, data):
-        raise NotImplementedError()
+    def __repr__(self):
+        return ('{self.method}: {self.value}\n'
+                'Training Set Size: {self.size}').format(self=self)
+
+
+class PrecisionTest(object):
+    """Represents model precision test.
+
+    :param model: Insance of the model to test.
+    :type model: :class:`models.Model`
+    :param data: Data to use for the test.
+    :type data: :class:`pandas.DataFrame`
+    """
+
+    def __init__(self, model, data):
+        self.data = data
+        self.model = model
+
+    def run(self):
+        """Prepares training set, test set and trains the model.
+        """
+        train_set, test_set = self.model.split_data(self.data)
+        self.model.train(train_set)
+
+        self.y_true = test_set['is_correct']
+        self.y_pred = test_set.apply(self.model.predict, axis=1)
+        self.train_set_size = len(train_set)
 
     def rmse(self):
-        y_true = self.test_set['correct']
-        y_pred = self.test_set.apply(self.model.predict, axis=1)
-        return tools.rmse(y_true, y_pred)
+        """Estimates precision of the model using Root Mean Squared Error
+        (RMSE) as metric.
+        """
+        result = tools.rmse(self.y_true, self.y_pred)
+        return PrecisionResult(result, 'RMSE', self.train_set_size)
 
     def auc(self):
-        raise NotImplementedError()
-
-
-class EloTest(Test):
-
-    def train_model(self):
-        model = EloModel(self.train_set, **self.model_kwargs)
-        model.train()
-        return model
-
-    def split_data(self, data):
-        data = tools.shuffle_data(tools.prior_data(data))
-        return tools.split_data(data)
-
-
-class PFATest(Test):
-
-    def train_model(self):
-        model = PFAModel(self.train_set, **self.model_kwargs)
-        model.train()
-        return model
-
-
-class PFAWithSpacingTest(Test):
-
-    def train_model(self):
-        model = PFAWithSpacing(self.train_set, **self.model_kwargs)
-        model.train()
-        return model
+        """Estimates precision of the model using Area Under the Curve
+        (AUC) as metric."""
+        fpr, tpr, thresholds = \
+            metrics.roc_curve(self.y_true, self.y_pred, pos_label=1)
+        result = metrics.auc(fpr, tpr)
+        return PrecisionResult(result, 'AUC', self.train_set_size)
