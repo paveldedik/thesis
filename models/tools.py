@@ -53,8 +53,8 @@ def prepare_data(data):
     return data
 
 
-def prior_data(data):
-    """Modifies the given data object so that only prior answers of
+def first_answers(data):
+    """Modifies the given data object so that only the first answers of
     students are contained in the data.
 
     :param data: The object containing data.
@@ -68,8 +68,23 @@ def prior_data(data):
     return data.reset_index()
 
 
+def last_answers(data):
+    """Modifies the given data object so that only the last answers of
+    students are contained in the data.
+
+    :param data: The object containing data.
+    :type data: :class:`pandas.DataFrame`.
+    """
+    data = data.sort(
+        ['user', 'place_asked', 'inserted']
+    ).groupby(
+        ['user', 'place_asked']
+    ).last()
+    return data.reset_index()
+
+
 def split_data(data, ratio=0.7):
-    """Splits data between test set and training set.
+    """Splits data into test set and training set.
 
     :param data: The object containing data.
     :type data: :class:`pandas.DataFrame`.

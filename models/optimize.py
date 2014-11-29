@@ -14,7 +14,8 @@ import matplotlib.cm as cm
 from scipy import optimize
 
 from . import tools
-from .tests import PFATest, EloTest
+from .tests import PrecisionTest
+from .models import EloModel, PFAModel
 
 
 class GridResult(object):
@@ -74,18 +75,21 @@ class GridSearch(object):
         """Performes grid search on ELO model using given parameters.
 
         :param alphas: Alpha parameters (see :class:`EloModel`).
+        :type alphas: list or :class:`numpy.array`
         :param betas: Beta paramters (see :class:`EloModel`).
+        :type betas: list or :class:`numpy.array`
         """
         minimum = (0, 0)
-        test = EloTest(self.data, train=False)
 
         m, n = len(alphas), len(betas)
         grid = np.matrix([[0] * m] * n, dtype=float)
 
         for x, y in itertools.product(range(m), range(n)):
-            kwargs = {'alpha': alphas[x], 'beta': betas[y]}
-            test.retrain_model(model_kwargs=kwargs)
-            grid[y, x] = test.rmse()
+            elo = EloModel(alpha=alphas[x], beta=betas[y])
+            test = PrecisionTest(elo, self.data)
+            test.run()
+
+            grid[y, x] = test.rmse().value
 
             minimum = (y, x) if grid[minimum] > grid[y, x] else minimum
             tools.echo('ELO: {}/{} {}/{}'.format(x+1, n, y+1, n))
@@ -107,18 +111,22 @@ class GridSearch(object):
         """Performes grid search on ELO model using given parameters.
 
         :param gammas: Gamma parameters (see :class:`PFAModel`).
+        :type gammas: list or :class:`numpy.array`
         :param deltas: Delta paramters (see :class:`PFAModel`).
+        :type deltas: list or :class:`numpy.array`
         """
         minimum = (0, 0)
-        test = PFATest(self.data, train=False)
+        elo = EloModel()
 
         m, n = len(gammas), len(deltas)
         grid = np.matrix([[0] * m] * n, dtype=float)
 
         for x, y in itertools.product(range(m), range(n)):
-            kwargs = {'gamma': gammas[x], 'delta': deltas[y]}
-            test.retrain_model(model_kwargs=kwargs)
-            grid[y, x] = test.rmse()
+            pfa = PFAModel(elo, gamma=gammas[x], delta=deltas[y])
+            test = PrecisionTest(pfa, self.data)
+            test.run()
+
+            grid[y, x] = test.rmse().value
 
             minimum = (y, x) if grid[minimum] > grid[y, x] else minimum
             tools.echo('PFA: {}/{} {}/{}'.format(x+1, m, y+1, n))
@@ -166,16 +174,18 @@ class RandomSearch(object):
         parameters.
 
         :param alpha: Initial alpha value (see :class:`EloModel`).
+        :type alpha: float
         :param beta: Initial beta value (see :class:`EloModel`).
+        :type beta: float
         """
-        test = EloTest(self.data, train=False)
-
         def fun(x):
-            kwargs = {'alpha': x[0], 'beta': x[1]}
-            test.retrain_model(model_kwargs=kwargs)
+            elo = EloModel(alpha=x[0], beta=x[1])
+            test = PrecisionTest(elo)
+
+            test.run()
 
             tools.echo('alpha={x[0]} beta={x[1]}'.format(x=x))
-            return test.rmse()
+            return test.rmse().value
 
         self.elo_result = optimize.minimize(fun, [alpha, beta])
         return self.elo_result
@@ -185,16 +195,20 @@ class RandomSearch(object):
         parameters.
 
         :param gamma: Initial gamma value (see :class:`PFAModel`).
+        :type gamma: float
         :param delta: Initial delta value (see :class:`PFAModel`).
+        :type delta: float
         """
-        test = PFATest(self.data, train=False)
+        elo = EloModel()
 
         def fun(x):
-            kwargs = {'gamma': x[0], 'delta': x[1]}
-            test.retrain_model(model_kwargs=kwargs)
+            pfa = PFAModel(elo, gamma=x[0], delta=x[1])
+            test = PrecisionTest(pfa)
+
+            test.run()
 
             tools.echo('gamma={x[0]} delta={x[1]}'.format(x=x))
-            return test.rmse()
+            return test.rmse().value
 
         self.pfa_result = optimize.minimize(fun, [gamma, delta])
         return self.pfa_result
