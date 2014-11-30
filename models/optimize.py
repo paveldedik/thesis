@@ -14,7 +14,7 @@ import matplotlib.cm as cm
 from scipy import optimize
 
 from . import tools
-from .tests import PrecisionTest
+from .tests import PerformanceTest
 from .models import EloModel, PFAModel
 
 
@@ -86,7 +86,7 @@ class GridSearch(object):
 
         for x, y in itertools.product(range(m), range(n)):
             elo = EloModel(alpha=alphas[x], beta=betas[y])
-            test = PrecisionTest(elo, self.data)
+            test = PerformanceTest(elo, self.data)
             test.run()
 
             grid[y, x] = test.rmse().value
@@ -123,7 +123,7 @@ class GridSearch(object):
 
         for x, y in itertools.product(range(m), range(n)):
             pfa = PFAModel(elo, gamma=gammas[x], delta=deltas[y])
-            test = PrecisionTest(pfa, self.data)
+            test = PerformanceTest(pfa, self.data)
             test.run()
 
             grid[y, x] = test.rmse().value
@@ -180,7 +180,7 @@ class RandomSearch(object):
         """
         def fun(x):
             elo = EloModel(alpha=x[0], beta=x[1])
-            test = PrecisionTest(elo)
+            test = PerformanceTest(elo)
 
             test.run()
 
@@ -203,7 +203,7 @@ class RandomSearch(object):
 
         def fun(x):
             pfa = PFAModel(elo, gamma=x[0], delta=x[1])
-            test = PrecisionTest(pfa)
+            test = PerformanceTest(pfa)
 
             test.run()
 

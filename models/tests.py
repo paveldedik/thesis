@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Tools for Model Accuracy Estimation
-===================================
+Evaluation of Model Performance
+===============================
 
 """
 
@@ -11,10 +11,10 @@ from sklearn import metrics
 from . import tools
 
 
-class PrecisionResult(object):
-    """Represents estimated accuracy of a model.
+class PerformanceResult(object):
+    """Represents estimated performance of a model.
 
-    :param value: Estimated accuracy.
+    :param value: Estimated performance.
     :type value: float
     :param method: Name of the used method (e.g. *RMES* or *AUC*).
     :type method: string
@@ -35,8 +35,8 @@ class PrecisionResult(object):
                 'Training Set Size: {self.size}').format(self=self)
 
 
-class PrecisionTest(object):
-    """Represents model precision test.
+class PerformanceTest(object):
+    """Represents model performance test.
 
     :param model: Insance of the model to test.
     :type model: :class:`models.Model`
@@ -51,24 +51,22 @@ class PrecisionTest(object):
     def run(self):
         """Prepares training set, test set and trains the model.
         """
-        train_set, test_set = self.model.split_data(self.data)
-        self.model.train(train_set)
+        self.train_set, self.test_set = self.model.split_data(self.data)
+        self.model.train(self.train_set)
 
-        self.y_true = test_set['is_correct']
-        self.y_pred = test_set.apply(self.model.predict, axis=1)
-        self.train_set_size = len(train_set)
+        self.y_true = self.test_set['is_correct']
+        self.y_pred = self.test_set.apply(self.model.predict, axis=1)
 
     def rmse(self):
-        """Estimates precision of the model using Root Mean Squared Error
-        (RMSE) as metric.
+        """Estimates performance of the model using the Root Mean
+         Squared Error (RMSE) as metric.
         """
         result = tools.rmse(self.y_true, self.y_pred)
-        return PrecisionResult(result, 'RMSE', self.train_set_size)
+        return PerformanceResult(result, 'RMSE', len(self.train_set))
 
     def auc(self):
         """Estimates precision of the model using Area Under the Curve
-        (AUC) as metric."""
-        fpr, tpr, thresholds = \
-            metrics.roc_curve(self.y_true, self.y_pred, pos_label=1)
-        result = metrics.auc(fpr, tpr)
-        return PrecisionResult(result, 'AUC', self.train_set_size)
+        (AUC) as metric.
+        """
+        result = metrics.roc_auc_score(self.y_true, self.y_pred)
+        return PerformanceResult(result, 'AUC', len(self.train_set))

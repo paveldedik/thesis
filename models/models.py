@@ -309,18 +309,61 @@ class PFAWithSpacing(PFAModel):
 
         super(PFAWithSpacing, self).__init__(*args, **kwargs)
 
-    def get_practices(self, user, place):
-        """Returns list of previous responses of the given user on
-        the given place.
+    def _get_practices(self, current, prior):
+        """Returns list of previous practices expresed as the number
+        of seconds that passed between *current* practice and all
+        the *prior* practices.
+
+        :param current: Datetime of the current practice.
+        :type place: string
+        :param prior: List of datetimes of the prior practices.
+        :type prior: list or :class:`numpy.array`
+        """
+        current_dt = self.to_datetime(current)
+        prior_dts = [self.to_datetime(t) for t in prior]
+        return [(current_dt - t).total_seconds() for t in prior_dts]
+
+    def init_model(self):
+        """Initializes attribute of the model that stores current
+        knowledge of places for all students.
+        """
+        self.items = pd.DataFrame(
+            columns=['knowledge', 'practices'],
+            index=pd.MultiIndex([[], []], [[], []], names=['user', 'place'])
+        )
+
+    def get_item(self, user_id, place_id):
+        """Returns an item (identified by user and place).
 
         :param user: ID of the user.
         :type user: int
         :param place: ID of the place.
         :type place: int
         """
-        now = datetime.now()
-        practices = self.practices[user, place]
-        return [(now - t).total_seconds() for t in practices]
+        if (user_id, place_id) not in self.items.index:
+            user = self.prior.get_user(user_id)
+            place = self.prior.get_place(place_id)
+            self.items.loc[(user_id, place_id), :] = pd.Series({
+                'knowledge': user.skill - place.difficulty,
+                'practices': [],
+            })
+        return self.items.ix[user_id, place_id]
+
+    def memory_strength(self, question):
+        """Estimates memory strength of an item.
+
+        :param question: Asked question.
+        :type question: :class:`pandas.Series`
+        """
+        item = self.get_item(question.user, question.place_asked)
+        practices = self._get_practices(question.inserted, item.practices)
+
+        if len(practices) > 0:
+            return tools.memory_strength(
+                practices,
+                spacing_rate=self.spacing_rate,
+                decay_rate=self.decay_rate,
+            )
 
     def predict(self, question):
         """Returns probability of correct answer for given question.
@@ -328,14 +371,25 @@ class PFAWithSpacing(PFAModel):
         :param question: Asked question.
         :type question: :class:`pandas.Series`
         """
-        study = self.get_study(question.user, question.place_asked)
-        practices = self.get_practices(question.user, question.place_asked)
+        item = self.get_item(question.user, question.place_asked)
+        strength = self.memory_strength(question) or 0
 
-        strength = tools.memory_strength(
-            practices,
-            spacing_rate=self.spacing_rate,
-            decay_rate=self.decay_rate,
-        )
-
-        prediction = tools.sigmoid(study.knowledge + strength)
+        prediction = tools.sigmoid(item.knowledge + strength)
         return self.respect_guess(prediction, question.number_of_options)
+
+    def update(self, answer):
+        """Performes update of current knowledge of a user based on the
+        given answer.
+
+        :param answer: Answer to a question.
+        :type answer: :class:`pandas.Series`
+        """
+        item = self.get_item(answer.user, answer.place_asked)
+        prediction = self.predict(answer)
+
+        if answer.is_correct:
+            item.knowledge += self.gamma * (1 - prediction)
+        else:
+            item.knowledge += self.delta * (1 - prediction)
+
+        item.practices += [answer.inserted]
