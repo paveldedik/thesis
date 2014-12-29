@@ -278,7 +278,7 @@ class PFAModel(Model):
         train_set = data[~data['id'].isin(test_set['id'])]
 
         return train_set, test_set
-
+import numpy as np
 
 class PFAWithSpacing(PFAModel):
     """Extended version of PFA that takes into account the effect of
@@ -360,7 +360,7 @@ class PFAWithSpacing(PFAModel):
 
         if len(practices) > 0:
             return tools.memory_strength(
-                practices,
+                filter(lambda x: x > 0, practices),
                 spacing_rate=self.spacing_rate,
                 decay_rate=self.decay_rate,
             )
