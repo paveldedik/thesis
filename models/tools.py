@@ -31,7 +31,7 @@ def echo(msg, clear=True):
     sys.stdout.flush()
 
 
-def load_data(path, limit=10000):
+def load_data(path, limit=10000, offset=0):
     """Loads CSV file into :class:`pandas.DataFrame`.
 
     :param path: Path to the CSV file.
@@ -39,7 +39,7 @@ def load_data(path, limit=10000):
     :param limit: Limit the number of loaded rows.
     :type limit: int
     """
-    return prepare_data(pd.read_csv(path)[:limit])
+    return prepare_data(pd.read_csv(path)[offset:offset+limit])
 
 
 def prepare_data(data):
