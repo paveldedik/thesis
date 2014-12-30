@@ -23,22 +23,67 @@ class GridResult(object):
 
     :param grid: A matrix representing the results of the search.
     :type grid: :class:`numpy.matrix`
-    :param minimum: The parameters which result in the lowest value.
-    :type minimum: :class:`numpy.matrix`
+    :param xlabel: Name of the x-axis.
+    :type xlabel: str
+    :param ylavel: Name of the y-axis.
+    :type ylabel: str
+    :param xvalues: Values on the x-axis.
+    :type xvalues: list
+    :param yvalues: Values on the y-axis.
+    :type yvalues: list
     """
 
-    def __init__(self, grid, extent, minimum, xlabel=None, ylabel=None):
+    def __init__(self, grid,
+                 xlabel=None, ylabel=None,
+                 xvalues=None, yvalues=None):
         self.grid = grid
-        self.extent = extent
-        self.minimum = minimum
         self.xlabel = xlabel
         self.ylabel = ylabel
+        self.xvalues = xvalues
+        self.yvalues = yvalues
 
-    def plot(self):
+        self.extent = np.array([
+            min(self.xvalues), max(self.xvalues),
+            max(self.yvalues), min(self.yvalues),
+        ]),
+
+    @tools.cached_property
+    def rmse(self):
+        """Grid Search errors estimations using RMSE."""
+        return np.array([
+            [result.rmse().value for result in row]
+            for row in self.grid
+        ])
+
+    @tools.cached_property
+    def auc(self):
+        """Grid Search errors estimations using AUC."""
+        return np.array([
+            [result.auc().value for result in row]
+            for row in self.grid
+        ])
+
+    @tools.cached_property
+    def rmse_min(self):
+        """Values of `xvalues` and `yvalues` with best RMSE."""
+        minimum = np.unravel_index(self.rmse.argmax(), self.rmse.shape)
+        return np.array([self.xvalues[minimum[0]], self.yvalues[minimum[1]]])
+
+    @tools.cached_property
+    def auc_min(self):
+        """Values of `xvalues` and `yvalues` with best AUC."""
+        minimum = np.unravel_index(self.auc.argmax(), self.auc.shape)
+        return np.array([self.xvalues[minimum[0]], self.yvalues[minimum[1]]])
+
+    def plot(self, metric='RMSE'):
         """Plots the result of the GRID search.
         Uses :func:`~matplotlib.pyplot.imshow` to plot the data.
         """
-        plot = plt.imshow(self.grid,
+        grids = {
+            'RMSE': self.rmse,
+            'AUC': self.auc,
+        }
+        plot = plt.imshow(grids[metric],
                           cmap=cm.Greys_r,
                           interpolation='nearest',
                           extent=self.extent,
@@ -53,10 +98,16 @@ class GridResult(object):
         return self.__repr__()
 
     def __repr__(self):
-        grid = self.grid.round(3)
-        minimum = self.minimum.round(3)
-        return ('Minimum:\n {}\n'
-                'Grid:\n {}').format(minimum, grid)
+        return (
+            'RMSE:\n min: {0}\n {1}'
+            '\n\n'
+            'AUC:\n min: {2}\n {3}'
+        ).format(
+            self.rmse_min.round(3),
+            self.rmse.round(3),
+            self.auc_min.round(3),
+            self.auc.round(3),
+        )
 
 
 class GridSearch(object):
@@ -68,10 +119,6 @@ class GridSearch(object):
     def __init__(self, data):
         self.data = data
 
-        self.elo_result = None
-        self.pfa_result = None
-        self.pfas_result = None
-
     def search_elo(self, alphas, betas):
         """Performes grid search on ELO model using given parameters.
 
@@ -80,33 +127,24 @@ class GridSearch(object):
         :param betas: Beta paramters (see :class:`EloModel`).
         :type betas: list or :class:`numpy.array`
         """
-        minimum = (0, 0)
-
         m, n = len(alphas), len(betas)
-        grid = np.matrix([[0] * m] * n, dtype=float)
+        grid = [[None] * m] * n
 
         for x, y in itertools.product(range(m), range(n)):
             elo = EloModel(alpha=alphas[x], beta=betas[y])
             test = PerformanceTest(elo, self.data)
             test.run()
 
-            grid[y, x] = test.rmse().value
-
-            minimum = (y, x) if grid[minimum] > grid[y, x] else minimum
+            grid[y, x] = test
             tools.echo('ELO: {}/{} {}/{}'.format(x+1, n, y+1, n))
 
-        self.elo_result = GridResult(
+        return GridResult(
             grid=grid,
-            extent=np.array([
-                min(alphas), max(alphas),
-                min(betas), max(betas),
-            ]),
-            minimum=np.array([alphas[minimum[0]], betas[minimum[1]]]),
             xlabel='alpha',
             ylabel='beta',
+            xvalues=alphas,
+            yvalues=betas,
         )
-
-        return self.elo_result
 
     def search_pfa(self, gammas, deltas):
         """Performes grid search on PFA extended model using given parameters.
@@ -116,105 +154,68 @@ class GridSearch(object):
         :param deltas: Delta paramters (see :class:`PFAModel`).
         :type deltas: list or :class:`numpy.array`
         """
-        minimum = (0, 0)
-        elo = EloModel()
-
         m, n = len(gammas), len(deltas)
-        grid = np.matrix([[0] * m] * n, dtype=float)
+
+        elo = EloModel()
+        grid = [[None] * m] * n
 
         for x, y in itertools.product(range(m), range(n)):
             pfa = PFAModel(elo, gamma=gammas[x], delta=deltas[y])
             test = PerformanceTest(pfa, self.data)
             test.run()
 
-            grid[y, x] = test.rmse().value
-
-            minimum = (y, x) if grid[minimum] > grid[y, x] else minimum
+            grid[y, x] = test
             tools.echo('PFA: {}/{} {}/{}'.format(x+1, m, y+1, n))
 
-        self.pfa_result = GridResult(
+        return GridResult(
             grid=grid,
-            extent=np.array([
-                min(gammas), max(gammas),
-                max(deltas), min(deltas),
-            ]),
-            minimum=np.array([gammas[minimum[0]], deltas[minimum[1]]]),
             xlabel='gamma',
             ylabel='delta',
+            xvalues=gammas,
+            yvalues=deltas,
         )
 
-        return self.pfa_result
-
-    def search_pfas(self, decays, spacing):
+    def search_pfas(self, decays, spacings):
         """Performes grid search on PFA extended with spacing and forgetting
         using given parameters.
 
         :param decays: Decay rates (see :class:`PFAWithSpacing`).
         :type decays: list or :class:`numpy.array`
-        :param spacing: Spacing rates (see :class:`PFAWithSpacing`).
-        :type spacing: list or :class:`numpy.array`
+        :param spacings: Spacing rates (see :class:`PFAWithSpacing`).
+        :type spacings: list or :class:`numpy.array`
         """
-        minimum = (0, 0)
-        elo = EloModel()
+        m, n = len(decays), len(spacings)
 
-        m, n = len(decays), len(spacing)
-        grid = np.matrix([[0] * m] * n, dtype=float)
+        elo = EloModel()
+        grid = [[None] * m] * n
 
         for x, y in itertools.product(range(m), range(n)):
             pfas = PFAWithSpacing(elo,
                                   decay_rate=decays[x],
-                                  spacing_rate=spacing[y])
+                                  spacing_rate=spacings[y])
             test = PerformanceTest(pfas, self.data)
             test.run()
 
-            grid[y, x] = test.rmse().value
-
-            minimum = (y, x) if grid[minimum] > grid[y, x] else minimum
+            grid[y, x] = test
             tools.echo('PFA: {}/{} {}/{}'.format(x+1, m, y+1, n))
 
-        self.pfas_result = GridResult(
+        return GridResult(
             grid=grid,
-            extent=np.array([
-                min(decays), max(decays),
-                max(spacing), min(spacing),
-            ]),
-            minimum=np.array([decays[minimum[0]], spacing[minimum[1]]]),
-            xlabel='gamma',
-            ylabel='delta',
+            xlabel='decay rates',
+            ylabel='spacing rates',
+            xvalues=decays,
+            yvalues=spacings,
         )
-
-        return self.pfas_result
-
-    def plot_elo(self):
-        """Plots the result of ELO model grid search."""
-        if self.elo_result is None:
-            raise RuntimeError('Run GridSearch.elo_search first.')
-        return self.elo_result.plot()
-
-    def plot_pfa(self):
-        """Plots the result of PFA model grid search."""
-        if self.pfa_result is None:
-            raise RuntimeError('Run GridSearch.pfa_search first.')
-        return self.pfa_result.plot()
-
-    def plot_pfas(self):
-        """Plots the result of PFA model grid search."""
-        if self.pfas_result is None:
-            raise RuntimeError('Run GridSearch.pfas_search first.')
-        return self.pfas_result.plot()
 
 
 class RandomSearch(object):
-    """Encapsulates grid searches for various models.
+    """Encapsulates random searches for various models.
 
     :param data: Data with answers in a DataFrame.
     """
 
     def __init__(self, data):
         self.data = data
-
-        self.elo_result = None
-        self.pfa_result = None
 
     def search_elo(self, alpha, beta):
         """Performes random search on ELO model using given initial
@@ -234,8 +235,7 @@ class RandomSearch(object):
             tools.echo('alpha={x[0]} beta={x[1]}'.format(x=x))
             return test.rmse().value
 
-        self.elo_result = optimize.minimize(fun, [alpha, beta])
-        return self.elo_result
+        return optimize.minimize(fun, [alpha, beta])
 
     def search_pfa(self, gamma, delta):
         """Performes random search on ELO model using given initial
@@ -257,5 +257,4 @@ class RandomSearch(object):
             tools.echo('gamma={x[0]} delta={x[1]}'.format(x=x))
             return test.rmse().value
 
-        self.pfa_result = optimize.minimize(fun, [gamma, delta])
-        return self.pfa_result
+        return optimize.minimize(fun, [gamma, delta])
