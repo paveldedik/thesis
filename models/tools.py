@@ -16,6 +16,19 @@ from IPython.display import clear_output
 from sklearn.metrics import mean_squared_error
 
 
+#: Columns currently not used in models. They are ignored by
+#: the :func:`prepare_data` so that the memory requirements are lower.
+IGNORED_COLUMNS = [
+    'place_map', 'language', 'options'
+]
+
+#: Columns renamed in models.
+RENAMED_COLUMNS = {
+    'user': 'user_id',
+    'place_asked': 'place_id',
+}
+
+
 def echo(msg, clear=True):
     """Prints the passed message. If the parameter `clear` is set to
     :obj:`True`, IPython's console output is cleared beforhand.
@@ -40,7 +53,8 @@ def load_data(path, limit=10000, offset=0):
     :param limit: Limit the number of loaded rows.
     :type limit: int
     """
-    return prepare_data(pd.read_csv(path)[offset:offset+limit])
+    data = pd.read_csv(path)[offset:offset+limit]
+    return prepare_data(data)
 
 
 def prepare_data(data):
@@ -49,9 +63,11 @@ def prepare_data(data):
     :param data: The object containing data.
     :type data: :class:`pandas.DataFrame`.
     """
-    data['is_correct'] = (data['place_asked'] ==
+    data.rename(columns=RENAMED_COLUMNS, inplace=True)
+    data['is_correct'] = (data['place_id'] ==
                           data['place_answered']).astype(int)
-    return data
+    return data[[column for column in data.columns
+                 if column not in IGNORED_COLUMNS]].copy()
 
 
 def first_answers(data):
@@ -62,9 +78,9 @@ def first_answers(data):
     :type data: :class:`pandas.DataFrame`.
     """
     data = data.sort(
-        ['user', 'place_asked', 'inserted']
+        ['user_id', 'place_id', 'inserted']
     ).groupby(
-        ['user', 'place_asked']
+        ['user_id', 'place_id']
     ).first()
     return data.reset_index()
 
@@ -77,11 +93,31 @@ def last_answers(data):
     :type data: :class:`pandas.DataFrame`.
     """
     data = data.sort(
-        ['user', 'place_asked', 'inserted']
+        ['user_id', 'place_id', 'inserted']
     ).groupby(
-        ['user', 'place_asked']
+        ['user_id', 'place_id']
     ).last()
     return data.reset_index()
+
+
+def unknown_answers(data):
+    """Modifies the given data set so that only the answeres formally
+    unknown by the user are contained in the data.
+
+    :param data: The object containing data.
+    :type data: :class:`pandas.DataFrame`.
+    """
+    def tuplify_user_place(serie):
+        return (serie['user_id'], serie['place_id'])
+
+    first = first_answers(data)
+    unknowns = first[first['is_correct'] == 0]
+
+    all_user_place = data.apply(tuplify_user_place, axis=1)
+    unk_user_place = unknowns.apply(tuplify_user_place, axis=1)
+
+    mask = all_user_place.isin(unk_user_place)
+    return data[mask].reset_index()
 
 
 def split_data(data, ratio=0.7):
