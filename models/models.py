@@ -132,8 +132,8 @@ class EloModel(Model):
         :param question: Asked question.
         :type question: :class:`pandas.Series`
         """
-        user = self.users[question.user]
-        place = self.places[question.place_asked]
+        user = self.users[question.user_id]
+        place = self.places[question.place_id]
 
         prediction = tools.sigmoid(user.skill - place.difficulty)
         return self.respect_guess(prediction, question.number_of_options)
@@ -145,8 +145,8 @@ class EloModel(Model):
         :param answer: Answer to a question.
         :type answer: :class:`pandas.Series`
         """
-        user = self.users[answer.user]
-        place = self.places[answer.place_asked]
+        user = self.users[answer.user_id]
+        place = self.places[answer.place_id]
 
         shift = answer.is_correct - self.predict(answer)
 
@@ -229,7 +229,7 @@ class PFAModel(Model):
         :param question: Asked question.
         :type question: :class:`pandas.Series`
         """
-        item = self.items[question.user, question.place_asked]
+        item = self.items[question.user_id, question.place_id]
         prediction = tools.sigmoid(item.knowledge)
         return self.respect_guess(prediction, question.number_of_options)
 
@@ -240,7 +240,7 @@ class PFAModel(Model):
         :param answer: Answer to a question.
         :type answer: :class:`pandas.Series`
         """
-        item = self.items[answer.user, answer.place_asked]
+        item = self.items[answer.user_id, answer.place_id]
         prediction = self.predict(answer)
 
         if answer.is_correct:
@@ -333,7 +333,7 @@ class PFAWithSpacing(PFAModel):
         :param question: Asked question.
         :type question: :class:`pandas.Series`
         """
-        item = self.items[question.user, question.place_asked]
+        item = self.items[question.user_id, question.place_id]
         practices = self._get_practices(question.inserted, item.practices)
 
         if len(practices) > 0:
@@ -349,7 +349,7 @@ class PFAWithSpacing(PFAModel):
         :param question: Asked question.
         :type question: :class:`pandas.Series`
         """
-        item = self.items[question.user, question.place_asked]
+        item = self.items[question.user_id, question.place_id]
         strength = self.memory_strength(question) or 0
 
         prediction = tools.sigmoid(item.knowledge + strength)
@@ -362,7 +362,7 @@ class PFAWithSpacing(PFAModel):
         :param answer: Answer to a question.
         :type answer: :class:`pandas.Series`
         """
-        item = self.items[answer.user, answer.place_asked]
+        item = self.items[answer.user_id, answer.place_id]
         prediction = self.predict(answer)
 
         if answer.is_correct:
