@@ -15,7 +15,7 @@ from scipy import optimize
 
 from . import tools
 from .tests import PerformanceTest
-from .models import EloModel, PFAModel
+from .models import EloModel, PFAModel, PFAWithSpacing
 
 
 class GridResult(object):
@@ -70,6 +70,7 @@ class GridSearch(object):
 
         self.elo_result = None
         self.pfa_result = None
+        self.pfas_result = None
 
     def search_elo(self, alphas, betas):
         """Performes grid search on ELO model using given parameters.
@@ -108,7 +109,7 @@ class GridSearch(object):
         return self.elo_result
 
     def search_pfa(self, gammas, deltas):
-        """Performes grid search on ELO model using given parameters.
+        """Performes grid search on PFA extended model using given parameters.
 
         :param gammas: Gamma parameters (see :class:`PFAModel`).
         :type gammas: list or :class:`numpy.array`
@@ -144,6 +145,46 @@ class GridSearch(object):
 
         return self.pfa_result
 
+    def search_pfas(self, decays, spacing):
+        """Performes grid search on PFA extended with spacing and forgetting
+        using given parameters.
+
+        :param decays: Decay rates (see :class:`PFAWithSpacing`).
+        :type decays: list or :class:`numpy.array`
+        :param spacing: Spacing rates (see :class:`PFAWithSpacing`).
+        :type spacing: list or :class:`numpy.array`
+        """
+        minimum = (0, 0)
+        elo = EloModel()
+
+        m, n = len(decays), len(spacing)
+        grid = np.matrix([[0] * m] * n, dtype=float)
+
+        for x, y in itertools.product(range(m), range(n)):
+            pfas = PFAWithSpacing(elo,
+                                  decay_rate=decays[x],
+                                  spacing_rate=spacing[y])
+            test = PerformanceTest(pfas, self.data)
+            test.run()
+
+            grid[y, x] = test.rmse().value
+
+            minimum = (y, x) if grid[minimum] > grid[y, x] else minimum
+            tools.echo('PFA: {}/{} {}/{}'.format(x+1, m, y+1, n))
+
+        self.pfas_result = GridResult(
+            grid=grid,
+            extent=np.array([
+                min(decays), max(decays),
+                max(spacing), min(spacing),
+            ]),
+            minimum=np.array([decays[minimum[0]], spacing[minimum[1]]]),
+            xlabel='gamma',
+            ylabel='delta',
+        )
+
+        return self.pfas_result
+
     def plot_elo(self):
         """Plots the result of ELO model grid search."""
         if self.elo_result is None:
@@ -155,6 +196,12 @@ class GridSearch(object):
         if self.pfa_result is None:
             raise RuntimeError('Run GridSearch.pfa_search first.')
         return self.pfa_result.plot()
+
+    def plot_pfas(self):
+        """Plots the result of PFA model grid search."""
+        if self.pfas_result is None:
+            raise RuntimeError('Run GridSearch.pfas_search first.')
+        return self.pfas_result.plot()
 
 
 class RandomSearch(object):
