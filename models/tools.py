@@ -7,6 +7,7 @@ Miscellaneous Helpers and Utils
 """
 
 import sys
+from collections import defaultdict
 
 import numpy as np
 import pandas as pd
@@ -271,3 +272,21 @@ class cached_property(object):
             value = self.func(obj)
             obj.__dict__[self.__name__] = value
         return value
+
+
+class keydefaultdict(defaultdict):
+    """Defaultdict that takes inserted key as an argument.
+
+    Example::
+
+    >>> d = keydefaultdict(C)
+    >>> d[x]  # returns C(x)
+    """
+
+    def __missing__(self, key):
+        if self.default_factory is None:
+            raise KeyError(key)
+        else:
+            args = key if isinstance(key, tuple) else (key,)
+            ret = self[key] = self.default_factory(*args)
+            return ret
