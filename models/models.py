@@ -6,7 +6,6 @@ Evaluation Models
 
 """
 
-import pandas as pd
 from datetime import datetime
 
 import tools
@@ -84,6 +83,26 @@ class EloModel(Model):
     affect the uncertainty function.
     """
 
+    class _User(object):
+        """Returns a user with given ID.
+
+        :param user_id: ID of the user.
+        :type user_id: int
+        """
+        def __init__(self, user_id):
+            self.skill = 0.0
+            self.number_of_answers = 0
+
+    class _Place(object):
+        """Returns a place with given ID.
+
+        :param place_id: ID of the place.
+        :type place_id: int
+        """
+        def __init__(self, place_id):
+            self.difficulty = 0.0
+            self.number_of_answers = 0
+
     def __init__(self, alpha=1, beta=0.05):
         self.alpha = alpha
         self.beta = beta
@@ -95,34 +114,8 @@ class EloModel(Model):
         dataframes. The first attribute represents difficulties of countries.
         The second attribute represents global knowledge of students.
         """
-        self.places = pd.DataFrame(
-            columns=['difficulty', 'number_of_answers'],
-            index=pd.Index([], name='place_asked')
-        )
-        self.users = pd.DataFrame(
-            columns=['skill', 'number_of_answers'],
-            index=pd.Index([], name='user')
-        )
-
-    def get_user(self, user_id):
-        """Returns a user with given ID.
-
-        :param user_id: ID of the user.
-        :type user_id: int
-        """
-        if user_id not in self.users.index:
-            self.users.loc[user_id] = (0, 0)
-        return self.users.ix[user_id]
-
-    def get_place(self, place_id):
-        """Returns a place with given ID.
-
-        :param user_id: ID of the place.
-        :type user_id: int
-        """
-        if place_id not in self.places.index:
-            self.places.loc[place_id] = (0, 0)
-        return self.places.ix[place_id]
+        self.places = tools.keydefaultdict(self._Place)
+        self.users = tools.keydefaultdict(self._User)
 
     def uncertainty(self, n):
         """Uncertainty function. The purpose is to make each update on
@@ -139,8 +132,8 @@ class EloModel(Model):
         :param question: Asked question.
         :type question: :class:`pandas.Series`
         """
-        user = self.get_user(question.user)
-        place = self.get_place(question.place_asked)
+        user = self.users[question.user]
+        place = self.places[question.place_asked]
 
         prediction = tools.sigmoid(user.skill - place.difficulty)
         return self.respect_guess(prediction, question.number_of_options)
@@ -152,8 +145,8 @@ class EloModel(Model):
         :param answer: Answer to a question.
         :type answer: :class:`pandas.Series`
         """
-        user = self.get_user(answer.user)
-        place = self.get_place(answer.place_asked)
+        user = self.users[answer.user]
+        place = self.places[answer.place_asked]
 
         shift = answer.is_correct - self.predict(answer)
 
@@ -199,6 +192,20 @@ class PFAModel(Model):
     :type delta: float
     """
 
+    class _Item(object):
+        """Item representation.
+
+        :param user_id: ID of the user.
+        :type user_id: int
+        :param place_id: ID of the place.
+        :type place_id: int
+        """
+
+        def __init__(self, prior, user_id, place_id):
+            self.user = prior.users[user_id]
+            self.place = prior.places[place_id]
+            self.knowledge = self.user.skill - self.place.difficulty
+
     def __init__(self, prior, gamma=3.4, delta=0.3):
         super(PFAModel, self).__init__()
 
@@ -212,25 +219,9 @@ class PFAModel(Model):
         """Initializes attribute of the model that stores current
         knowledge of places for all students.
         """
-        self.items = pd.DataFrame(
-            columns=['knowledge'],
-            index=pd.MultiIndex([[], []], [[], []], names=['user', 'place'])
+        self.items = tools.keydefaultdict(
+            lambda *args: self._Item(self.prior, *args)
         )
-
-    def get_item(self, user_id, place_id):
-        """Returns an item (identified by user and place).
-
-        :param user: ID of the user.
-        :type user: int
-        :param place: ID of the place.
-        :type place: int
-        """
-        if (user_id, place_id) not in self.items.index:
-            user = self.prior.get_user(user_id)
-            place = self.prior.get_place(place_id)
-            self.items.loc[(user_id, place_id), :] = \
-                user.skill - place.difficulty
-        return self.items.ix[user_id, place_id]
 
     def predict(self, question):
         """Returns probability of correct answer for given question.
@@ -238,7 +229,7 @@ class PFAModel(Model):
         :param question: Asked question.
         :type question: :class:`pandas.Series`
         """
-        item = self.get_item(question.user, question.place_asked)
+        item = self.items[question.user, question.place_asked]
         prediction = tools.sigmoid(item.knowledge)
         return self.respect_guess(prediction, question.number_of_options)
 
@@ -249,7 +240,7 @@ class PFAModel(Model):
         :param answer: Answer to a question.
         :type answer: :class:`pandas.Series`
         """
-        item = self.get_item(answer.user, answer.place_asked)
+        item = self.items[answer.user, answer.place_asked]
         prediction = self.predict(answer)
 
         if answer.is_correct:
@@ -278,7 +269,7 @@ class PFAModel(Model):
         train_set = data[~data['id'].isin(test_set['id'])]
 
         return train_set, test_set
-import numpy as np
+
 
 class PFAWithSpacing(PFAModel):
     """Extended version of PFA that takes into account the effect of
@@ -300,9 +291,22 @@ class PFAWithSpacing(PFAModel):
     :type decay_rate: float
     """
 
+    class _Item(PFAModel._Item):
+        """Item representation.
+
+        :param user_id: ID of the user.
+        :type user_id: int
+        :param place_id: ID of the place.
+        :type place_id: int
+        """
+
+        def __init__(self, *args, **kwargs):
+            self.practices = []
+            super(PFAWithSpacing._Item, self).__init__(*args, **kwargs)
+
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('gamma', 4)
-        kwargs.setdefault('delta', 1)
+        kwargs.setdefault('gamma', 3.4)
+        kwargs.setdefault('delta', 0.3)
 
         self.spacing_rate = kwargs.pop('spacing_rate', 0)
         self.decay_rate = kwargs.pop('decay_rate', 0.2)
@@ -323,39 +327,13 @@ class PFAWithSpacing(PFAModel):
         prior_dts = [self.to_datetime(t) for t in prior]
         return [(current_dt - t).total_seconds() for t in prior_dts]
 
-    def init_model(self):
-        """Initializes attribute of the model that stores current
-        knowledge of places for all students.
-        """
-        self.items = pd.DataFrame(
-            columns=['knowledge', 'practices'],
-            index=pd.MultiIndex([[], []], [[], []], names=['user', 'place'])
-        )
-
-    def get_item(self, user_id, place_id):
-        """Returns an item (identified by user and place).
-
-        :param user: ID of the user.
-        :type user: int
-        :param place: ID of the place.
-        :type place: int
-        """
-        if (user_id, place_id) not in self.items.index:
-            user = self.prior.get_user(user_id)
-            place = self.prior.get_place(place_id)
-            self.items.loc[(user_id, place_id), :] = pd.Series({
-                'knowledge': user.skill - place.difficulty,
-                'practices': [],
-            })
-        return self.items.ix[user_id, place_id]
-
     def memory_strength(self, question):
         """Estimates memory strength of an item.
 
         :param question: Asked question.
         :type question: :class:`pandas.Series`
         """
-        item = self.get_item(question.user, question.place_asked)
+        item = self.items[question.user, question.place_asked]
         practices = self._get_practices(question.inserted, item.practices)
 
         if len(practices) > 0:
@@ -371,7 +349,7 @@ class PFAWithSpacing(PFAModel):
         :param question: Asked question.
         :type question: :class:`pandas.Series`
         """
-        item = self.get_item(question.user, question.place_asked)
+        item = self.items[question.user, question.place_asked]
         strength = self.memory_strength(question) or 0
 
         prediction = tools.sigmoid(item.knowledge + strength)
@@ -384,12 +362,12 @@ class PFAWithSpacing(PFAModel):
         :param answer: Answer to a question.
         :type answer: :class:`pandas.Series`
         """
-        item = self.get_item(answer.user, answer.place_asked)
+        item = self.items[answer.user, answer.place_asked]
         prediction = self.predict(answer)
 
         if answer.is_correct:
             item.knowledge += self.gamma * (1 - prediction)
         else:
-            item.knowledge += self.delta * (1 - prediction)
+            item.knowledge += self.delta * (0 - prediction)
 
         item.practices += [answer.inserted]
