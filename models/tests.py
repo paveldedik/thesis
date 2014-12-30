@@ -56,6 +56,7 @@ class PerformanceTest(object):
 
         self.y_true = self.test_set['is_correct']
         self.y_pred = self.test_set.apply(self.model.predict, axis=1)
+        self.test_set['prediction'] = self.y_pred
 
     def rmse(self):
         """Estimates performance of the model using the Root Mean
