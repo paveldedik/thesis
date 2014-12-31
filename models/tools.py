@@ -6,6 +6,8 @@ Miscellaneous Helpers and Utils
 
 """
 
+from __future__ import division
+
 import sys
 from collections import defaultdict
 
@@ -16,7 +18,7 @@ from IPython.display import clear_output
 from sklearn.metrics import mean_squared_error
 
 
-#: Columns currently not used in models. They are ignored by
+#: Columns currently not used in models. They are ignored in
 #: the :func:`prepare_data` so that the memory requirements are lower.
 IGNORED_COLUMNS = [
     'place_map', 'language', 'options'
@@ -101,8 +103,8 @@ def last_answers(data):
 
 
 def unknown_answers(data):
-    """Modifies the given data set so that only the answeres formally
-    unknown by the user are contained in the data.
+    """Modifies the given data set so that only the answers the user
+    didn't answer correctly at first are contained in the data.
 
     :param data: The object containing data.
     :type data: :class:`pandas.DataFrame`.
@@ -277,6 +279,20 @@ def retrieval_prob(strength, tau=-0.704, s=0.255):
     return 1 / (1 + np.exp(val))
 
 
+def timing(t):
+    """Calculates probability of correct answer based on response time.
+    The values of parameters are based on some statistical experiments.
+
+    :param t: Response time in seconds.
+    :type t: float or int
+    """
+    result = ((4.07446031e-03 * t) -
+              (1.18475468e+00 * t ** (1 / 2)) -
+              (1.01545130e-05 * t ** (3 / 2)) +
+              (4.68002306e+00 * t ** (1 / 3)))
+    return max(result - 12.23, 0)
+
+
 class cached_property(object):
     """A decorator that converts a method into a property. The
     function wrapped is called the first time to retrieve the result
@@ -315,8 +331,9 @@ class keydefaultdict(defaultdict):
 
     Example::
 
-    >>> d = keydefaultdict(C)
-    >>> d[x]  # returns C(x)
+        d = keydefaultdict(C)
+        d[x]  # returns C(x)
+
     """
 
     def __missing__(self, key):

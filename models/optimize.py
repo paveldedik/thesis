@@ -6,6 +6,8 @@ Optimization Methods
 
 """
 
+from __future__ import division
+
 import itertools
 
 import numpy as np

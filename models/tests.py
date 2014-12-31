@@ -6,6 +6,8 @@ Evaluation of Model Performance
 
 """
 
+from __future__ import division
+
 from sklearn import metrics
 
 from . import tools
@@ -48,14 +50,16 @@ class PerformanceTest(object):
         self.data = data
         self.model = model
 
+        self.train_set, self.test_set = model.split_data(data)
+
     def run(self):
         """Prepares training set, test set and trains the model.
         """
-        self.train_set, self.test_set = self.model.split_data(self.data)
         self.model.train(self.train_set)
 
         self.y_true = self.test_set['is_correct']
         self.y_pred = self.test_set.apply(self.model.predict, axis=1)
+
         self.test_set['prediction'] = self.y_pred
 
     def rmse(self):
