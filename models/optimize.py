@@ -45,7 +45,7 @@ class GridResult(object):
         self.extent = np.array([
             min(self.xvalues), max(self.xvalues),
             max(self.yvalues), min(self.yvalues),
-        ]),
+        ])
 
     @tools.cached_property
     def rmse(self):
@@ -75,24 +75,66 @@ class GridResult(object):
         minimum = np.unravel_index(self.auc.argmax(), self.auc.shape)
         return np.array([self.xvalues[minimum[0]], self.yvalues[minimum[1]]])
 
-    def plot(self, metric='RMSE'):
+    def _plot_grid(self, grid, **img_kwargs):
+        """Plots the result of the GRID search.
+        Uses :func:`~matplotlib.pyplot.imshow` to plot the data.
+
+        :param grid: The grid to plot.
+        :type grid: list of lists or :class:`numpy.matrix`.
+        :param **img_kwargs: Key-word arguments passed to the
+            :func:`~matplotlib.pyplot.imshow`.
+        """
+        img_kwargs.setdefault('cmap', cm.Greys)
+        img_kwargs.setdefault('interpolation', 'nearest')
+        img_kwargs.setdefault('extent', self.extent)
+        img_kwargs.setdefault('aspect', 'auto')
+
+        img_title = img_kwargs.pop('title', 'Grid Search')
+        img_xlabel = img_kwargs.pop('xlabel', self.xlabel)
+        img_ylabel = img_kwargs.pop('ylabel', self.ylabel)
+
+        plot = plt.imshow(grid, **img_kwargs)
+        plt.colorbar(plot)
+        plt.xlabel(img_xlabel)
+        plt.ylabel(img_ylabel)
+        plt.title(img_title)
+        plt.show()
+
+        return plot
+
+    def plot_rmse(self, **img_kwargs):
+        """Plots the result of the GRID search.
+        Uses :func:`~matplotlib.pyplot.imshow` to plot the data.
+
+        :param **img_kwargs: Key-word arguments passed to the
+            :func:`~matplotlib.pyplot.imshow`.
+        """
+        img_kwargs.setdefault('title', 'Grid Search, metric: RMSE')
+        return self._plot_grid(self.rmse, **img_kwargs)
+
+    def plot_auc(self, **img_kwargs):
+        """Plots the result of the GRID search.
+        Uses :func:`~matplotlib.pyplot.imshow` to plot the data.
+
+        :param **img_kwargs: Key-word arguments passed to the
+            :func:`~matplotlib.pyplot.imshow`.
+        """
+        img_kwargs.setdefault('title', 'Grid Search, metric: AUC')
+        return self._plot_grid(self.auc, **img_kwargs)
+
+    def plot(self):
         """Plots the result of the GRID search.
         Uses :func:`~matplotlib.pyplot.imshow` to plot the data.
         """
-        grids = {
-            'RMSE': self.rmse,
-            'AUC': self.auc,
-        }
-        plot = plt.imshow(grids[metric],
-                          cmap=cm.Greys_r,
-                          interpolation='nearest',
-                          extent=self.extent,
-                          aspect='auto')
-        plt.colorbar(plot)
-        plt.xlabel(self.xlabel)
-        plt.ylabel(self.ylabel)
-        plt.show()
-        return plot
+        plt.figure(1)
+
+        plt.subplot(121)
+        plot1 = self.plot_rmse(cmap=cm.Greys_r, aspect=None)
+
+        plt.subplot(122)
+        plot2 = self.plot_auc(aspect=None)
+
+        return [plot1, plot2]
 
     def __str__(self):
         return self.__repr__()
@@ -119,6 +161,39 @@ class GridSearch(object):
     def __init__(self, data):
         self.data = data
 
+    def search(self, factory, xvalues, yvalues, **result_kwargs):
+        """Performes grid search on ELO model using given parameters.
+
+        :param factory: Model facotry which is used to instantiate
+            model with all the combinations of `xvalues` and `yvalues`.
+        :type factory: callable
+        :param xvalues: List of values for first positional argument
+            passed on to the model factory.
+        :type xvalues: iterable
+        :param yvalues: List of values for second positional argument
+            passed on to the model factory.
+        :type yvalues: iterable
+        :param **result_kwargs: Optional arguments passed on to
+            the :class:`GridResult` instance.
+        """
+        m, n = len(xvalues), len(yvalues)
+        grid = np.array([[None] * m] * n)
+
+        for x, y in itertools.product(range(m), range(n)):
+            model = factory(xvalues[x], yvalues[y])
+            test = PerformanceTest(model, self.data)
+            test.run()
+
+            grid[y, x] = test
+            tools.echo('{}/{} {}/{}'.format(x+1, m, y+1, n))
+
+        return GridResult(
+            grid=grid,
+            xvalues=xvalues,
+            yvalues=yvalues,
+            **result_kwargs
+        )
+
     def search_elo(self, alphas, betas):
         """Performes grid search on ELO model using given parameters.
 
@@ -127,23 +202,15 @@ class GridSearch(object):
         :param betas: Beta paramters (see :class:`EloModel`).
         :type betas: list or :class:`numpy.array`
         """
-        m, n = len(alphas), len(betas)
-        grid = [[None] * m] * n
+        def elo_factory(x, y):
+            return EloModel(alpha=x, beta=y)
 
-        for x, y in itertools.product(range(m), range(n)):
-            elo = EloModel(alpha=alphas[x], beta=betas[y])
-            test = PerformanceTest(elo, self.data)
-            test.run()
-
-            grid[y, x] = test
-            tools.echo('ELO: {}/{} {}/{}'.format(x+1, n, y+1, n))
-
-        return GridResult(
-            grid=grid,
-            xlabel='alpha',
-            ylabel='beta',
+        return self.search(
+            factory=elo_factory,
             xvalues=alphas,
             yvalues=betas,
+            xlabel='alpha',
+            ylabel='beta',
         )
 
     def search_pfa(self, gammas, deltas):
@@ -154,25 +221,16 @@ class GridSearch(object):
         :param deltas: Delta paramters (see :class:`PFAModel`).
         :type deltas: list or :class:`numpy.array`
         """
-        m, n = len(gammas), len(deltas)
+        def pfa_factory(x, y):
+            elo = EloModel()
+            return PFAModel(elo, gamma=x, delta=y)
 
-        elo = EloModel()
-        grid = [[None] * m] * n
-
-        for x, y in itertools.product(range(m), range(n)):
-            pfa = PFAModel(elo, gamma=gammas[x], delta=deltas[y])
-            test = PerformanceTest(pfa, self.data)
-            test.run()
-
-            grid[y, x] = test
-            tools.echo('PFA: {}/{} {}/{}'.format(x+1, m, y+1, n))
-
-        return GridResult(
-            grid=grid,
-            xlabel='gamma',
-            ylabel='delta',
+        return self.search(
+            factory=pfa_factory,
             xvalues=gammas,
             yvalues=deltas,
+            xlabel='gammas',
+            ylabel='deltas',
         )
 
     def search_pfas(self, decays, spacings):
@@ -184,27 +242,16 @@ class GridSearch(object):
         :param spacings: Spacing rates (see :class:`PFAWithSpacing`).
         :type spacings: list or :class:`numpy.array`
         """
-        m, n = len(decays), len(spacings)
+        def pfas_factory(x, y):
+            elo = EloModel()
+            return PFAWithSpacing(elo, decay_rate=x, spacing_rate=y)
 
-        elo = EloModel()
-        grid = [[None] * m] * n
-
-        for x, y in itertools.product(range(m), range(n)):
-            pfas = PFAWithSpacing(elo,
-                                  decay_rate=decays[x],
-                                  spacing_rate=spacings[y])
-            test = PerformanceTest(pfas, self.data)
-            test.run()
-
-            grid[y, x] = test
-            tools.echo('PFA: {}/{} {}/{}'.format(x+1, m, y+1, n))
-
-        return GridResult(
-            grid=grid,
-            xlabel='decay rates',
-            ylabel='spacing rates',
+        return self.search(
+            factory=pfas_factory,
             xvalues=decays,
             yvalues=spacings,
+            xlabel='decay rates',
+            ylabel='spacing rates',
         )
 
 
