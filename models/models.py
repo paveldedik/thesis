@@ -6,9 +6,19 @@ Evaluation Models
 
 """
 
+from __future__ import division
+
 from datetime import datetime
 
 import tools
+
+
+__all__ = (
+    'EloModel',
+    'EloWithTiming',
+    'PFAModel',
+    'PFAWithSpacing',
+)
 
 
 class Model(object):
@@ -177,8 +187,37 @@ class EloModel(Model):
             distributed equaly.
         :type ratio: float
         """
-        data = tools.shuffle_data(tools.first_answers(data))
+        data = tools.first_answers(data)
         return tools.split_data(data, ratio=ratio)
+
+
+class EloWithTiming(EloModel):
+    """Extension of the Elo model with timing information."""
+
+    def __init__(self, *args, **kwargs):
+        self.phi = kwargs.pop('phi', 3)
+
+        super(EloWithTiming, self).__init__(*args, **kwargs)
+
+    def update(self, answer):
+        """Updates skills of users and difficulties of places according
+        to given answer.
+
+        :param answer: Answer to a question.
+        :type answer: :class:`pandas.Series`
+        """
+        user = self.users[answer.user_id]
+        place = self.places[answer.place_id]
+
+        timing = tools.timing(answer.response_time)
+        prob = (self.predict(answer) * self.phi + timing) / (self.phi + 1)
+        shift = answer.is_correct - prob
+
+        user.skill += self.uncertainty(user.number_of_answers) * shift
+        place.difficulty -= self.uncertainty(place.number_of_answers) * shift
+
+        user.number_of_answers += 1
+        place.number_of_answers += 1
 
 
 class PFAModel(Model):
