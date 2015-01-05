@@ -279,9 +279,10 @@ def retrieval_prob(strength, tau=-0.704, s=0.255):
     return 1 / (1 + np.exp(val))
 
 
-def timing(t):
-    """Calculates probability of correct answer based on response time.
-    The values of parameters are based on some statistical experiments.
+def automaticity_level(t):
+    """Calculates the level of automaticity (the effort the user had to
+    make to retrieve the item from memory) based on response time. The values
+    of parameters are based on some statistical experiments.
 
     :param t: Response time in seconds.
     :type t: float or int

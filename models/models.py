@@ -15,7 +15,7 @@ import tools
 
 __all__ = (
     'EloModel',
-    'EloWithTiming',
+    'EloResponseTime',
     'PFAModel',
     'PFAWithSpacing',
 )
@@ -191,13 +191,15 @@ class EloModel(Model):
         return tools.split_data(data, ratio=ratio)
 
 
-class EloWithTiming(EloModel):
-    """Extension of the Elo model with timing information."""
+class EloResponseTime(EloModel):
+    """Extension of the Elo model that takes response time of user
+    into account.
+    """
 
     def __init__(self, *args, **kwargs):
         self.phi = kwargs.pop('phi', 3)
 
-        super(EloWithTiming, self).__init__(*args, **kwargs)
+        super(EloResponseTime, self).__init__(*args, **kwargs)
 
     def update(self, answer):
         """Updates skills of users and difficulties of places according
@@ -209,8 +211,8 @@ class EloWithTiming(EloModel):
         user = self.users[answer.user_id]
         place = self.places[answer.place_id]
 
-        timing = tools.timing(answer.response_time)
-        prob = (self.predict(answer) * self.phi + timing) / (self.phi + 1)
+        level = tools.automaticity_level(answer.response_time)
+        prob = (self.predict(answer) * self.phi + level) / (self.phi + 1)
         shift = answer.is_correct - prob
 
         user.skill += self.uncertainty(user.number_of_answers) * shift
