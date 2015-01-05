@@ -11,6 +11,7 @@ from __future__ import division
 from datetime import datetime
 
 import tools
+import numpy as np
 
 
 __all__ = (
@@ -18,6 +19,7 @@ __all__ = (
     'EloResponseTime',
     'PFAModel',
     'PFAWithSpacing',
+    'PFASpacingAlt',
 )
 
 
@@ -352,6 +354,9 @@ class PFAWithSpacing(PFAModel):
         self.spacing_rate = kwargs.pop('spacing_rate', 0)
         self.decay_rate = kwargs.pop('decay_rate', 0.2)
 
+        self.tau = kwargs.pop('tau', 10)
+        self.iota = kwargs.pop('iota', 1)
+
         super(PFAWithSpacing, self).__init__(*args, **kwargs)
 
     def _get_practices(self, current, prior):
@@ -378,11 +383,12 @@ class PFAWithSpacing(PFAModel):
         practices = self._get_practices(question.inserted, item.practices)
 
         if len(practices) > 0:
-            return tools.memory_strength(
+            strength = tools.memory_strength(
                 filter(lambda x: x > 0, practices),
                 spacing_rate=self.spacing_rate,
                 decay_rate=self.decay_rate,
             )
+            return (self.tau / (1 + np.exp(-strength))) - self.iota
 
     def predict(self, question):
         """Returns probability of correct answer for given question.
@@ -410,5 +416,34 @@ class PFAWithSpacing(PFAModel):
             item.knowledge += self.gamma * (1 - prediction)
         else:
             item.knowledge += self.delta * (0 - prediction)
+
+        item.practices += [answer.inserted]
+
+
+class PFASpacingAlt(PFAWithSpacing):
+    """Alternative version of :class:`PFAWithSpacing`.
+    For description of the parameters of the model see the parent class.
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('gamma', 4.0)
+        kwargs.setdefault('delta', 1.0)
+
+        super(PFASpacingAlt, self).__init__(*args, **kwargs)
+
+    def update(self, answer):
+        """Performes update of current knowledge of a user based on the
+        given answer.
+
+        :param answer: Answer to a question.
+        :type answer: :class:`pandas.Series`
+        """
+        item = self.items[answer.user_id, answer.place_id]
+        prediction = self.predict(answer)
+
+        if answer.is_correct:
+            item.knowledge += self.gamma * (1 - prediction)
+        else:
+            item.knowledge += self.delta * (1 - prediction)
 
         item.practices += [answer.inserted]

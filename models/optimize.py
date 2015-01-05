@@ -66,16 +66,16 @@ class GridResult(object):
         ])
 
     @tools.cached_property
-    def rmse_min(self):
+    def rmse_best(self):
         """Values of `xvalues` and `yvalues` with best RMSE."""
-        minimum = np.unravel_index(self.rmse.argmax(), self.rmse.shape)
-        return np.array([self.xvalues[minimum[0]], self.yvalues[minimum[1]]])
+        minimum = np.unravel_index(self.rmse.argmin(), self.rmse.shape)
+        return np.array([self.xvalues[minimum[1]], self.yvalues[minimum[0]]])
 
     @tools.cached_property
-    def auc_min(self):
+    def auc_best(self):
         """Values of `xvalues` and `yvalues` with best AUC."""
-        minimum = np.unravel_index(self.auc.argmax(), self.auc.shape)
-        return np.array([self.xvalues[minimum[0]], self.yvalues[minimum[1]]])
+        maximum = np.unravel_index(self.auc.argmax(), self.auc.shape)
+        return np.array([self.xvalues[maximum[1]], self.yvalues[maximum[0]]])
 
     def _plot_grid(self, grid, **img_kwargs):
         """Plots the result of the GRID search.
@@ -112,6 +112,7 @@ class GridResult(object):
             :func:`~matplotlib.pyplot.imshow`.
         """
         img_kwargs.setdefault('title', 'Grid Search, metric: RMSE')
+        img_kwargs.setdefault('cmap', cm.Greys_r)
         return self._plot_grid(self.rmse, **img_kwargs)
 
     def plot_auc(self, **img_kwargs):
@@ -131,10 +132,10 @@ class GridResult(object):
         plt.figure(1)
 
         plt.subplot(121)
-        plot1 = self.plot_rmse(cmap=cm.Greys_r, aspect=None)
+        plot1 = self.plot_rmse()
 
         plt.subplot(122)
-        plot2 = self.plot_auc(aspect=None)
+        plot2 = self.plot_auc()
 
         return [plot1, plot2]
 
