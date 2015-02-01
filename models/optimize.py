@@ -17,7 +17,7 @@ from scipy import optimize
 
 from . import tools
 from .tests import PerformanceTest
-from .models import EloModel, PFAModel, PFAWithSpacing
+from .models import EloModel, PFAModel, PFASpacing
 
 
 class GridResult(object):
@@ -240,14 +240,14 @@ class GridSearch(object):
         """Performes grid search on PFA extended with spacing and forgetting
         using given parameters.
 
-        :param decays: Decay rates (see :class:`PFAWithSpacing`).
+        :param decays: Decay rates (see :class:`PFASpacing`).
         :type decays: list or :class:`numpy.array`
-        :param spacings: Spacing rates (see :class:`PFAWithSpacing`).
+        :param spacings: Spacing rates (see :class:`PFASpacing`).
         :type spacings: list or :class:`numpy.array`
         """
         def pfas_factory(x, y):
             elo = EloModel()
-            return PFAWithSpacing(elo, decay_rate=x, spacing_rate=y)
+            return PFASpacing(elo, decay_rate=x, spacing_rate=y)
 
         return self.search(
             factory=pfas_factory,

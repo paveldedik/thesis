@@ -44,13 +44,17 @@ class PerformanceTest(object):
     :type model: :class:`models.Model`
     :param data: Data to use for the test.
     :type data: :class:`pandas.DataFrame`
+    :param split_data: Function that splits data into training set
+        and test set.
+    :type split_data: callable
     """
 
-    def __init__(self, model, data):
+    def __init__(self, model, data, split_data=None):
         self.data = data
         self.model = model
 
-        self.train_set, self.test_set = model.split_data(data)
+        split_data = split_data or model.split_data
+        self.train_set, self.test_set = split_data(data)
 
     def run(self):
         """Prepares training set, test set and trains the model.

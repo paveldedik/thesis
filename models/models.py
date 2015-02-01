@@ -18,7 +18,8 @@ __all__ = (
     'EloModel',
     'EloResponseTime',
     'PFAModel',
-    'PFAWithSpacing',
+    'PFATiming',
+    'PFASpacing',
     'PFASpacingAlt',
 )
 
@@ -314,7 +315,71 @@ class PFAModel(Model):
         return train_set, test_set
 
 
-class PFAWithSpacing(PFAModel):
+class PFATiming(PFAModel):
+    """Alternative version of :class:`PFASpacing` which ignores
+    spacing effect. Only forgetting is considered.
+    """
+
+    class _Item(PFAModel._Item):
+        """Item representation.
+
+        :param user_id: ID of the user.
+        :type user_id: int
+        :param place_id: ID of the place.
+        :type place_id: int
+        """
+
+        def __init__(self, *args, **kwargs):
+            self.practices = []
+            super(PFATiming._Item, self).__init__(*args, **kwargs)
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('gamma', 3.4)
+        kwargs.setdefault('delta', 0.3)
+
+        time_effect = lambda t: 80 / t
+        self.time_effect = kwargs.pop('time_effect_fun', time_effect)
+
+        super(PFATiming, self).__init__(*args, **kwargs)
+
+    def predict(self, question):
+        """Returns probability of correct answer for given question.
+
+        :param question: Asked question.
+        :type question: :class:`pandas.Series`
+        """
+        item = self.items[question.user_id, question.place_id]
+
+        if item.practices:
+            current_dt = self.to_datetime(question.inserted)
+            last_answer = self.to_datetime(item.practices[-1])
+            seconds = (current_dt - last_answer).total_seconds()
+            time_effect = self.time_effect(seconds)
+        else:
+            time_effect = 0
+
+        prediction = tools.sigmoid(item.knowledge + time_effect)
+        return self.respect_guess(prediction, question.number_of_options)
+
+    def update(self, answer):
+        """Performes update of current knowledge of a user based on the
+        given answer.
+
+        :param answer: Answer to a question.
+        :type answer: :class:`pandas.Series`
+        """
+        item = self.items[answer.user_id, answer.place_id]
+        prediction = self.predict(answer)
+
+        if answer.is_correct:
+            item.knowledge += self.gamma * (1 - prediction)
+        else:
+            item.knowledge += self.delta * (0 - prediction)
+
+        item.practices += [answer.inserted]
+
+
+class PFASpacing(PFATiming):
     """Extended version of PFA that takes into account the effect of
     forgetting and spacing.
 
@@ -334,19 +399,6 @@ class PFAWithSpacing(PFAModel):
     :type decay_rate: float
     """
 
-    class _Item(PFAModel._Item):
-        """Item representation.
-
-        :param user_id: ID of the user.
-        :type user_id: int
-        :param place_id: ID of the place.
-        :type place_id: int
-        """
-
-        def __init__(self, *args, **kwargs):
-            self.practices = []
-            super(PFAWithSpacing._Item, self).__init__(*args, **kwargs)
-
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('gamma', 3.4)
         kwargs.setdefault('delta', 0.3)
@@ -357,7 +409,7 @@ class PFAWithSpacing(PFAModel):
         self.tau = kwargs.pop('tau', 10)
         self.iota = kwargs.pop('iota', 1)
 
-        super(PFAWithSpacing, self).__init__(*args, **kwargs)
+        super(PFASpacing, self).__init__(*args, **kwargs)
 
     def _get_practices(self, current, prior):
         """Returns list of previous practices expresed as the number
@@ -402,26 +454,9 @@ class PFAWithSpacing(PFAModel):
         prediction = tools.sigmoid(item.knowledge + strength)
         return self.respect_guess(prediction, question.number_of_options)
 
-    def update(self, answer):
-        """Performes update of current knowledge of a user based on the
-        given answer.
 
-        :param answer: Answer to a question.
-        :type answer: :class:`pandas.Series`
-        """
-        item = self.items[answer.user_id, answer.place_id]
-        prediction = self.predict(answer)
-
-        if answer.is_correct:
-            item.knowledge += self.gamma * (1 - prediction)
-        else:
-            item.knowledge += self.delta * (0 - prediction)
-
-        item.practices += [answer.inserted]
-
-
-class PFASpacingAlt(PFAWithSpacing):
-    """Alternative version of :class:`PFAWithSpacing`.
+class PFASpacingAlt(PFASpacing):
+    """Alternative version of :class:`PFASpacing`.
     For description of the parameters of the model see the parent class.
     """
 
