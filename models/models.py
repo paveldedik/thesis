@@ -407,7 +407,6 @@ class PFASpacing(PFATiming):
         self.decay_rate = kwargs.pop('decay_rate', 0.2)
 
         self.tau = kwargs.pop('tau', 10)
-        self.iota = kwargs.pop('iota', 1)
 
         super(PFASpacing, self).__init__(*args, **kwargs)
 
@@ -440,7 +439,7 @@ class PFASpacing(PFATiming):
                 spacing_rate=self.spacing_rate,
                 decay_rate=self.decay_rate,
             )
-            return (self.tau / (1 + np.exp(-strength))) - self.iota
+            return self.tau + strength
 
     def predict(self, question):
         """Returns probability of correct answer for given question.
