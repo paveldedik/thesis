@@ -278,7 +278,7 @@ class RandomSearch(object):
         """
         def fun(x):
             elo = EloModel(alpha=x[0], beta=x[1])
-            test = PerformanceTest(elo)
+            test = PerformanceTest(elo, self.data)
 
             test.run()
 
@@ -300,7 +300,7 @@ class RandomSearch(object):
 
         def fun(x):
             pfa = PFAModel(elo, gamma=x[0], delta=x[1])
-            test = PerformanceTest(pfa)
+            test = PerformanceTest(pfa, self.data)
 
             test.run()
 
@@ -308,3 +308,51 @@ class RandomSearch(object):
             return test.rmse().value
 
         return optimize.minimize(fun, [gamma, delta])
+
+
+class GradientDescent(object):
+    """Encapsulates gradient descent for various models.
+
+    :param data: Data with answers in a DataFrame.
+    """
+
+    def __init__(self, data):
+        self.data = data
+
+    def search_pfa(self, init_gamma, init_delta,
+                   step_size=0.01, precision=0.01, maxiter=50):
+        """Finds optimal parameters for the PFAModel.
+
+        :param init_gamma: Initial gamma value.
+        :param init_delta: Initial delta value.
+        :param step_size: Step size. Default is :num:`0.01`.
+        :param precision: The algorithm stops iterating when the precision
+            gets below this value. Default is :num:`0.01`.
+        :param maxiter: Maximum number of iteration. Default is :num:`50`.
+        """
+        def pfa_off(x, y):
+            elo = EloModel()
+            pfa = PFAModel(elo, gamma=x, delta=y)
+            pfa_test = PerformanceTest(pfa, self.data)
+
+            pfa_test.run()
+            return pfa_test.pred_off()
+
+        gamma_val = delta_val = pfa_off(init_gamma, init_delta)
+
+        old_gamma = init_gamma
+        old_delta = init_delta
+
+        for _ in range(maxiter):
+
+            # import pdb; pdb.set_trace()
+            new_gamma = old_gamma + step_size * gamma_val
+            new_delta = old_delta - step_size * delta_val
+
+            gamma_val = pfa_off(new_gamma, old_delta)
+            delta_val = pfa_off(old_gamma, new_delta)
+
+            old_gamma = new_gamma
+            old_delta = new_delta
+
+            tools.echo('gamma:{}/delta:{}'.format(new_gamma, new_delta))
