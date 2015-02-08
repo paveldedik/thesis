@@ -9,11 +9,13 @@ Evaluation Models
 from __future__ import division
 
 from datetime import datetime
+from collections import defaultdict
 
 import tools
 
 
 __all__ = (
+    'DummyPriorModel',
     'EloModel',
     'EloResponseTime',
     'PFAModel',
@@ -86,6 +88,27 @@ class Model(object):
         :type ratio: float
         """
         raise NotImplementedError()
+
+
+class DummyPriorModel(Model):
+    """Dummy model that sets all skills of users and difficulties
+    of places to zero.
+    """
+
+    class _User(object):
+        """Returns a user with given ID."""
+        skill = 0.0
+
+    class _Place(object):
+        """Returns a place with given ID."""
+        difficulty = 0.0
+
+    def __init__(self):
+        self.users = defaultdict(lambda: self._User())
+        self.places = defaultdict(lambda: self._Place())
+
+    def train(self, data):
+        pass
 
 
 class EloModel(Model):
@@ -264,6 +287,7 @@ class PFAModel(Model):
         self.items = tools.keydefaultdict(
             lambda *args: self._Item(self.prior, *args)
         )
+        self.predictions = []
 
     def predict(self, question):
         """Returns probability of correct answer for given question.
@@ -284,6 +308,8 @@ class PFAModel(Model):
         """
         item = self.items[answer.user_id, answer.place_id]
         prediction = self.predict(answer)
+
+        self.predictions.append((answer.is_correct, prediction))
 
         if answer.is_correct:
             item.knowledge += self.gamma * (1 - prediction)
