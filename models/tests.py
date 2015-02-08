@@ -9,6 +9,7 @@ Evaluation of Model Performance
 from __future__ import division
 
 from sklearn import metrics
+import matplotlib.pyplot as plt
 
 from . import tools
 
@@ -18,7 +19,7 @@ class PerformanceResult(object):
 
     :param value: Estimated performance.
     :type value: float
-    :param method: Name of the used method (e.g. *RMES* or *AUC*).
+    :param method: Name of the used method (e.g. *RMSE* or *AUC*).
     :type method: string
     :param size: Size of the training set.
     :type size: int
@@ -79,3 +80,10 @@ class PerformanceTest(object):
         """
         result = metrics.roc_auc_score(self.y_true, self.y_pred)
         return PerformanceResult(result, 'AUC', len(self.train_set))
+
+    def plot_roc(self):
+        """Plots ROC curve (Receiver Operating Characteristic).
+        """
+        fpr, tpr, thresholds = \
+            metrics.roc_curve(self.y_true, self.y_pred, pos_label=1)
+        return plt.plot(fpr, tpr)

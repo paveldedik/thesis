@@ -11,7 +11,6 @@ from __future__ import division
 from datetime import datetime
 
 import tools
-import numpy as np
 
 
 __all__ = (
@@ -20,7 +19,6 @@ __all__ = (
     'PFAModel',
     'PFATiming',
     'PFASpacing',
-    'PFASpacingAlt',
 )
 
 
@@ -452,32 +450,3 @@ class PFASpacing(PFATiming):
 
         prediction = tools.sigmoid(item.knowledge + strength)
         return self.respect_guess(prediction, question.number_of_options)
-
-
-class PFASpacingAlt(PFASpacing):
-    """Alternative version of :class:`PFASpacing`.
-    For description of the parameters of the model see the parent class.
-    """
-
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault('gamma', 4.0)
-        kwargs.setdefault('delta', 1.0)
-
-        super(PFASpacingAlt, self).__init__(*args, **kwargs)
-
-    def update(self, answer):
-        """Performes update of current knowledge of a user based on the
-        given answer.
-
-        :param answer: Answer to a question.
-        :type answer: :class:`pandas.Series`
-        """
-        item = self.items[answer.user_id, answer.place_id]
-        prediction = self.predict(answer)
-
-        if answer.is_correct:
-            item.knowledge += self.gamma * (1 - prediction)
-        else:
-            item.knowledge += self.delta * (1 - prediction)
-
-        item.practices += [answer.inserted]
