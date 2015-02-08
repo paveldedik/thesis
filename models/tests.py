@@ -8,6 +8,7 @@ Evaluation of Model Performance
 
 from __future__ import division
 
+import numpy as np
 from sklearn import metrics
 import matplotlib.pyplot as plt
 
@@ -80,6 +81,12 @@ class PerformanceTest(object):
         """
         result = metrics.roc_auc_score(self.y_true, self.y_pred)
         return PerformanceResult(result, 'AUC', len(self.train_set))
+
+    def pred_off(self):
+        """Average difference between observed frequency of correct
+        answers and predictions.
+        """
+        return np.average(self.y_true - self.y_pred)
 
     def plot_roc(self):
         """Plots ROC curve (Receiver Operating Characteristic).
