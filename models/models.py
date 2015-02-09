@@ -309,12 +309,12 @@ class PFAModel(Model):
         item = self.items[answer.user_id, answer.place_id]
         prediction = self.predict(answer)
 
-        self.predictions.append((answer.is_correct, prediction))
-
         if answer.is_correct:
             item.knowledge += self.gamma * (1 - prediction)
         else:
             item.knowledge += self.delta * (0 - prediction)
+
+        self.predictions += [(answer.is_correct, prediction)]
 
     def train(self, data):
         """Trains the model on given data set.
@@ -401,6 +401,7 @@ class PFATiming(PFAModel):
             item.knowledge += self.delta * (0 - prediction)
 
         item.practices += [answer.inserted]
+        self.predictions += [(answer.is_correct, prediction)]
 
 
 class PFASpacing(PFATiming):
