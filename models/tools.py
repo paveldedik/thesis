@@ -294,6 +294,17 @@ def automaticity_level(t):
     return max(result - 12.23, 0)
 
 
+def merge_dicts(*dicts):
+    """Merges multiple *dicts* into one."""
+    items = []
+    for d in dicts:
+        items.extend(d.items())
+    merged = {}
+    for key, value in items:
+        merged[key] = value
+    return merged
+
+
 class cached_property(object):
     """A decorator that converts a method into a property. The
     function wrapped is called the first time to retrieve the result
