@@ -9,6 +9,7 @@ Evaluation of Model Performance
 from __future__ import division
 
 import numpy as np
+import pandas as pd
 from sklearn import metrics
 import matplotlib.pyplot as plt
 
@@ -18,25 +19,57 @@ from . import tools
 class PerformanceResult(object):
     """Represents estimated performance of a model.
 
-    :param value: Estimated performance.
-    :type value: float
-    :param method: Name of the used method (e.g. *RMSE* or *AUC*).
-    :type method: string
-    :param size: Size of the training set.
-    :type size: int
+    :param observed: Vector of observed corectness of answers.
+    :type observed: iterable
+    :param predicted: Vector of predicted corectness of answers.
+        Must have the sime lenth as the vector containing observed
+        answers.
+    :type predicted: iterable
     """
 
-    def __init__(self, value, method, size):
-        self.value = value
-        self.method = method
-        self.size = size
+    def __init__(self, observed, predicted):
+        self.observed = observed
+        self.predicted = predicted
+        self.size = len(self.predicted)
+
+    @tools.cached_property
+    def rmse(self):
+        """Estimates performance of the model using the Root Mean
+         Squared Error (RMSE) as metric.
+        """
+        return tools.rmse(self.observed, self.predicted)
+
+    @tools.cached_property
+    def auc(self):
+        """Estimates precision of the model using Area Under the Curve
+        (AUC) as metric.
+        """
+        return metrics.roc_auc_score(self.observed, self.predicted)
+
+    @tools.cached_property
+    def off(self):
+        """Difference between observed frequency of correct
+        answers and average prediction.
+        """
+        return np.average(self.observed - self.predicted)
+
+    def plot_roc(self):
+        """Plots ROC curve (Receiver Operating Characteristic).
+        """
+        fpr, tpr, thresholds = \
+            metrics.roc_curve(self.observed, self.predicted, pos_label=1)
+        return plt.plot(fpr, tpr)
 
     def __str__(self):
         return self.__repr__()
 
     def __repr__(self):
-        return ('{self.method}: {self.value}\n'
-                'Training Set Size: {self.size}').format(self=self)
+        return (
+            'RMSE: {self.rmse}\n'
+            'AUC: {self.auc}\n'
+            'OFF: {self.off}\n'
+            'Set Size: {self.size}'
+        ).format(self=self)
 
 
 class PerformanceTest(object):
@@ -63,34 +96,30 @@ class PerformanceTest(object):
         """
         self.model.train(self.train_set)
 
-        self.y_true = self.test_set['is_correct']
-        self.y_pred = self.test_set.apply(self.model.predict, axis=1)
+        self.test_values = pd.DataFrame({
+            'observed': self.test_set['is_correct'],
+            'predicted': self.test_set.apply(self.model.predict, axis=1),
+        })
+        self.train_values = pd.DataFrame(
+            self.model.predictions,
+            columns=['observed', 'predicted'],
+        )
 
-        self.test_set['prediction'] = self.y_pred
+        self.test_result = PerformanceResult(
+            self.test_values['observed'],
+            self.test_values['predicted'],
+        )
+        self.train_result = PerformanceResult(
+            self.train_values['observed'],
+            self.train_values['predicted'],
+        )
 
-    def rmse(self):
-        """Estimates performance of the model using the Root Mean
-         Squared Error (RMSE) as metric.
+    @property
+    def results(self):
+        """Dictionary that contains results of test set
+        and train set.
         """
-        result = tools.rmse(self.y_true, self.y_pred)
-        return PerformanceResult(result, 'RMSE', len(self.train_set))
-
-    def auc(self):
-        """Estimates precision of the model using Area Under the Curve
-        (AUC) as metric.
-        """
-        result = metrics.roc_auc_score(self.y_true, self.y_pred)
-        return PerformanceResult(result, 'AUC', len(self.train_set))
-
-    def pred_off(self):
-        """Average difference between observed frequency of correct
-        answers and predictions.
-        """
-        return np.average(self.y_true - self.y_pred)
-
-    def plot_roc(self):
-        """Plots ROC curve (Receiver Operating Characteristic).
-        """
-        fpr, tpr, thresholds = \
-            metrics.roc_curve(self.y_true, self.y_pred, pos_label=1)
-        return plt.plot(fpr, tpr)
+        return {
+            'test': self.test_result,
+            'train': self.train_result,
+        }
