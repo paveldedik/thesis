@@ -53,16 +53,14 @@ class GridResult(object):
     def rmse(self):
         """Grid Search errors estimations using RMSE."""
         return np.array([
-            [result.rmse().value for result in row]
-            for row in self.grid
+            [result.rmse for result in row] for row in self.grid
         ])
 
     @tools.cached_property
     def auc(self):
         """Grid Search errors estimations using AUC."""
         return np.array([
-            [result.auc().value for result in row]
-            for row in self.grid
+            [result.auc for result in row] for row in self.grid
         ])
 
     @tools.cached_property
@@ -187,7 +185,7 @@ class GridSearch(object):
             test = PerformanceTest(model, self.data)
             test.run()
 
-            grid[y, x] = test
+            grid[y, x] = test.results['train']
             tools.echo('{}/{} {}/{}'.format(x+1, m, y+1, n))
 
         return GridResult(
@@ -283,7 +281,7 @@ class RandomSearch(object):
             test.run()
 
             tools.echo('alpha={x[0]} beta={x[1]}'.format(x=x))
-            return test.rmse().value
+            return test.results['train'].rmse
 
         return optimize.minimize(fun, [alpha, beta])
 
@@ -305,7 +303,7 @@ class RandomSearch(object):
             test.run()
 
             tools.echo('gamma={x[0]} delta={x[1]}'.format(x=x))
-            return test.rmse().value
+            return test.results['train'].rmse
 
         return optimize.minimize(fun, [gamma, delta])
 
@@ -319,40 +317,62 @@ class GradientDescent(object):
     def __init__(self, data):
         self.data = data
 
-    def search_pfa(self, init_gamma, init_delta,
-                   step_size=0.01, precision=0.01, maxiter=50):
-        """Finds optimal parameters for the PFAModel.
+    def search(self, model_fun, parameters,
+               step_size=1, precision=0.01, maxiter=50):
+        """Finds optimal parameters for given model.
 
-        :param init_gamma: Initial gamma value.
-        :param init_delta: Initial delta value.
+        :param model_fun: Callable that is called with ``parameters``.
+            Must return gradient.
+        :param parameters: Dictionary of parameters to fit.
         :param step_size: Step size. Default is :num:`0.01`.
         :param precision: The algorithm stops iterating when the precision
             gets below this value. Default is :num:`0.01`.
         :param maxiter: Maximum number of iteration. Default is :num:`50`.
         """
-        def pfa_off(x, y):
+        def diff(old, new):
+            return sum(abs(old[key] - new[key]) for key in new)
+
+        old_params = {p: 0 for p in parameters}
+        new_params = dict(parameters)
+
+        grad = model_fun(**new_params)
+        grads = {p: grad for p in parameters}
+
+        while diff(old_params, new_params) > precision:
+
+            old_params = dict(new_params)
+
+            for key in parameters:
+                value = old_params[key] + step_size * grads[key]
+                params = tools.merge_dicts(old_params, {key: value})
+
+                grads[key] = model_fun(**params)
+                new_params[key] = value
+
+            msg = '\n'.join([
+                '{k}: {v}; {k} grad: {g}'.format(k=key, v=val, g=grads[key])
+                for key, val in new_params.items()
+            ])
+            tools.echo(msg)
+
+    def search_pfa(self, init_gamma, init_delta, **search_kwargs):
+        """Finds optimal parameters for the PFAModel.
+
+        :param init_gamma: Initial gamma value.
+        :param init_delta: Initial delta value.
+        :param **search_kwargs: Optional parameters passed to the
+            method :meth:`GradientDescent.serach`.
+        """
+        def pfa_fun(gamma, delta):
             elo = EloModel()
-            pfa = PFAModel(elo, gamma=x, delta=y)
+            pfa = PFAModel(elo, gamma=gamma, delta=-delta)
             pfa_test = PerformanceTest(pfa, self.data)
 
             pfa_test.run()
-            return pfa_test.pred_off()
+            return pfa_test.results['train'].off
 
-        gamma_val = delta_val = pfa_off(init_gamma, init_delta)
+        parameters = {
+            'gamma': init_gamma, 'delta': init_delta
+        }
 
-        old_gamma = init_gamma
-        old_delta = init_delta
-
-        for _ in range(maxiter):
-
-            # import pdb; pdb.set_trace()
-            new_gamma = old_gamma + step_size * gamma_val
-            new_delta = old_delta - step_size * delta_val
-
-            gamma_val = pfa_off(new_gamma, old_delta)
-            delta_val = pfa_off(old_gamma, new_delta)
-
-            old_gamma = new_gamma
-            old_delta = new_delta
-
-            tools.echo('gamma:{}/delta:{}'.format(new_gamma, new_delta))
+        self.search(pfa_fun, parameters, **search_kwargs)
