@@ -350,7 +350,7 @@ class GradientDescent(object):
                 new_params[key] = value
 
             msg = '\n'.join([
-                '{k}: {v}; {k} grad: {g}'.format(k=key, v=val, g=grads[key])
+                '{}: {}; grad: {}'.format(key, val, grads[key])
                 for key, val in new_params.items()
             ])
             tools.echo(msg)
