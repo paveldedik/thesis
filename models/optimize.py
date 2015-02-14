@@ -9,8 +9,10 @@ Optimization Methods
 from __future__ import division
 
 import itertools
+from collections import defaultdict
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from scipy import optimize
@@ -150,6 +152,32 @@ class GridResult(object):
             self.rmse.round(3),
             self.auc_min.round(3),
             self.auc.round(3),
+        )
+
+
+class GradientResult(object):
+    """Representation of the result of gradient descent."""
+
+    def __init__(self, params, grads):
+        self.params = pd.DataFrame(params)
+        self.grads = pd.Series(grads)
+        self.iterations = len(self.grads)
+
+    @property
+    def best(self):
+        """The best fitted parameters."""
+        return self.params.iloc[-1]
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        return (
+            'Iterations: {}\n'
+            'Best: {}'
+        ).format(
+            self.iterations,
+            self.best.round(3),
         )
 
 
@@ -332,28 +360,40 @@ class GradientDescent(object):
         def diff(old, new):
             return sum(abs(old[key] - new[key]) for key in new)
 
-        old_params = {p: 0 for p in parameters}
+        old_params = {p: np.inf for p in parameters}
         new_params = dict(parameters)
 
         grad = model_fun(**new_params)
         grads = {p: grad for p in parameters}
+
+        descent = defaultdict(lambda: [])
 
         while diff(old_params, new_params) > precision:
 
             old_params = dict(new_params)
 
             for key in parameters:
-                value = old_params[key] + step_size * grads[key]
+                value = old_params[key] - step_size * grads[key]
                 params = tools.merge_dicts(old_params, {key: value})
 
                 grads[key] = model_fun(**params)
                 new_params[key] = value
+
+                descent[key].append(new_params[key])
+
+            grads_mean = np.average(grads.values())
+            descent['grad'].append(grads_mean)
 
             msg = '\n'.join([
                 '{}: {}; grad: {}'.format(key, val, grads[key])
                 for key, val in new_params.items()
             ])
             tools.echo(msg)
+
+        gradients = descent.pop('grads')
+        fitted_params = descent
+
+        return GradientResult(fitted_params, gradients)
 
     def search_pfa(self, init_gamma, init_delta, **search_kwargs):
         """Finds optimal parameters for the PFAModel.
@@ -365,7 +405,7 @@ class GradientDescent(object):
         """
         def pfa_fun(gamma, delta):
             elo = EloModel()
-            pfa = PFAModel(elo, gamma=gamma, delta=-delta)
+            pfa = PFAModel(elo, gamma=gamma, delta=delta)
             pfa_test = PerformanceTest(pfa, self.data)
 
             pfa_test.run()
@@ -375,4 +415,4 @@ class GradientDescent(object):
             'gamma': init_gamma, 'delta': init_delta
         }
 
-        self.search(pfa_fun, parameters, **search_kwargs)
+        return self.search(pfa_fun, parameters, **search_kwargs)

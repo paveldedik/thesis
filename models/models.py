@@ -271,7 +271,7 @@ class PFAModel(Model):
             self.place = prior.places[place_id]
             self.knowledge = self.user.skill - self.place.difficulty
 
-    def __init__(self, prior, gamma=3.4, delta=0.3):
+    def __init__(self, prior, gamma=3.4, delta=-0.3):
         super(PFAModel, self).__init__()
 
         self.prior = prior
@@ -312,7 +312,7 @@ class PFAModel(Model):
         if answer.is_correct:
             item.knowledge += self.gamma * (1 - prediction)
         else:
-            item.knowledge += self.delta * (0 - prediction)
+            item.knowledge += self.delta * prediction
 
         self.predictions += [(answer.is_correct, prediction)]
 
@@ -359,7 +359,7 @@ class PFATiming(PFAModel):
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('gamma', 3.4)
-        kwargs.setdefault('delta', 0.3)
+        kwargs.setdefault('delta', -0.3)
 
         time_effect = lambda t: 80 / t
         self.time_effect = kwargs.pop('time_effect_fun', time_effect)
@@ -398,7 +398,7 @@ class PFATiming(PFAModel):
         if answer.is_correct:
             item.knowledge += self.gamma * (1 - prediction)
         else:
-            item.knowledge += self.delta * (0 - prediction)
+            item.knowledge += self.delta * prediction
 
         item.practices += [answer.inserted]
         self.predictions += [(answer.is_correct, prediction)]
@@ -426,7 +426,7 @@ class PFASpacing(PFATiming):
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('gamma', 3.4)
-        kwargs.setdefault('delta', 0.3)
+        kwargs.setdefault('delta', -0.3)
 
         self.spacing_rate = kwargs.pop('spacing_rate', 0)
         self.decay_rate = kwargs.pop('decay_rate', 0.2)

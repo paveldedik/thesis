@@ -51,7 +51,7 @@ class PerformanceResult(object):
         """Difference between observed frequency of correct
         answers and average prediction.
         """
-        return np.average(self.observed - self.predicted)
+        return np.average(self.predicted - self.observed)
 
     def plot_roc(self):
         """Plots ROC curve (Receiver Operating Characteristic).
@@ -79,40 +79,43 @@ class PerformanceTest(object):
     :type model: :class:`models.Model`
     :param data: Data to use for the test.
     :type data: :class:`pandas.DataFrame`
-    :param split_data: Function that splits data into training set
-        and test set.
+    :param split_data: Whether to split the data between
+        test set and train set. Default is :obj:`False`.
     :type split_data: callable
     """
 
-    def __init__(self, model, data, split_data=None):
+    def __init__(self, model, data, split_data=False):
         self.data = data
         self.model = model
 
-        split_data = split_data or model.split_data
-        self.train_set, self.test_set = split_data(data)
+        if split_data:
+            self.train_set, self.test_set = model.split_data(data)
+        else:
+            self.train_set, self.test_set = data, None
 
     def run(self):
         """Prepares training set, test set and trains the model.
         """
         self.model.train(self.train_set)
 
-        self.test_values = pd.DataFrame({
-            'observed': self.test_set['is_correct'],
-            'predicted': self.test_set.apply(self.model.predict, axis=1),
-        })
-        self.train_values = pd.DataFrame(
-            self.model.predictions,
-            columns=['observed', 'predicted'],
-        )
-
-        self.test_result = PerformanceResult(
-            self.test_values['observed'],
-            self.test_values['predicted'],
-        )
-        self.train_result = PerformanceResult(
-            self.train_values['observed'],
-            self.train_values['predicted'],
-        )
+        if self.test_set is not None:
+            self.test_values = pd.DataFrame({
+                'observed': self.test_set['is_correct'],
+                'predicted': self.test_set.apply(self.model.predict, axis=1),
+            })
+            self.test_result = PerformanceResult(
+                self.test_values['observed'],
+                self.test_values['predicted'],
+            )
+        if self.train_set is not None:
+            self.train_values = pd.DataFrame(
+                self.model.predictions,
+                columns=['observed', 'predicted'],
+            )
+            self.train_result = PerformanceResult(
+                self.train_values['observed'],
+                self.train_values['predicted'],
+            )
 
     @property
     def results(self):
@@ -120,6 +123,6 @@ class PerformanceTest(object):
         and train set.
         """
         return {
-            'test': self.test_result,
-            'train': self.train_result,
+            'test': getattr(self, 'test_result', None),
+            'train': getattr(self, 'train_result', None),
         }
