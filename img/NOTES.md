@@ -9,12 +9,12 @@ response-time.png
 -----------------
 Correlation between response time and the probability on recall. Each value in the boxes represents the probability that the user recalles a particular country.
 
-pfa-spacing-first-answers-wrong.png
------------------------------------
-Grid Search for fitting the spacing rate and decay rate in PFA model extended with forgetting and spacing effects.
+pfa-gradient-descent.png
+------------------------
+Parameter fitting with gradient descent. The algorithm was run with the following settings:
 
-* Only the items which were answered incorrectly by the user in the very initial presentation have been used in the training of the model.
-* Train set size: 3261
-* Test set size: 1107
-* AUC of the original model on this set: 0.78490910201
-* RMSE of the original model on this set: 0.455674388602
+* step size = 5
+* precision = 0.001
+* initial gamma = 5
+* initial delta = 0.5
+* number of training examples = 50 000
