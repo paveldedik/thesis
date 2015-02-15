@@ -19,7 +19,7 @@ from scipy import optimize
 
 from . import tools
 from .tests import PerformanceTest
-from .models import EloModel, PFAModel, PFASpacing
+from .models import EloModel, PFAModel, PFASpacing, PFAStaircase
 
 
 class GridResult(object):
@@ -390,7 +390,7 @@ class GradientDescent(object):
             ])
             tools.echo(msg)
 
-        gradients = descent.pop('grads')
+        gradients = descent.pop('grad')
         fitted_params = descent
 
         return GradientResult(fitted_params, gradients)
@@ -416,3 +416,37 @@ class GradientDescent(object):
         }
 
         return self.search(pfa_fun, parameters, **search_kwargs)
+
+    def search_staircase(self, init_gamma, init_delta, init_staircase,
+                         **search_kwargs):
+        """Finds optimal parameters for the `PFAStaircase` model.
+
+        :param init_gamma: Initial gamma value.
+        :type init_gamma: int or float
+        :param init_delta: Initial delta value.
+        :type init_delta: int or float
+        :param init_staircase: Initial staircase function.
+        :type init_staircase: dict
+        :param **search_kwargs: Optional parameters passed to the
+            method :meth:`GradientDescent.serach`.
+        """
+        interval, init_value = init_staircase.items()[0]
+
+        def pfast_fun(gamma, delta, staircase_value):
+            elo = EloModel()
+            staircase = {interval: staircase_value}
+
+            pfa = PFAStaircase(elo, gamma=gamma, delta=delta,
+                               staircase=staircase)
+            pfa_test = PerformanceTest(pfa, self.data)
+
+            pfa_test.run()
+            return pfa_test.results['train'].off
+
+        parameters = {
+            'gamma': init_gamma,
+            'delta': init_delta,
+            'staircase_value': init_value,
+        }
+
+        return self.search(pfast_fun, parameters, **search_kwargs)
