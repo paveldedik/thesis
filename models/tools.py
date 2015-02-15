@@ -9,6 +9,7 @@ Miscellaneous Helpers and Utils
 from __future__ import division
 
 import sys
+from datetime import datetime
 from collections import defaultdict
 
 import numpy as np
@@ -29,6 +30,10 @@ RENAMED_COLUMNS = {
     'user': 'user_id',
     'place_asked': 'place_id',
 }
+
+
+#: DateTime format of the field `inserted`.
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 
 def echo(msg, clear=True):
@@ -295,7 +300,10 @@ def automaticity_level(t):
 
 
 def merge_dicts(*dicts):
-    """Merges multiple *dicts* into one."""
+    """Merges multiple *dicts* into one.
+
+    :param *dicts: Dictionaries given as positional arguments.
+    """
     items = []
     for d in dicts:
         items.extend(d.items())
@@ -303,6 +311,29 @@ def merge_dicts(*dicts):
     for key, value in items:
         merged[key] = value
     return merged
+
+
+def time_diff(datetime1, datetime2):
+    """Returns difference between the arguments `datetime1` and
+    `datetime2` in seconds.
+
+    :type datetime1: string or datetime
+    :type datetime2: string or datetime
+    """
+    if isinstance(datetime1, basestring):
+        datetime1 = to_datetime(datetime1)
+    if isinstance(datetime2, basestring):
+        datetime2 = to_datetime(datetime2)
+    return (datetime1 - datetime2).total_seconds()
+
+
+def to_datetime(date_str):
+    """Deserializes given datetime.
+
+    :param date_str: DateTime given as string.
+    :type date_str: str
+    """
+    return datetime.strptime(date_str, DATETIME_FORMAT)
 
 
 class cached_property(object):
