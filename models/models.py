@@ -8,7 +8,6 @@ Evaluation Models
 
 from __future__ import division
 
-from datetime import datetime
 from collections import defaultdict
 
 import tools
@@ -20,23 +19,13 @@ __all__ = (
     'EloResponseTime',
     'PFAModel',
     'PFATiming',
+    'PFAStaircase',
     'PFASpacing',
 )
 
 
 class Model(object):
     """Abstract model class."""
-
-    #: DateTime format of the field `inserted`.
-    datetime_format = '%Y-%m-%d %H:%M:%S'
-
-    def to_datetime(self, date_str):
-        """Deserializes given datetime.
-
-        :param date_str: DateTime given as string.
-        :type date_str: str
-        """
-        return datetime.strptime(date_str, self.datetime_format)
 
     def respect_guess(self, prediction, options):
         """Updates prediction with respect to guessing paramter.
@@ -375,9 +364,7 @@ class PFATiming(PFAModel):
         item = self.items[question.user_id, question.place_id]
 
         if item.practices:
-            current_dt = self.to_datetime(question.inserted)
-            last_answer = self.to_datetime(item.practices[-1])
-            seconds = (current_dt - last_answer).total_seconds()
+            seconds = tools.time_diff(question.inserted, item.practices[-1])
             time_effect = self.time_effect(seconds)
         else:
             time_effect = 0
@@ -402,6 +389,50 @@ class PFATiming(PFAModel):
 
         item.practices += [answer.inserted]
         self.predictions += [(answer.is_correct, prediction)]
+
+
+class PFAStaircase(PFATiming):
+    """Alternative version of :class:`PFASpacing` which ignores
+    spacing effect. Only forgetting is considered given by staircase
+    fucntion.
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('gamma', 3.4)
+        kwargs.setdefault('delta', -0.3)
+
+        self.staircase = kwargs.pop('staircase', {})
+
+        super(PFATiming, self).__init__(*args, **kwargs)
+
+    def get_staircase_value(self, seconds):
+        """Returns the value of staircase function.
+
+        :param seconds: Number of seconds that passed since the
+            item was asked the last time.
+        :type seconds: int or float
+        """
+        for lower, upper in self.staircase:
+            if lower <= seconds <= upper:
+                return self.staircase[lower, upper]
+        return 0
+
+    def predict(self, question):
+        """Returns probability of correct answer for given question.
+
+        :param question: Asked question.
+        :type question: :class:`pandas.Series`
+        """
+        item = self.items[question.user_id, question.place_id]
+
+        if item.practices:
+            seconds = tools.time_diff(question.inserted, item.practices[-1])
+            time_effect = self.get_staircase_value(seconds)
+        else:
+            time_effect = 0
+
+        prediction = tools.sigmoid(item.knowledge + time_effect)
+        return self.respect_guess(prediction, question.number_of_options)
 
 
 class PFASpacing(PFATiming):
@@ -435,19 +466,17 @@ class PFASpacing(PFATiming):
 
         super(PFASpacing, self).__init__(*args, **kwargs)
 
-    def _get_practices(self, current, prior):
+    def _get_practices(self, current, priors):
         """Returns list of previous practices expresed as the number
         of seconds that passed between *current* practice and all
         the *prior* practices.
 
         :param current: Datetime of the current practice.
         :type place: string
-        :param prior: List of datetimes of the prior practices.
-        :type prior: list or :class:`numpy.array`
+        :param priors: List of datetimes of the prior practices.
+        :type priors: list or :class:`numpy.array`
         """
-        current_dt = self.to_datetime(current)
-        prior_dts = [self.to_datetime(t) for t in prior]
-        return [(current_dt - t).total_seconds() for t in prior_dts]
+        return [tools.time_diff(current, prior) for prior in priors]
 
     def memory_strength(self, question):
         """Estimates memory strength of an item.
