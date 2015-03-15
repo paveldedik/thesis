@@ -174,7 +174,7 @@ class GradientResult(object):
     def __repr__(self):
         return (
             'Iterations: {}\n'
-            'Best: {}'
+            'Best:\n{}'
         ).format(
             self.iterations,
             self.best.round(3),
@@ -446,6 +446,32 @@ class GradientDescent(object):
         parameters = {
             'gamma': init_gamma,
             'delta': init_delta,
+            'staircase_value': init_value,
+        }
+
+        return self.search(pfast_fun, parameters, **search_kwargs)
+
+    def search_staircase_only(self, init_staircase, **search_kwargs):
+        """Finds optimal parameters for the `PFAStaircase` model.
+
+        :param init_staircase: Initial staircase function.
+        :type init_staircase: dict
+        :param **search_kwargs: Optional parameters passed to the
+            method :meth:`GradientDescent.serach`.
+        """
+        interval, init_value = init_staircase.items()[0]
+
+        def pfast_fun(staircase_value):
+            elo = EloModel()
+            staircase = {interval: staircase_value}
+
+            pfa = PFAStaircase(elo, staircase=staircase)
+            pfa_test = PerformanceTest(pfa, self.data)
+
+            pfa_test.run()
+            return pfa_test.results['train'].off
+
+        parameters = {
             'staircase_value': init_value,
         }
 

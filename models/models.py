@@ -398,8 +398,8 @@ class PFAStaircase(PFATiming):
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('gamma', 3.4)
-        kwargs.setdefault('delta', -0.3)
+        kwargs.setdefault('gamma', 2.5)
+        kwargs.setdefault('delta', -0.8)
 
         self.staircase = kwargs.pop('staircase', {})
 
