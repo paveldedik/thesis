@@ -366,10 +366,13 @@ class GradientDescent(object):
         grad = model_fun(**new_params)
         grads = {p: grad for p in parameters}
 
+        iterations = 0
         descent = defaultdict(lambda: [])
 
-        while diff(old_params, new_params) > precision:
+        while (diff(old_params, new_params) > precision
+               and iterations < maxiter):
 
+            iterations += 1
             old_params = dict(new_params)
 
             for key in parameters:
