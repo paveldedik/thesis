@@ -127,6 +127,22 @@ def unknown_answers(data):
     return data[mask].reset_index()
 
 
+def add_prior(data):
+    """Appends the given data set with the time of prior answers.
+
+    :param data: The object containing data.
+    :type data: :class:`pandas.DataFrame`.
+    """
+    data['prior_inserted'] = np.nan
+    groups = data.sort(['inserted']).groupby(['user_id', 'place_id'])
+
+    for _, group in groups:
+        previous = np.array(group[:-1]['inserted'])
+        data.loc[group.index[1:], 'prior_inserted'] = previous
+
+    return data
+
+
 def split_data(data, ratio=0.7):
     """Splits data into test set and training set.
 
