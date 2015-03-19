@@ -127,19 +127,23 @@ def unknown_answers(data):
     return data[mask].reset_index()
 
 
-def add_prior(data):
-    """Appends the given data set with the time of prior answers.
+def add_spacing(data):
+    """Appends the given data set with spacing information of earch item.
 
     :param data: The object containing data.
     :type data: :class:`pandas.DataFrame`.
     """
-    data['prior_inserted'] = np.nan
-    groups = data.sort(['inserted']).groupby(['user_id', 'place_id'])
+    answers = {}
+    data['spacing'] = np.inf
 
-    for _, group in groups:
-        previous = np.array(group[:-1]['inserted'])
-        data.loc[group.index[1:], 'prior_inserted'] = previous
+    def set_spacing(row):
+        index = (row.user_id, row.place_id)
+        if index in answers:
+            data.loc[row.name, 'spacing'] = \
+                time_diff(row.inserted, answers[index])
+        answers[index] = row.inserted
 
+    data.sort(['inserted']).apply(set_spacing, axis=1)
     return data
 
 
