@@ -103,15 +103,25 @@ class PerformanceTest(object):
                 'observed': self.test_set['is_correct'],
                 'predicted': self.test_set.apply(self.model.predict, axis=1),
             })
+            self.test_values = self.test_values[
+                np.isfinite(self.test_values['predicted'])
+            ]
             self.test_result = PerformanceResult(
                 self.test_values['observed'],
                 self.test_values['predicted'],
             )
         if self.train_set is not None:
-            self.train_values = pd.DataFrame(
-                self.model.predictions,
-                columns=['observed', 'predicted'],
+            predictions = pd.DataFrame.from_dict(
+                {'predicted': self.model.predictions},
             )
+            self.train_set = pd.concat([self.train_set, predictions], axis=1)
+            self.train_values = pd.DataFrame({
+                'observed': self.train_set['is_correct'],
+                'predicted': self.train_set['predicted'],
+            })
+            self.train_values = self.train_values[
+                np.isfinite(self.train_values['predicted'])
+            ]
             self.train_result = PerformanceResult(
                 self.train_values['observed'],
                 self.train_values['predicted'],

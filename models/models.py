@@ -276,7 +276,7 @@ class PFAModel(Model):
         self.items = tools.keydefaultdict(
             lambda *args: self._Item(self.prior, *args)
         )
-        self.predictions = []
+        self.predictions = {}
 
     def predict(self, question):
         """Returns probability of correct answer for given question.
@@ -388,7 +388,7 @@ class PFATiming(PFAModel):
             item.knowledge += self.delta * prediction
 
         item.practices += [answer.inserted]
-        self.predictions += [(answer.is_correct, prediction)]
+        self.predictions[answer.name] = prediction
 
 
 class PFAStaircase(PFATiming):
@@ -462,8 +462,6 @@ class PFASpacing(PFATiming):
         self.spacing_rate = kwargs.pop('spacing_rate', 0)
         self.decay_rate = kwargs.pop('decay_rate', 0.2)
 
-        self.tau = kwargs.pop('tau', 10)
-
         super(PFASpacing, self).__init__(*args, **kwargs)
 
     def _get_practices(self, current, priors):
@@ -488,12 +486,11 @@ class PFASpacing(PFATiming):
         practices = self._get_practices(question.inserted, item.practices)
 
         if len(practices) > 0:
-            strength = tools.memory_strength(
+            return tools.memory_strength(
                 filter(lambda x: x > 0, practices),
                 spacing_rate=self.spacing_rate,
                 decay_rate=self.decay_rate,
             )
-            return self.tau + strength
 
     def predict(self, question):
         """Returns probability of correct answer for given question.
