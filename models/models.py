@@ -187,7 +187,7 @@ class EloModel(Model):
         """
         self.init_model()
         data = tools.first_answers(data)
-        data.apply(self.update, axis=1)
+        data.sort(['inserted']).apply(self.update, axis=1)
 
     @classmethod
     def split_data(cls, data, ratio=0.7):
@@ -313,7 +313,7 @@ class PFAModel(Model):
         """
         self.init_model()
         self.prior.train(data)
-        data.apply(self.update, axis=1)
+        data.sort(['inserted']).apply(self.update, axis=1)
 
     @classmethod
     def split_data(self, data):
@@ -347,8 +347,8 @@ class PFATiming(PFAModel):
             super(PFATiming._Item, self).__init__(*args, **kwargs)
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('gamma', 3.4)
-        kwargs.setdefault('delta', -0.3)
+        kwargs.setdefault('gamma', 2.3)
+        kwargs.setdefault('delta', -0.9)
 
         time_effect = lambda t: 80 / t
         self.time_effect = kwargs.pop('time_effect_fun', time_effect)
