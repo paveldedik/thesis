@@ -303,7 +303,7 @@ class PFAModel(Model):
         else:
             item.knowledge += self.delta * prediction
 
-        self.predictions += [(answer.is_correct, prediction)]
+        self.predictions[answer.name] = prediction
 
     def train(self, data):
         """Trains the model on given data set.
@@ -364,7 +364,8 @@ class PFATiming(PFAModel):
         item = self.items[question.user_id, question.place_id]
 
         if item.practices:
-            seconds = tools.time_diff(question.inserted, item.practices[-1])
+            seconds = tools.time_diff(
+                question.inserted, item.practices[-1].inserted)
             time_effect = self.time_effect(seconds)
         else:
             time_effect = 0
@@ -387,7 +388,7 @@ class PFATiming(PFAModel):
         else:
             item.knowledge += self.delta * prediction
 
-        item.practices += [answer.inserted]
+        item.practices += [answer]
         self.predictions[answer.name] = prediction
 
 
@@ -426,7 +427,8 @@ class PFAStaircase(PFATiming):
         item = self.items[question.user_id, question.place_id]
 
         if item.practices:
-            seconds = tools.time_diff(question.inserted, item.practices[-1])
+            seconds = tools.time_diff(
+                question.inserted, item.practices[-1].inserted)
             time_effect = self.get_staircase_value(seconds)
         else:
             time_effect = 0
@@ -456,11 +458,12 @@ class PFASpacing(PFATiming):
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('gamma', 3.4)
-        kwargs.setdefault('delta', -0.3)
+        kwargs.setdefault('gamma', 2.8)
+        kwargs.setdefault('delta', -0.7)
 
         self.spacing_rate = kwargs.pop('spacing_rate', 0)
-        self.decay_rate = kwargs.pop('decay_rate', 0.2)
+        self.decay_rate = kwargs.pop('decay_rate', 0.15)
+        self.iota = kwargs.pop('iota', 5)
 
         super(PFASpacing, self).__init__(*args, **kwargs)
 
@@ -483,10 +486,11 @@ class PFASpacing(PFATiming):
         :type question: :class:`pandas.Series`
         """
         item = self.items[question.user_id, question.place_id]
-        practices = self._get_practices(question.inserted, item.practices)
-
+        practices = self._get_practices(
+            question.inserted, [answer.inserted for answer in item.practices]
+        )
         if len(practices) > 0:
-            return tools.memory_strength(
+            return self.iota + tools.memory_strength(
                 filter(lambda x: x > 0, practices),
                 spacing_rate=self.spacing_rate,
                 decay_rate=self.decay_rate,
@@ -499,7 +503,11 @@ class PFASpacing(PFATiming):
         :type question: :class:`pandas.Series`
         """
         item = self.items[question.user_id, question.place_id]
-        strength = self.memory_strength(question) or 0
+
+        if any(not answer.is_correct for answer in item.practices):
+            strength = self.memory_strength(question)
+        else:
+            strength = 0
 
         prediction = tools.sigmoid(item.knowledge + strength)
         return self.respect_guess(prediction, question.number_of_options)
