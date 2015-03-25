@@ -346,6 +346,34 @@ class PFATiming(PFAModel):
             self.practices = []
             super(PFATiming._Item, self).__init__(*args, **kwargs)
 
+        @property
+        def last_inserted(self):
+            """Returns the time of the last answer for this item
+            or :obj:`None` if the item was never answered before.
+            """
+            if self.practices:
+                return self.practices[-1]['inserted']
+
+        @property
+        def any_incorrect(self):
+            """:obj:`True` if at least one of the practiced item
+            was answered incorrectly, otherwise :obj:`False`.
+            """
+            return any(not answer['is_correct'] for answer in self.practices)
+
+        def get_diffs(self, current):
+            """Returns list of previous practices expresed as the number
+            of seconds that passed between *current* practice and all
+            the *prior* practices.
+
+            :param current: Datetime of the current practice.
+            :type place: string
+            """
+            return [
+                tools.time_diff(current, prior['inserted'])
+                for prior in self.practices
+            ]
+
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('gamma', 2.3)
         kwargs.setdefault('delta', -0.9)
@@ -364,8 +392,7 @@ class PFATiming(PFAModel):
         item = self.items[question.user_id, question.place_id]
 
         if item.practices:
-            seconds = tools.time_diff(
-                question.inserted, item.practices[-1].inserted)
+            seconds = tools.time_diff(question.inserted, item.last_inserted)
             time_effect = self.time_effect(seconds)
         else:
             time_effect = 0
@@ -388,7 +415,7 @@ class PFATiming(PFAModel):
         else:
             item.knowledge += self.delta * prediction
 
-        item.practices += [answer]
+        item.practices += [answer.to_dict()]
         self.predictions[answer.name] = prediction
 
 
@@ -427,8 +454,7 @@ class PFAStaircase(PFATiming):
         item = self.items[question.user_id, question.place_id]
 
         if item.practices:
-            seconds = tools.time_diff(
-                question.inserted, item.practices[-1].inserted)
+            seconds = tools.time_diff(question.inserted, item.last_inserted)
             time_effect = self.get_staircase_value(seconds)
         else:
             time_effect = 0
@@ -467,18 +493,6 @@ class PFASpacing(PFATiming):
 
         super(PFASpacing, self).__init__(*args, **kwargs)
 
-    def _get_practices(self, current, priors):
-        """Returns list of previous practices expresed as the number
-        of seconds that passed between *current* practice and all
-        the *prior* practices.
-
-        :param current: Datetime of the current practice.
-        :type place: string
-        :param priors: List of datetimes of the prior practices.
-        :type priors: list or :class:`numpy.array`
-        """
-        return [tools.time_diff(current, prior) for prior in priors]
-
     def memory_strength(self, question):
         """Estimates memory strength of an item.
 
@@ -486,9 +500,8 @@ class PFASpacing(PFATiming):
         :type question: :class:`pandas.Series`
         """
         item = self.items[question.user_id, question.place_id]
-        practices = self._get_practices(
-            question.inserted, [answer.inserted for answer in item.practices]
-        )
+        practices = item.get_diffs(question.inserted)
+
         if len(practices) > 0:
             return self.iota + tools.memory_strength(
                 filter(lambda x: x > 0, practices),
@@ -504,8 +517,10 @@ class PFASpacing(PFATiming):
         """
         item = self.items[question.user_id, question.place_id]
 
-        if any(not answer.is_correct for answer in item.practices):
+        if item.any_incorrect:
             strength = self.memory_strength(question)
+            # if len(item.practices) > 2:
+            #     import pdb; pdb.set_trace()
         else:
             strength = 0
 
