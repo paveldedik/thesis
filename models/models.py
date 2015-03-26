@@ -140,6 +140,8 @@ class EloModel(Model):
         self.places = tools.keydefaultdict(self._Place)
         self.users = tools.keydefaultdict(self._User)
 
+        self.predictions = {}
+
     def uncertainty(self, n):
         """Uncertainty function. The purpose is to make each update on
         the model trained with larger data set less significant.
@@ -171,13 +173,16 @@ class EloModel(Model):
         user = self.users[answer.user_id]
         place = self.places[answer.place_id]
 
-        shift = answer.is_correct - self.predict(answer)
+        prediction = self.predict(answer)
+        shift = answer.is_correct - prediction
 
         user.skill += self.uncertainty(user.number_of_answers) * shift
         place.difficulty -= self.uncertainty(place.number_of_answers) * shift
 
         user.number_of_answers += 1
         place.number_of_answers += 1
+
+        self.predictions[answer.name] = prediction
 
     def train(self, data):
         """Trains the model on given data set.
@@ -224,8 +229,10 @@ class EloResponseTime(EloModel):
         user = self.users[answer.user_id]
         place = self.places[answer.place_id]
 
+        prediction = self.predict(answer)
         level = tools.automaticity_level(answer.response_time)
-        prob = (self.predict(answer) * self.phi + level) / (self.phi + 1)
+
+        prob = (prediction * self.phi + level) / (self.phi + 1)
         shift = answer.is_correct - prob
 
         user.skill += self.uncertainty(user.number_of_answers) * shift
@@ -233,6 +240,8 @@ class EloResponseTime(EloModel):
 
         user.number_of_answers += 1
         place.number_of_answers += 1
+
+        self.predictions[answer.name] = prediction
 
 
 class PFAModel(Model):
@@ -519,8 +528,8 @@ class PFASpacing(PFATiming):
 
         if item.any_incorrect:
             strength = self.memory_strength(question)
-            # if len(item.practices) > 2:
-            #     import pdb; pdb.set_trace()
+            if sum(item.get_diffs(question.inserted)) > 5000:
+                import pdb; pdb.set_trace()
         else:
             strength = 0
 
