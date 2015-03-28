@@ -528,8 +528,6 @@ class PFASpacing(PFATiming):
 
         if item.any_incorrect:
             strength = self.memory_strength(question)
-            if sum(item.get_diffs(question.inserted)) > 5000:
-                import pdb; pdb.set_trace()
         else:
             strength = 0
 
