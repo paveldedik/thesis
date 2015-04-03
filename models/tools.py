@@ -9,6 +9,7 @@ Miscellaneous Helpers and Utils
 from __future__ import division
 
 import sys
+import itertools
 from datetime import datetime
 from collections import defaultdict
 
@@ -354,6 +355,19 @@ def to_datetime(date_str):
     :type date_str: str
     """
     return datetime.strptime(date_str, DATETIME_FORMAT)
+
+
+def reverse_enumerate(values):
+    """Enumerate over an iterable in reverse order while
+    retaining proper indexes.
+
+    :param values: List of objects.
+    :type values: iterable
+    """
+    count = len(values)
+    for value in values:
+        count -= 1
+        yield count, value
 
 
 class cached_property(object):

@@ -19,7 +19,7 @@ from scipy import optimize
 
 from . import tools
 from .tests import PerformanceTest
-from .models import EloModel, PFAModel, PFASpacing, PFAStaircase
+from .models import EloModel, PFAModel, PFASpacing, PFAStaircase, PFAGong
 
 
 class GridResult(object):
@@ -419,6 +419,28 @@ class GradientDescent(object):
         }
 
         return self.search(pfa_fun, parameters, **search_kwargs)
+
+    def search_pfag(self, init_gamma, init_delta, **search_kwargs):
+        """Finds optimal parameters for the PFAGong model.
+
+        :param init_gamma: Initial gamma value.
+        :param init_delta: Initial delta value.
+        :param **search_kwargs: Optional parameters passed to the
+            method :meth:`GradientDescent.serach`.
+        """
+        def pfag_fun(gamma, delta):
+            elo = EloModel()
+            pfag = PFAGong(elo, gamma=gamma, delta=delta)
+            pfag_test = PerformanceTest(pfag, self.data)
+
+            pfag_test.run()
+            return pfag_test.results['train'].off
+
+        parameters = {
+            'gamma': init_gamma, 'delta': init_delta
+        }
+
+        return self.search(pfag_fun, parameters, **search_kwargs)
 
     def search_staircase(self, init_gamma, init_delta, init_staircase,
                          **search_kwargs):
