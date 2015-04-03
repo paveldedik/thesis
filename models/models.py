@@ -268,6 +268,45 @@ class PFAModel(Model):
             self.user = prior.users[user_id]
             self.place = prior.places[place_id]
             self.knowledge = self.user.skill - self.place.difficulty
+            self.practices = []
+
+        @property
+        def correct(self):
+            """List of correct answers."""
+            return [ans for ans in self.practices if ans['is_correct']]
+
+        @property
+        def incorrect(self):
+            """List of incorrect answers."""
+            return [ans for ans in self.practices if not ans['is_correct']]
+
+        @property
+        def last_inserted(self):
+            """Returns the time of the last answer for this item
+            or :obj:`None` if the item was never answered before.
+            """
+            if self.practices:
+                return self.practices[-1]['inserted']
+
+        @property
+        def any_incorrect(self):
+            """:obj:`True` if at least one of the practiced item
+            was answered incorrectly, otherwise :obj:`False`.
+            """
+            return any(not answer['is_correct'] for answer in self.practices)
+
+        def get_diffs(self, current):
+            """Returns list of previous practices expresed as the number
+            of seconds that passed between *current* practice and all
+            the *prior* practices.
+
+            :param current: Datetime of the current practice.
+            :type place: string
+            """
+            return [
+                tools.time_diff(current, prior['inserted'])
+                for prior in self.practices
+            ]
 
     def __init__(self, prior, gamma=3.4, delta=-0.3):
         super(PFAModel, self).__init__()
@@ -341,47 +380,6 @@ class PFATiming(PFAModel):
     """Alternative version of :class:`PFASpacing` which ignores
     spacing effect. Only forgetting is considered.
     """
-
-    class _Item(PFAModel._Item):
-        """Item representation.
-
-        :param user_id: ID of the user.
-        :type user_id: int
-        :param place_id: ID of the place.
-        :type place_id: int
-        """
-
-        def __init__(self, *args, **kwargs):
-            self.practices = []
-            super(PFATiming._Item, self).__init__(*args, **kwargs)
-
-        @property
-        def last_inserted(self):
-            """Returns the time of the last answer for this item
-            or :obj:`None` if the item was never answered before.
-            """
-            if self.practices:
-                return self.practices[-1]['inserted']
-
-        @property
-        def any_incorrect(self):
-            """:obj:`True` if at least one of the practiced item
-            was answered incorrectly, otherwise :obj:`False`.
-            """
-            return any(not answer['is_correct'] for answer in self.practices)
-
-        def get_diffs(self, current):
-            """Returns list of previous practices expresed as the number
-            of seconds that passed between *current* practice and all
-            the *prior* practices.
-
-            :param current: Datetime of the current practice.
-            :type place: string
-            """
-            return [
-                tools.time_diff(current, prior['inserted'])
-                for prior in self.practices
-            ]
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('gamma', 2.3)
@@ -533,3 +531,53 @@ class PFASpacing(PFATiming):
 
         prediction = tools.sigmoid(item.knowledge + strength)
         return self.respect_guess(prediction, question.number_of_options)
+
+
+class PFAGong(PFAModel):
+    """Performance Factor Analysis."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('gamma', 1.7)
+        kwargs.setdefault('delta', -0.8)
+
+        self.decay = kwargs.pop('decay', 0.9)
+
+        super(PFAGong, self).__init__(*args, **kwargs)
+
+    def predict(self, question):
+        """Returns probability of correct answer for given question.
+
+        :param question: Asked question.
+        :type question: :class:`pandas.Series`
+        """
+        item = self.items[question.user_id, question.place_id]
+
+        correct_weights = [
+            ans['is_correct'] * self.decay ** t for t, ans
+            in tools.reverse_enumerate(item.practices)
+        ]
+        incorrect_weights = [
+            (1 - ans['is_correct']) * self.decay ** t for t, ans
+            in tools.reverse_enumerate(item.practices)
+        ]
+        knowledge = (
+            item.knowledge +
+            self.gamma * sum(correct_weights) +
+            self.delta * sum(incorrect_weights)
+        )
+
+        prediction = tools.sigmoid(knowledge)
+        return self.respect_guess(prediction, question.number_of_options)
+
+    def update(self, answer):
+        """Performes update of current knowledge of a user based on the
+        given answer.
+
+        :param answer: Answer to a question.
+        :type answer: :class:`pandas.Series`
+        """
+        item = self.items[answer.user_id, answer.place_id]
+        prediction = self.predict(answer)
+
+        item.practices += [answer.to_dict()]
+        self.predictions[answer.name] = prediction
