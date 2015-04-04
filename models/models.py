@@ -11,6 +11,7 @@ from __future__ import division
 from copy import copy
 from collections import defaultdict
 
+import numpy as np
 import pandas as pd
 
 import tools
@@ -24,6 +25,8 @@ __all__ = (
     'PFATiming',
     'PFAStaircase',
     'PFASpacing',
+    'PFAGong',
+    'PFAForgetting'
 )
 
 
@@ -32,7 +35,6 @@ class Question(object):
 
     def __init__(self, **kwargs):
         self.id = kwargs.pop('id')
-        self.name = self.id  # pandas Series alias
         self.user_id = kwargs.pop('user_id')
         self.place_id = kwargs.pop('place_id')
         self.type = kwargs.pop('type')
@@ -176,7 +178,7 @@ class Item(object):
     def get_diffs(self, current):
         """Returns list of previous practices expresed as the number
         of seconds that passed between *current* practice and all
-        the *prior* practices.
+        the *previous* practices.
 
         :param current: Datetime of the current practice.
         :type place: string
@@ -201,7 +203,7 @@ class Item(object):
         :type answer: :class:`pandas.Series` or :class:`Answer`
         """
         if isinstance(answer, pd.Series):
-            self.practices += [Answer(id=answer.name, **answer.to_dict())]
+            self.practices += [Answer(**answer.to_dict())]
         else:
             self.practices += [copy(answer)]
 
@@ -278,6 +280,9 @@ class DummyPriorModel(Model):
         self.users = defaultdict(lambda: self._User())
         self.places = defaultdict(lambda: self._Place())
 
+    def update(self, answer):
+        pass
+
     def train(self, data):
         pass
 
@@ -341,7 +346,7 @@ class EloModel(Model):
         user.inc_skill(self.uncertainty(user.answers_count) * shift)
         place.inc_difficulty(-(self.uncertainty(place.answers_count) * shift))
 
-        self.predictions[answer.name] = prediction
+        self.predictions[answer.id] = prediction
 
     def train(self, data):
         """Trains the model on given data set.
@@ -397,7 +402,7 @@ class EloResponseTime(EloModel):
         user.inc_skill(self.uncertainty(user.answers_count) * shift)
         place.inc_difficulty(-(self.uncertainty(place.answers_count) * shift))
 
-        self.predictions[answer.name] = prediction
+        self.predictions[answer.id] = prediction
 
 
 class PFAModel(Model):
@@ -447,15 +452,19 @@ class PFAModel(Model):
         :type answer: :class:`pandas.Series` or :class:`Answer`
         """
         item = self.items[answer.user_id, answer.place_id]
+
+        if not item.practices:
+            self.prior.update(answer)
+
         prediction = self.predict(answer)
+        self.predictions[answer.id] = prediction
+
+        item.add_practice(answer)
 
         if answer.is_correct:
             item.inc_knowledge(self.gamma * (1 - prediction))
         else:
             item.inc_knowledge(self.delta * prediction)
-
-        item.add_practice(answer)
-        self.predictions[answer.name] = prediction
 
     def train(self, data):
         """Trains the model on given data set.
@@ -464,7 +473,6 @@ class PFAModel(Model):
         :type data: :class:`pandas.DataFrame`
         """
         self.init_model()
-        self.prior.train(data)
         data.sort(['inserted']).apply(self.update, axis=1)
 
     @classmethod
@@ -510,24 +518,6 @@ class PFATiming(PFAModel):
 
         prediction = tools.sigmoid(item.knowledge + time_effect)
         return self.respect_guess(prediction, question.number_of_options)
-
-    def update(self, answer):
-        """Performes update of current knowledge of a user based on the
-        given answer.
-
-        :param answer: Answer to a question.
-        :type answer: :class:`pandas.Series` or :class:`Answer`
-        """
-        item = self.items[answer.user_id, answer.place_id]
-        prediction = self.predict(answer)
-
-        if answer.is_correct:
-            item.inc_knowledge(self.gamma * (1 - prediction))
-        else:
-            item.inc_knowledge(self.delta * prediction)
-
-        item.add_practice(answer)
-        self.predictions[answer.name] = prediction
 
 
 class PFAStaircase(PFATiming):
@@ -641,21 +631,21 @@ class PFAGong(PFAModel):
     """Performance Factor Analysis."""
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('gamma', 1.7)
-        kwargs.setdefault('delta', -0.8)
+        kwargs.setdefault('gamma', 1.5)
+        kwargs.setdefault('delta', -0.1)
 
         self.decay = kwargs.pop('decay', 0.9)
 
         super(PFAGong, self).__init__(*args, **kwargs)
 
-    def predict(self, question):
-        """Returns probability of correct answer for given question.
+    def get_weights(self, item, question):
+        """Returns weights of previous answers to the given item.
 
+        :param item: *Item* (i.e. practiced place by a user).
+        :type item: :class:`Item`
         :param question: Asked question.
         :type question: :class:`pandas.Series` or :class:`Question`
         """
-        item = self.items[question.user_id, question.place_id]
-
         correct_weights = [
             ans.is_correct * self.decay ** t for t, ans
             in tools.reverse_enumerate(item.practices)
@@ -664,10 +654,21 @@ class PFAGong(PFAModel):
             (1 - ans.is_correct) * self.decay ** t for t, ans
             in tools.reverse_enumerate(item.practices)
         ]
+        return sum(correct_weights), sum(incorrect_weights)
+
+    def predict(self, question):
+        """Returns probability of correct answer for given question.
+
+        :param question: Asked question.
+        :type question: :class:`pandas.Series` or :class:`Question`
+        """
+        item = self.items[question.user_id, question.place_id]
+        correct_weight, incorrect_weight = self.get_weights(item, question)
+
         knowledge = (
             item.knowledge +
-            self.gamma * sum(correct_weights) +
-            self.delta * sum(incorrect_weights)
+            self.gamma * correct_weight +
+            self.delta * incorrect_weight
         )
 
         prediction = tools.sigmoid(knowledge)
@@ -680,9 +681,43 @@ class PFAGong(PFAModel):
         :param answer: Answer to a question.
         :type answer: :class:`pandas.Series` or :class:`Answer`
         """
-        prediction = self.predict(answer)
-
         item = self.items[answer.user_id, answer.place_id]
+
+        if not item.practices:
+            self.prior.update(answer)
+
+        prediction = self.predict(answer)
+        self.predictions[answer.id] = prediction
+
         item.add_practice(answer)
 
-        self.predictions[answer.name] = prediction
+
+class PFAForgetting(PFAGong):
+    """Performance Factor Analysis."""
+
+    def __init__(self, *args, **kwargs):
+        time_effect = lambda t: 1.3 - 0.1*np.log(t)
+        self.time_effect = kwargs.pop('time_effect_fun', time_effect)
+
+        kwargs.setdefault('gamma', 1.7)
+        kwargs.setdefault('delta', 0.5)
+
+        super(PFAGong, self).__init__(*args, **kwargs)
+
+    def get_weights(self, item, question):
+        """Returns weights of previous answers to the given item.
+
+        :param item: *Item* (i.e. practiced place by a user).
+        :type item: :class:`Item`
+        :param question: Asked question.
+        :type question: :class:`pandas.Series` or :class:`Question`
+        """
+        correct_weights = [
+            ans.is_correct * self.time_effect(diff) for ans, diff
+            in zip(item.practices, item.get_diffs(question.inserted))
+        ]
+        incorrect_weights = [
+            (1 - ans.is_correct) * self.time_effect(diff) for ans, diff
+            in zip(item.practices, item.get_diffs(question.inserted))
+        ]
+        return sum(correct_weights), sum(incorrect_weights)

@@ -114,7 +114,9 @@ class PerformanceTest(object):
             predictions = pd.DataFrame.from_dict(
                 {'predicted': self.model.predictions},
             )
-            self.train_set = pd.concat([self.train_set, predictions], axis=1)
+            self.train_set = pd.concat(
+                [self.train_set.set_index(['id']), predictions], axis=1
+            )
             self.train_values = pd.DataFrame({
                 'observed': self.train_set['is_correct'],
                 'predicted': self.train_set['predicted'],

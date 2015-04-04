@@ -60,7 +60,7 @@ def load_data(path, limit=10000, offset=0):
     :param limit: Limit the number of loaded rows.
     :type limit: int
     """
-    data = pd.read_csv(path, index_col='id')[offset:offset+limit]
+    data = pd.read_csv(path)[offset:offset+limit]
     return prepare_data(data)
 
 
@@ -124,7 +124,7 @@ def unknown_answers(data):
     unk_user_place = unknowns.apply(tuplify_user_place, axis=1)
 
     mask = all_user_place.isin(unk_user_place)
-    return data[mask].reset_index()
+    return data[mask].reset_index(drop=True)
 
 
 def add_spacing(data):
