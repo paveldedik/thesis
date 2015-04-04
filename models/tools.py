@@ -9,7 +9,6 @@ Miscellaneous Helpers and Utils
 from __future__ import division
 
 import sys
-import itertools
 from datetime import datetime
 from collections import defaultdict
 
@@ -61,7 +60,7 @@ def load_data(path, limit=10000, offset=0):
     :param limit: Limit the number of loaded rows.
     :type limit: int
     """
-    data = pd.read_csv(path)[offset:offset+limit]
+    data = pd.read_csv(path, index_col='id')[offset:offset+limit]
     return prepare_data(data)
 
 

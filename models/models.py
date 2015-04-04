@@ -8,7 +8,10 @@ Evaluation Models
 
 from __future__ import division
 
+from copy import copy
 from collections import defaultdict
+
+import pandas as pd
 
 import tools
 
@@ -22,6 +25,185 @@ __all__ = (
     'PFAStaircase',
     'PFASpacing',
 )
+
+
+class Question(object):
+    """Representation of a question."""
+
+    def __init__(self, **kwargs):
+        self.id = kwargs.pop('id')
+        self.name = self.id  # pandas Series alias
+        self.user_id = kwargs.pop('user_id')
+        self.place_id = kwargs.pop('place_id')
+        self.type = kwargs.pop('type')
+        self.inserted = kwargs.pop('inserted')
+        self.number_of_options = kwargs.pop('number_of_options')
+
+
+class Answer(Question):
+    """Answer to a question."""
+
+    def __init__(self, **kwargs):
+        super(Answer, self).__init__(**kwargs)
+
+        self.place_answered = kwargs.pop('place_answered')
+        self.response_time = kwargs.pop('response_time')
+        self.is_correct = kwargs.pop('is_correct')
+
+
+class User(object):
+    """Returns a user with given ID.
+
+    :param user_id: ID of the user.
+    :type user_id: int
+    """
+    def __init__(self, user_id):
+        self.skill_increments = []
+
+    @property
+    def skill(self):
+        """Skill of the user."""
+        return sum(self.skill_increments)
+
+    @property
+    def answers_count(self):
+        """Number of answer of the user (equal to the number of
+        skill increments.
+        """
+        return len(self.skill_increments)
+
+    def inc_skill(self, increment):
+        """Increments the skill of the user.
+
+        :param increment: Increment (or decrement) of the skill.
+        :type increment: int
+        """
+        self.skill_increments += [increment]
+
+
+class Place(object):
+    """Returns a place with given ID.
+
+    :param place_id: ID of the place.
+    :type place_id: int
+    """
+    def __init__(self, place_id):
+        self.difficulty_increments = []
+
+    @property
+    def difficulty(self):
+        """Difficulty of the place."""
+        return sum(self.difficulty_increments)
+
+    @property
+    def answers_count(self):
+        """Number of answer for the place (equal to the number of
+        difficulty increments.
+        """
+        return len(self.difficulty_increments)
+
+    def inc_difficulty(self, increment):
+        """Increments the difficulty of the place.
+
+        :param increment: Increment (or decrement) of the difficulty.
+        :type increment: int
+        """
+        self.difficulty_increments += [increment]
+
+
+class Item(object):
+    """Item representation.
+
+    :param prior: Prior skills of users and difficulties of places.
+    :type prior: dictionary
+    :param user_id: ID of the user.
+    :type user_id: int
+    :param place_id: ID of the place.
+    :type place_id: int
+    """
+
+    def __init__(self, prior, user_id, place_id):
+        self.prior = prior
+        self.user_id = user_id
+        self.place_id = place_id
+
+        self.practices = []
+        self.knowledge_increments = []
+
+    @property
+    def user(self):
+        """User answering the item."""
+        return self.prior.users[self.user_id]
+
+    @property
+    def place(self):
+        """Place of the item being asked."""
+        return self.prior.places[self.place_id]
+
+    @property
+    def knowledge(self):
+        """Knowledge of the item by the user."""
+        return (
+              self.user.skill - self.place.difficulty
+            + sum(self.knowledge_increments)
+        )
+
+    @property
+    def correct(self):
+        """List of correct answers."""
+        return [ans for ans in self.practices if ans.is_correct]
+
+    @property
+    def incorrect(self):
+        """List of incorrect answers."""
+        return [ans for ans in self.practices if not ans.is_correct]
+
+    @property
+    def last_inserted(self):
+        """Returns the time of the last answer for this item
+        or :obj:`None` if the item was never answered before.
+        """
+        if self.practices:
+            return self.practices[-1].inserted
+
+    @property
+    def any_incorrect(self):
+        """:obj:`True` if at least one of the practiced item
+        was answered incorrectly, otherwise :obj:`False`.
+        """
+        return any(not answer.is_correct for answer in self.practices)
+
+    def get_diffs(self, current):
+        """Returns list of previous practices expresed as the number
+        of seconds that passed between *current* practice and all
+        the *prior* practices.
+
+        :param current: Datetime of the current practice.
+        :type place: string
+        """
+        return [
+            tools.time_diff(current, prior.inserted)
+            for prior in self.practices
+        ]
+
+    def inc_knowledge(self, increment):
+        """Increments the knowledge of the user of the item.
+
+        :param increment: Increment (or decrement) of the knowledge.
+        :type increment: int
+        """
+        self.knowledge_increments += [increment]
+
+    def add_practice(self, answer):
+        """Registers new practice of the item.
+
+        :param answer: Information about the answer.
+        :type answer: :class:`pandas.Series` or :class:`Answer`
+        """
+        if isinstance(answer, pd.Series):
+            self.practices += [Answer(id=answer.name, **answer.to_dict())]
+        else:
+            self.practices += [copy(answer)]
 
 
 class Model(object):
@@ -45,7 +227,7 @@ class Model(object):
         """Returns probability of correct answer for given question.
 
         :param question: Asked question.
-        :type question: :class:`pandas.Series`
+        :type question: :class:`pandas.Series` or :class:`Question`
         """
         raise NotImplementedError()
 
@@ -53,7 +235,7 @@ class Model(object):
         """Performes an update of skills, difficulties or knowledge.
 
         :param answer: Asked question.
-        :type answer: :class:`pandas.Series`
+        :type answer: :class:`pandas.Series` or :class:`Answer`
         """
         raise NotImplementedError()
 
@@ -106,26 +288,6 @@ class EloModel(Model):
     affect the uncertainty function.
     """
 
-    class _User(object):
-        """Returns a user with given ID.
-
-        :param user_id: ID of the user.
-        :type user_id: int
-        """
-        def __init__(self, user_id):
-            self.skill = 0.0
-            self.number_of_answers = 0
-
-    class _Place(object):
-        """Returns a place with given ID.
-
-        :param place_id: ID of the place.
-        :type place_id: int
-        """
-        def __init__(self, place_id):
-            self.difficulty = 0.0
-            self.number_of_answers = 0
-
     def __init__(self, alpha=1, beta=0.05):
         self.alpha = alpha
         self.beta = beta
@@ -137,8 +299,8 @@ class EloModel(Model):
         dataframes. The first attribute represents difficulties of countries.
         The second attribute represents global knowledge of students.
         """
-        self.places = tools.keydefaultdict(self._Place)
-        self.users = tools.keydefaultdict(self._User)
+        self.places = tools.keydefaultdict(Place)
+        self.users = tools.keydefaultdict(User)
 
         self.predictions = {}
 
@@ -155,7 +317,7 @@ class EloModel(Model):
         """Returns probability of correct answer for given question.
 
         :param question: Asked question.
-        :type question: :class:`pandas.Series`
+        :type question: :class:`pandas.Series` or :class:`Question`
         """
         user = self.users[question.user_id]
         place = self.places[question.place_id]
@@ -176,11 +338,8 @@ class EloModel(Model):
         prediction = self.predict(answer)
         shift = answer.is_correct - prediction
 
-        user.skill += self.uncertainty(user.number_of_answers) * shift
-        place.difficulty -= self.uncertainty(place.number_of_answers) * shift
-
-        user.number_of_answers += 1
-        place.number_of_answers += 1
+        user.inc_skill(self.uncertainty(user.answers_count) * shift)
+        place.inc_difficulty(-(self.uncertainty(place.answers_count) * shift))
 
         self.predictions[answer.name] = prediction
 
@@ -224,7 +383,7 @@ class EloResponseTime(EloModel):
         to given answer.
 
         :param answer: Answer to a question.
-        :type answer: :class:`pandas.Series`
+        :type answer: :class:`pandas.Series` or :class:`Answer`
         """
         user = self.users[answer.user_id]
         place = self.places[answer.place_id]
@@ -235,11 +394,8 @@ class EloResponseTime(EloModel):
         prob = (prediction * self.phi + level) / (self.phi + 1)
         shift = answer.is_correct - prob
 
-        user.skill += self.uncertainty(user.number_of_answers) * shift
-        place.difficulty -= self.uncertainty(place.number_of_answers) * shift
-
-        user.number_of_answers += 1
-        place.number_of_answers += 1
+        user.inc_skill(self.uncertainty(user.answers_count) * shift)
+        place.inc_difficulty(-(self.uncertainty(place.answers_count) * shift))
 
         self.predictions[answer.name] = prediction
 
@@ -255,59 +411,6 @@ class PFAModel(Model):
     :type delta: float
     """
 
-    class _Item(object):
-        """Item representation.
-
-        :param user_id: ID of the user.
-        :type user_id: int
-        :param place_id: ID of the place.
-        :type place_id: int
-        """
-
-        def __init__(self, prior, user_id, place_id):
-            self.user = prior.users[user_id]
-            self.place = prior.places[place_id]
-            self.knowledge = self.user.skill - self.place.difficulty
-            self.practices = []
-
-        @property
-        def correct(self):
-            """List of correct answers."""
-            return [ans for ans in self.practices if ans['is_correct']]
-
-        @property
-        def incorrect(self):
-            """List of incorrect answers."""
-            return [ans for ans in self.practices if not ans['is_correct']]
-
-        @property
-        def last_inserted(self):
-            """Returns the time of the last answer for this item
-            or :obj:`None` if the item was never answered before.
-            """
-            if self.practices:
-                return self.practices[-1]['inserted']
-
-        @property
-        def any_incorrect(self):
-            """:obj:`True` if at least one of the practiced item
-            was answered incorrectly, otherwise :obj:`False`.
-            """
-            return any(not answer['is_correct'] for answer in self.practices)
-
-        def get_diffs(self, current):
-            """Returns list of previous practices expresed as the number
-            of seconds that passed between *current* practice and all
-            the *prior* practices.
-
-            :param current: Datetime of the current practice.
-            :type place: string
-            """
-            return [
-                tools.time_diff(current, prior['inserted'])
-                for prior in self.practices
-            ]
-
     def __init__(self, prior, gamma=3.4, delta=-0.3):
         super(PFAModel, self).__init__()
 
@@ -322,7 +425,7 @@ class PFAModel(Model):
         knowledge of places for all students.
         """
         self.items = tools.keydefaultdict(
-            lambda *args: self._Item(self.prior, *args)
+            lambda *args: Item(self.prior, *args)
         )
         self.predictions = {}
 
@@ -330,7 +433,7 @@ class PFAModel(Model):
         """Returns probability of correct answer for given question.
 
         :param question: Asked question.
-        :type question: :class:`pandas.Series`
+        :type question: :class:`pandas.Series` or :class:`Question`
         """
         item = self.items[question.user_id, question.place_id]
         prediction = tools.sigmoid(item.knowledge)
@@ -341,16 +444,17 @@ class PFAModel(Model):
         given answer.
 
         :param answer: Answer to a question.
-        :type answer: :class:`pandas.Series`
+        :type answer: :class:`pandas.Series` or :class:`Answer`
         """
         item = self.items[answer.user_id, answer.place_id]
         prediction = self.predict(answer)
 
         if answer.is_correct:
-            item.knowledge += self.gamma * (1 - prediction)
+            item.inc_knowledge(self.gamma * (1 - prediction))
         else:
-            item.knowledge += self.delta * prediction
+            item.inc_knowledge(self.delta * prediction)
 
+        item.add_practice(answer)
         self.predictions[answer.name] = prediction
 
     def train(self, data):
@@ -394,7 +498,7 @@ class PFATiming(PFAModel):
         """Returns probability of correct answer for given question.
 
         :param question: Asked question.
-        :type question: :class:`pandas.Series`
+        :type question: :class:`pandas.Series` or :class:`Question`
         """
         item = self.items[question.user_id, question.place_id]
 
@@ -412,17 +516,17 @@ class PFATiming(PFAModel):
         given answer.
 
         :param answer: Answer to a question.
-        :type answer: :class:`pandas.Series`
+        :type answer: :class:`pandas.Series` or :class:`Answer`
         """
         item = self.items[answer.user_id, answer.place_id]
         prediction = self.predict(answer)
 
         if answer.is_correct:
-            item.knowledge += self.gamma * (1 - prediction)
+            item.inc_knowledge(self.gamma * (1 - prediction))
         else:
-            item.knowledge += self.delta * prediction
+            item.inc_knowledge(self.delta * prediction)
 
-        item.practices += [answer.to_dict()]
+        item.add_practice(answer)
         self.predictions[answer.name] = prediction
 
 
@@ -456,7 +560,7 @@ class PFAStaircase(PFATiming):
         """Returns probability of correct answer for given question.
 
         :param question: Asked question.
-        :type question: :class:`pandas.Series`
+        :type question: :class:`pandas.Series` or :class:`Question`
         """
         item = self.items[question.user_id, question.place_id]
 
@@ -520,7 +624,7 @@ class PFASpacing(PFATiming):
         """Returns probability of correct answer for given question.
 
         :param question: Asked question.
-        :type question: :class:`pandas.Series`
+        :type question: :class:`pandas.Series` or :class:`Question`
         """
         item = self.items[question.user_id, question.place_id]
 
@@ -548,16 +652,16 @@ class PFAGong(PFAModel):
         """Returns probability of correct answer for given question.
 
         :param question: Asked question.
-        :type question: :class:`pandas.Series`
+        :type question: :class:`pandas.Series` or :class:`Question`
         """
         item = self.items[question.user_id, question.place_id]
 
         correct_weights = [
-            ans['is_correct'] * self.decay ** t for t, ans
+            ans.is_correct * self.decay ** t for t, ans
             in tools.reverse_enumerate(item.practices)
         ]
         incorrect_weights = [
-            (1 - ans['is_correct']) * self.decay ** t for t, ans
+            (1 - ans.is_correct) * self.decay ** t for t, ans
             in tools.reverse_enumerate(item.practices)
         ]
         knowledge = (
@@ -574,10 +678,11 @@ class PFAGong(PFAModel):
         given answer.
 
         :param answer: Answer to a question.
-        :type answer: :class:`pandas.Series`
+        :type answer: :class:`pandas.Series` or :class:`Answer`
         """
-        item = self.items[answer.user_id, answer.place_id]
         prediction = self.predict(answer)
 
-        item.practices += [answer.to_dict()]
+        item = self.items[answer.user_id, answer.place_id]
+        item.add_practice(answer)
+
         self.predictions[answer.name] = prediction
