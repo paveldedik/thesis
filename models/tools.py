@@ -13,44 +13,14 @@ import csv
 from datetime import datetime
 from collections import defaultdict
 
+import pytz
 import numpy as np
 import pandas as pd
 from scipy import optimize
 from IPython.display import clear_output
 from sklearn.metrics import mean_squared_error
 
-
-### Developer-specific configurations
-
-#: Path to the CSV file containing all answers.
-DATA_ANSWERS_PATH = '../data/answers_all.csv'
-
-#: Path to the CSV file containing users (see :func:`generate_users`).
-DATA_USERS_PATH = '../data/users.csv'
-
-
-### Other configurations
-
-#: Columns currently not used in models. They are ignored in
-#: the :func:`prepare_data` so that the memory requirements are lower.
-IGNORED_COLUMNS = [
-    'place_map', 'language', 'options'
-]
-
-#: Columns renamed in models.
-RENAMED_COLUMNS = {
-    'user': 'user_id',
-    'place_asked': 'place_id',
-}
-
-#: Names of columns in generated CSV containing users.
-USERS_COLUMNS = [
-    'user_id', 'first_answer_id', 'first_answer_inserted'
-]
-
-
-#: DateTime format of the field `inserted`.
-DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+from . import config
 
 
 def echo(msg, clear=True):
@@ -69,9 +39,10 @@ def echo(msg, clear=True):
     sys.stdout.flush()
 
 
-def load_data(path=DATA_ANSWERS_PATH, users_path=DATA_USERS_PATH,
+def load_data(path=config.DATA_ANSWERS_PATH,
+              users_path=config.DATA_USERS_PATH,
               limit=10000, offset=0):
-    """Loads CSV file into :class:`pandas.DataFrame`.
+    """Loads CSV file with answers into :class:`pandas.DataFrame`.
 
     :param path: Path to the CSV file with the answers of users.
     :type path: str
@@ -95,7 +66,16 @@ def load_data(path=DATA_ANSWERS_PATH, users_path=DATA_USERS_PATH,
     return data[data['user_id'].isin(new_users['user_id'])][:limit]
 
 
-def generate_users(data, users_path=DATA_USERS_PATH):
+def load_places(path=config.DATA_PLACES_PATH):
+    """Loads CSV file with places into :class:`pandas.DataFrame`.
+
+    :param path: Path to CSV file.
+    :type path: str
+    """
+    return pd.read_csv(path, index_col='id')
+
+
+def generate_users(data, users_path=config.DATA_USERS_PATH):
     """Exports users from given data into CSV file.
 
     :param data: Data to export users from.
@@ -110,7 +90,7 @@ def generate_users(data, users_path=DATA_USERS_PATH):
 
     with open(users_path, 'w') as out:
         csv_out = csv.writer(out)
-        csv_out.writerow(USERS_COLUMNS)
+        csv_out.writerow(config.USERS_COLUMNS)
         for user_id, (answer_id, answer_inserted) in users.items():
             csv_out.writerow((user_id, answer_id, answer_inserted))
 
@@ -121,11 +101,11 @@ def prepare_data(data):
     :param data: The object containing data.
     :type data: :class:`pandas.DataFrame`.
     """
-    data.rename(columns=RENAMED_COLUMNS, inplace=True)
+    data.rename(columns=config.RENAMED_COLUMNS, inplace=True)
     data['is_correct'] = (data['place_id'] ==
                           data['place_answered']).astype(int)
     return data[[column for column in data.columns
-                 if column not in IGNORED_COLUMNS]].copy()
+                 if column not in config.IGNORED_COLUMNS]].copy()
 
 
 def first_answers(data):
@@ -404,7 +384,7 @@ def to_datetime(date_str):
     :param date_str: DateTime given as string.
     :type date_str: str
     """
-    return datetime.strptime(date_str, DATETIME_FORMAT)
+    return datetime.strptime(date_str, config.DATETIME_FORMAT)
 
 
 def reverse_enumerate(values):
@@ -418,6 +398,43 @@ def reverse_enumerate(values):
     for value in values:
         count -= 1
         yield count, value
+
+
+def timezones(prefix=''):
+    """Lists all timezones and alpha2 code of the country.
+
+    :param prefix: Filter timezones with prefix (default is no prefix).
+    :type prefix: string
+    :return: Dictonary of timezones and country codes.
+    :rtype: dict
+    """
+    timezone_country = {}
+    for countrycode in pytz.country_timezones:
+        timezones = pytz.country_timezones[countrycode]
+        for timezone in timezones:
+            if timezone.startswith(prefix):
+                timezone_country[timezone] = countrycode
+    return timezone_country
+
+
+def get_codes(prefix=''):
+    """Returns codes of all countries by the given timezone prefix.
+
+    :param prefix: Timezone prefix. Default is no prefix (codes of all
+        countries will be returned).
+    :type prefix: string
+    :rtype: set
+    """
+    result = set()
+    places = load_places().T.to_dict()
+    codes = {
+        place['code'].upper(): place_id
+        for place_id, place in places.items()
+    }
+    for timezone, code in timezones(prefix).items():
+        if code in codes:
+            result.add(codes[code])
+    return result
 
 
 class cached_property(object):

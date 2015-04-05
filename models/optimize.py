@@ -66,6 +66,15 @@ class GridResult(object):
         ])
 
     @tools.cached_property
+    def off(self):
+        """Grid Search errors estimations using the average of
+        ``predicted - observerd``.
+        """
+        return np.array([
+            [result.off for result in row] for row in self.grid
+        ])
+
+    @tools.cached_property
     def rmse_best(self):
         """Values of `xvalues` and `yvalues` with best RMSE."""
         minimum = np.unravel_index(self.rmse.argmin(), self.rmse.shape)
@@ -124,6 +133,17 @@ class GridResult(object):
         """
         img_kwargs.setdefault('title', 'Grid Search, metric: AUC')
         return self._plot_grid(self.auc, **img_kwargs)
+
+    def plot_off(self, **img_kwargs):
+        """Plots the result of the GRID search.
+        Uses :func:`~matplotlib.pyplot.imshow` to plot the data.
+
+        :param **img_kwargs: Key-word arguments passed to the
+            :func:`~matplotlib.pyplot.imshow`.
+        """
+        img_kwargs.setdefault('title',
+                              'Grid Search, metric: observed - predicted')
+        return self._plot_grid(self.off, **img_kwargs)
 
     def plot(self):
         """Plots the result of the GRID search.
