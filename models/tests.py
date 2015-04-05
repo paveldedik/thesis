@@ -10,7 +10,7 @@ from __future__ import division
 
 import numpy as np
 import pandas as pd
-from sklearn import metrics
+import sklearn as sk
 import matplotlib.pyplot as plt
 
 from . import tools
@@ -44,7 +44,7 @@ class PerformanceResult(object):
         """Estimates precision of the model using Area Under the Curve
         (AUC) as metric.
         """
-        return metrics.roc_auc_score(self.observed, self.predicted)
+        return sk.metrics.roc_auc_score(self.observed, self.predicted)
 
     @tools.cached_property
     def off(self):
@@ -53,11 +53,21 @@ class PerformanceResult(object):
         """
         return np.average(self.predicted - self.observed)
 
+    @tools.cached_property
+    def accuracy(self):
+        """Accuracy classification score."""
+        return sk.metrics.accuracy_score(self.observed, self.predicted.round())
+
+    @tools.cached_property
+    def correct(self):
+        """Number of correctly predicted answers."""
+        return (self.observed == self.predicted.round()).sum()
+
     def plot_roc(self):
         """Plots ROC curve (Receiver Operating Characteristic).
         """
         fpr, tpr, thresholds = \
-            metrics.roc_curve(self.observed, self.predicted, pos_label=1)
+            sk.metrics.roc_curve(self.observed, self.predicted, pos_label=1)
         return plt.plot(fpr, tpr)
 
     def __str__(self):
@@ -68,6 +78,8 @@ class PerformanceResult(object):
             'RMSE: {self.rmse}\n'
             'AUC: {self.auc}\n'
             'OFF: {self.off}\n'
+            'CORRECT: {self.correct}\n'
+            'ACCURACY: {self.accuracy}\n'
             'Set Size: {self.size}'
         ).format(self=self)
 
