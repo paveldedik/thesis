@@ -9,6 +9,7 @@ Miscellaneous Helpers and Utils
 from __future__ import division
 
 import sys
+import csv
 from datetime import datetime
 from collections import defaultdict
 
@@ -18,6 +19,17 @@ from scipy import optimize
 from IPython.display import clear_output
 from sklearn.metrics import mean_squared_error
 
+
+### Developer-specific configurations
+
+#: Path to the CSV file containing all answers.
+DATA_ANSWERS_PATH = '../data/answers_all.csv'
+
+#: Path to the CSV file containing users (see :func:`generate_users`).
+DATA_USERS_PATH = '../data/users.csv'
+
+
+### Other configurations
 
 #: Columns currently not used in models. They are ignored in
 #: the :func:`prepare_data` so that the memory requirements are lower.
@@ -30,6 +42,11 @@ RENAMED_COLUMNS = {
     'user': 'user_id',
     'place_asked': 'place_id',
 }
+
+#: Names of columns in generated CSV containing users.
+USERS_COLUMNS = [
+    'user_id', 'first_answer_id', 'first_answer_inserted'
+]
 
 
 #: DateTime format of the field `inserted`.
@@ -52,16 +69,50 @@ def echo(msg, clear=True):
     sys.stdout.flush()
 
 
-def load_data(path, limit=10000, offset=0):
+def load_data(path=DATA_ANSWERS_PATH, users_path=DATA_USERS_PATH,
+              limit=10000, offset=0):
     """Loads CSV file into :class:`pandas.DataFrame`.
 
-    :param path: Path to the CSV file.
+    :param path: Path to the CSV file with the answers of users.
     :type path: str
     :param limit: Limit the number of loaded rows.
     :type limit: int
+    :param offset: Number of loaded rows.
+    :type offset: int
+    :param users_path: Path to the CSV file containing all users.
+        This is neccessary so that first answers of users are truly first.
+        The CSV file is used for filtering the answers correctly.
+    :type users_path: string
     """
-    data = pd.read_csv(path)[offset:offset+limit]
-    return prepare_data(data)
+    if users_path is None:
+        data = pd.read_csv(path)[offset:offset+limit]
+        return prepare_data(data)
+
+    users = pd.read_csv(users_path)
+    new_users = users[users['first_answer_id'] > offset]
+
+    data = prepare_data(pd.read_csv(path)[offset:])
+    return data[data['user_id'].isin(new_users['user_id'])][:limit]
+
+
+def generate_users(data, users_path=DATA_USERS_PATH):
+    """Exports users from given data into CSV file.
+
+    :param data: Data to export users from.
+    :type data: :class:`pandas.DataFram`
+    :param users_path: Where to save the exported users.
+    :type users_path: string
+    """
+    users = {}
+    for index, row in data.iterrows():
+        if row.user_id not in users:
+            users[row.user_id] = (row.id, row.inserted)
+
+    with open(users_path, 'w') as out:
+        csv_out = csv.writer(out)
+        csv_out.writerow(USERS_COLUMNS)
+        for user_id, (answer_id, answer_inserted) in users.items():
+            csv_out.writerow((user_id, answer_id, answer_inserted))
 
 
 def prepare_data(data):
