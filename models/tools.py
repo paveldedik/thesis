@@ -417,10 +417,10 @@ def timezones(prefix=''):
     return timezone_country
 
 
-def get_codes(prefix=''):
-    """Returns codes of all countries by the given timezone prefix.
+def get_places(prefix=''):
+    """Returns ids of all countries by the given timezone prefix.
 
-    :param prefix: Timezone prefix. Default is no prefix (codes of all
+    :param prefix: Timezone prefix. Default is no prefix (ids of all
         countries will be returned).
     :type prefix: string
     :rtype: set

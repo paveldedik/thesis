@@ -18,31 +18,31 @@ def open_questions(data):
 
 def world_countries(data):
     """List of world countries."""
-    places = tools.get_codes()
+    places = tools.get_places()
     return data['place_id'].isin(places)
 
 
 def european_countries(data):
     """List of European countries."""
-    places = tools.get_codes('Europe')
+    places = tools.get_places('Europe')
     return data['place_id'].isin(places)
 
 
 def africa_countries(data):
     """List of African countries."""
-    places = tools.get_codes('Africa')
+    places = tools.get_places('Africa')
     return data['place_id'].isin(places)
 
 
 def asia_countries(data):
     """List of Asian countries."""
-    places = tools.get_codes('Asia')
+    places = tools.get_places('Asia')
     return data['place_id'].isin(places)
 
 
 def america_countries(data):
     """List of American countries."""
-    places = tools.get_codes('America')
+    places = tools.get_places('America')
     return data['place_id'].isin(places)
 
 

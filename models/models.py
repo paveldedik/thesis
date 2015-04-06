@@ -379,7 +379,7 @@ class EloResponseTime(EloModel):
     """
 
     def __init__(self, *args, **kwargs):
-        self.phi = kwargs.pop('phi', 3)
+        self.zeta = kwargs.pop('zeta', 3)
 
         super(EloResponseTime, self).__init__(*args, **kwargs)
 
@@ -396,7 +396,7 @@ class EloResponseTime(EloModel):
         prediction = self.predict(answer)
         level = tools.automaticity_level(answer.response_time)
 
-        prob = (prediction * self.phi + level) / (self.phi + 1)
+        prob = (prediction * self.zeta + level) / (self.zeta + 1)
         shift = answer.is_correct - prob
 
         user.inc_skill(self.uncertainty(user.answers_count) * shift)
@@ -491,6 +491,15 @@ class PFAModel(Model):
 class PFATiming(PFAModel):
     """Alternative version of :class:`PFASpacing` which ignores
     spacing effect. Only forgetting is considered.
+
+    :param gamma: The significance of the update when the student
+        answered correctly.
+    :type gamma: float
+    :param delta: The significance of the update when the student
+        answered incorrectly.
+    :type delta: float
+    :param time_effect_fun: Time effect function.
+    :type time_effect_fun: callable
     """
 
     def __init__(self, *args, **kwargs):
@@ -524,6 +533,15 @@ class PFAStaircase(PFATiming):
     """Alternative version of :class:`PFASpacing` which ignores
     spacing effect. Only forgetting is considered given by staircase
     fucntion.
+
+    :param gamma: The significance of the update when the student
+        answered correctly.
+    :type gamma: float
+    :param delta: The significance of the update when the student
+        answered incorrectly.
+    :type delta: float
+    :param time_effect_fun: Values for staircase function.
+    :type time_effect_fun: dict (tuples as keys)
     """
 
     def __init__(self, *args, **kwargs):
@@ -589,8 +607,8 @@ class PFASpacing(PFATiming):
         kwargs.setdefault('delta', -0.7)
 
         self.spacing_rate = kwargs.pop('spacing_rate', 0)
-        self.decay_rate = kwargs.pop('decay_rate', 0.15)
-        self.iota = kwargs.pop('iota', 5)
+        self.decay_rate = kwargs.pop('decay_rate', 0.18)
+        self.iota = kwargs.pop('iota', 1.5)
 
         super(PFASpacing, self).__init__(*args, **kwargs)
 
@@ -628,7 +646,17 @@ class PFASpacing(PFATiming):
 
 
 class PFAGong(PFAModel):
-    """Performance Factor Analysis."""
+    """Yue Gong's extended Performance Factor Analysis.
+
+    :param gamma: The significance of the update when the student
+        answers correctly.
+    :type gamma: float
+    :param delta: The significance of the update when the student
+        answers incorrectly.
+    :type delta: float
+    :param decay: Decay rate of answers.
+    :type decay: float
+    """
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('gamma', 1.5)
@@ -693,7 +721,18 @@ class PFAGong(PFAModel):
 
 
 class PFAForgetting(PFAGong):
-    """Performance Factor Analysis."""
+    """Performance Factor Analysis combining some aspects of both
+    the Yue Gong's PFA and the ACT-R model.
+
+    :param gamma: The significance of the update when the student
+        answers correctly.
+    :type gamma: float
+    :param delta: The significance of the update when the student
+        answers incorrectly.
+    :type delta: float
+    :param time_effect_fun: Time effect function.
+    :type time_effect_fun: callable
+    """
 
     def __init__(self, *args, **kwargs):
         time_effect = lambda t: 1.4 - 0.1*np.log(t)
