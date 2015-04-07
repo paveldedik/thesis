@@ -6,7 +6,6 @@ Configurations
 
 """
 
-
 ### Developer-specific configurations
 
 #: Path to the CSV file containing all answers.
@@ -37,7 +36,6 @@ RENAMED_COLUMNS = {
 USERS_COLUMNS = [
     'user_id', 'first_answer_id', 'first_answer_inserted'
 ]
-
 
 #: DateTime format of the field `inserted`.
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'

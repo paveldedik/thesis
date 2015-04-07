@@ -52,7 +52,7 @@ def load_data(path=config.DATA_ANSWERS_PATH,
     :type offset: int
     :param users_path: Path to the CSV file containing all users.
         This is neccessary so that first answers of users are truly first.
-        The CSV file is used for filtering the answers correctly.
+        The CSV file is used to filter the answers correctly.
     :type users_path: string
     """
     if users_path is None:
