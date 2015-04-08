@@ -165,7 +165,7 @@ def add_spacing(data):
     :type data: :class:`pandas.DataFrame`.
     """
     answers = {}
-    data['spacing'] = np.inf
+    data['spacing'] = np.nan
 
     def set_spacing(row):
         index = (row.user_id, row.place_id)
