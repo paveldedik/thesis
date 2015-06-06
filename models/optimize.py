@@ -357,7 +357,8 @@ class RandomSearch(object):
 
 
 class GradientDescent(object):
-    """Encapsulates gradient descent for various models.
+    """Encapsulates the modified gradient descent (which is not in fact
+    based on the partial derivatives of a function) for various models.
 
     :param data: Data with answers in a DataFrame.
     """
@@ -369,8 +370,8 @@ class GradientDescent(object):
                step_size=1, precision=0.01, maxiter=50):
         """Finds optimal parameters for given model.
 
-        :param model_fun: Callable that is called with ``parameters``.
-            Must return gradient.
+        :param model_fun: Callable that trains the model on the given
+            parameters.
         :param parameters: Dictionary of parameters to fit.
         :param step_size: Step size. Default is :num:`0.01`.
         :param precision: The algorithm stops iterating when the precision
@@ -437,7 +438,6 @@ class GradientDescent(object):
         parameters = {
             'gamma': init_gamma, 'delta': init_delta
         }
-
         return self.search(pfa_fun, parameters, **search_kwargs)
 
     def search_pfag(self, init_gamma, init_delta, **search_kwargs):
@@ -459,7 +459,6 @@ class GradientDescent(object):
         parameters = {
             'gamma': init_gamma, 'delta': init_delta
         }
-
         return self.search(pfag_fun, parameters, **search_kwargs)
 
     def search_staircase(self, init_gamma, init_delta, init_staircase,
@@ -493,7 +492,6 @@ class GradientDescent(object):
             'delta': init_delta,
             'staircase_value': init_value,
         }
-
         return self.search(pfast_fun, parameters, **search_kwargs)
 
     def search_staircase_only(self, init_staircase, **search_kwargs):
@@ -519,5 +517,63 @@ class GradientDescent(object):
         parameters = {
             'staircase_value': init_value,
         }
-
         return self.search(pfast_fun, parameters, **search_kwargs)
+
+
+class HillClimbing(object):
+    """Similar to the gradient descent method but searches for
+    the optimum of a selected objective function.
+
+    :param data: Data with answers in a DataFrame.
+    """
+
+    def __init__(self, data):
+        self.data = data
+
+    def search(self, model_fun, init_parameters, init_epsilons,
+               step_size=20, precision=0.001, maxiter=50):
+        """Finds optimal parameters for given model function.
+
+        :param model_fun: Callable that trains the model on the given
+            parameters.
+        :param parameters: Dictionary of parameters to fit.
+        :param step_size: Step size. Default is :num:`0.01`.
+        :param precision: The algorithm stops iterating when the precision
+            gets below this value. Default is :num:`0.01`.
+        :param maxiter: Maximum number of iteration. Default is :num:`50`.
+        """
+        def diff(old, new):
+            return sum(abs(old[key] - new[key]) for key in new)
+
+        epsilons = dict(init_epsilons)
+        parameters = dict(init_parameters)
+
+        for iteration in xrange(1, maxiter+1):
+            altitude = model_fun(**parameters)
+            new_parameters = {}
+
+            for name, value in parameters.items():
+                positive = value + epsilons[name]
+                negative = value - epsilons[name]
+
+                positive_p = tools.merge_dicts(parameters, {name: positive})
+                negative_p = tools.merge_dicts(parameters, {name: negative})
+
+                altitudes = {
+                    positive: model_fun(**positive_p),
+                    negative: model_fun(**negative_p),
+                    value: altitude,
+                }
+                best = min(altitudes, key=lambda x: altitudes[x])
+                new_parameters[name] = best
+
+                epsilons[name] -= \
+                    epsilons[name] * (altitude - altitudes[best]) / step_size
+
+            if diff(parameters, new_parameters) < precision:
+                break
+
+            parameters = new_parameters
+            tools.echo('{}\n{}'.format(altitude, str(parameters)))
+
+        return parameters
