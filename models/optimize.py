@@ -536,7 +536,9 @@ class HillClimbing(object):
 
         :param model_fun: Callable that trains the model on the given
             parameters.
-        :param parameters: Dictionary of parameters to fit.
+        :param init_parameters: Dictionary of parameters to fit.
+        :param init_epsilons: Dictionary of initial values for the
+            evaluation of the parameter's neigbourhood.
         :param step_size: Step size. Default is :num:`0.01`.
         :param precision: The algorithm stops iterating when the precision
             gets below this value. Default is :num:`0.01`.
