@@ -28,19 +28,19 @@ def european_countries(data):
     return data['place_id'].isin(places)
 
 
-def africa_countries(data):
+def african_countries(data):
     """List of African countries."""
     places = tools.get_places('Africa')
     return data['place_id'].isin(places)
 
 
-def asia_countries(data):
+def asian_countries(data):
     """List of Asian countries."""
     places = tools.get_places('Asia')
     return data['place_id'].isin(places)
 
 
-def america_countries(data):
+def american_countries(data):
     """List of American countries."""
     places = tools.get_places('America')
     return data['place_id'].isin(places)
