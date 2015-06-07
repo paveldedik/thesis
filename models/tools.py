@@ -437,6 +437,21 @@ def get_places(prefix=''):
     return result
 
 
+def to_place_name(place_id, places=None):
+    """Takes ID of a place and returns its english name.
+
+    :param place_id: ID of the place.
+    :type place_id: integer
+    :param places: Dictionary of places can be given so that
+        there is no need to load it every time the function is called
+        (e.g. in for-loop).
+    :type places: dict
+    :rtype: string
+    """
+    places = places or load_places().T.to_dict()
+    return str(places[place_id]['name_en']).decode('utf-8')
+
+
 class cached_property(object):
     """A decorator that converts a method into a property. The
     function wrapped is called the first time to retrieve the result
