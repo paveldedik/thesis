@@ -60,6 +60,7 @@ class User(object):
     :type user_id: int
     """
     def __init__(self, user_id):
+        self.id = user_id
         self.skill_increments = []
 
     @property
@@ -90,6 +91,7 @@ class Place(object):
     :type place_id: int
     """
     def __init__(self, place_id):
+        self.id = place_id
         self.difficulty_increments = []
 
     @property
