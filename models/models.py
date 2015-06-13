@@ -754,7 +754,7 @@ class PFAForgetting(PFAGong):
         :type question: :class:`pandas.Series` or :class:`Question`
         """
         correct_weights = [
-            ans.is_correct * self.time_effect(diff) for ans, diff
+            max(ans.is_correct * self.time_effect(diff), 0) for ans, diff
             in zip(item.practices, item.get_diffs(question.inserted))
         ]
         incorrect_weights = [
