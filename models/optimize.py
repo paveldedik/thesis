@@ -531,7 +531,7 @@ class HillClimbing(object):
         self.data = data
 
     def search(self, model_fun, init_parameters, init_epsilons,
-               step_size=20, precision=0.001, maxiter=50):
+               altitude_ratio=1, precision=0.001, maxiter=50):
         """Finds optimal parameters for given model function.
 
         :param model_fun: Callable that trains the model on the given
@@ -539,9 +539,11 @@ class HillClimbing(object):
         :param init_parameters: Dictionary of parameters to fit.
         :param init_epsilons: Dictionary of initial values for the
             evaluation of the parameter's neigbourhood.
-        :param step_size: Step size. Default is :num:`0.01`.
+        :param altitude_ratio: The ratio of the change in altitude.
+            Higher value means that the change in altitude (epsilon)
+            is bigger with each iteration. Default is :num:`1`.
         :param precision: The algorithm stops iterating when the precision
-            gets below this value. Default is :num:`0.01`.
+            gets below this value. Default is :num:`0.001`.
         :param maxiter: Maximum number of iteration. Default is :num:`50`.
         """
         def diff(old, new):
@@ -569,13 +571,16 @@ class HillClimbing(object):
                 best = min(altitudes, key=lambda x: altitudes[x])
                 new_parameters[name] = best
 
-                epsilons[name] -= \
-                    epsilons[name] * (altitude - altitudes[best]) / step_size
+                change = (altitude - altitudes[best]) * altitude_ratio
+                epsilons[name] -= epsilons[name] * change
 
-            if diff(parameters, new_parameters) < precision:
-                break
-
+            old_parameters = parameters
             parameters = new_parameters
-            tools.echo('{}\n{}'.format(altitude, str(parameters)))
+
+            template = 'altitude: {}\nparameters: {}\nepsilons: {}'
+            tools.echo(template.format(altitude, parameters, epsilons))
+
+            if diff(old_parameters, parameters) < precision:
+                break
 
         return parameters
