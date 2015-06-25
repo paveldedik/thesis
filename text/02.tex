@@ -63,3 +63,23 @@ Philip~I.~Pavlik and John~R.~Anderson developed an extended version of the equat
 \begin{equation} \label{eq-pavlik-activation}
   m_{s,n}(t) = \ln{\sum_{k=1}^{n} t_{k}^{-d_k}}
 \end{equation}
+
+Since the computation is recursive and a bit complex, we present the pseudo-code of the algorithm returning the memory activation.
+
+\begin{algorithm}
+  \caption{The function takes one parameter $T$ which is a vector of seconds that passed since the item was practices by the student. The vector is ordered in descending order, e.g. $[56800, 56400, 3600, 60, 0]$ (note that the last zero is the current practice). Returns student's memory strength during each practice.}
+  \begin{algorithmic}[1]
+    \Function{MemoryActivation}{$T$}
+      \State $S \gets [-\infty]$
+      \For{$t_i$ \textbf{in} $T[2~...~n]$}
+        \State $s_i \gets 0$
+        \For{$t_j$ \textbf{in} $T[1~...~i-1]$}
+          \State $d_j \gets ce^{S[j]} + a$
+          \State $s_i \gets s_i + (t_j - t_i)^{-d_j}$
+        \EndFor
+        \State $S[i] \gets \log(s_i)$
+      \EndFor
+      \State \Return $S$
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
