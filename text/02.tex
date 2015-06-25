@@ -14,8 +14,52 @@ The study of learning and memory can be divided into the following components:
   \item Performance
 \end{itemize}
 
-Learning is the process of encoding information. For example the encoding of the location of Portugal can be seen as learning the shape of the country and its neighbor Spain. Memory is the biological storage that retains the information -- in our example the location of Portugal. Performance is the speed and precision of recall (retrieval of an item from memory).
-
 \subsection{Learning}
 
+Learning is the process of encoding information. For example the encoding of the location of Portugal can be seen as learning the shape of the country,  its neighbor Spain and the surrounding ocean. The learning respects the power function.
+
+In order to be able to model learning we have to measure memory strength. Memory strength can be measured by the acquisition of these three properties:
+
+\begin{description}
+  \item[Probability of recall] Probability of the student recalling the item.
+  \item[Latency of recall] Latency of the student retrieving the item from their memory.
+  \item[Savings in relearning] How much time the student has to spend in order to recall the item.
+\end{description}
+
+We can further distinguish the following levels of learning as measured by memory strength:
+
+\begin{description}
+  \item[Familiarity] The student has feeling they knew the item in the past but cannot remember anymore.
+  \item[Recognition] The student recognized the item when presented multiple-choice options but couldn't remember otherwise.
+  \item[Recall] The student is able to recall the item with some effort.
+  \item[Automaticity] The student recalls the item instantaneously when presented. Note that the level of automaticity can be measured by the latency of recall.
+\end{description}
+
 \subsection{Memory}
+
+Memory is the biological storage that retains the information, for example the location of Portugal. The student's memory, however, decays with the time. This memory decay is called \textit{forgetting} and similarly as learning it respects the power function.
+
+Forgetting can be reduced by repetition. Repetition can be massed or spaced. In a massed presentation the item is revised in a short interval many times over. In contrast, a spaced presentation usually consists of revisions performed in a longer period of time with pauses between presentations. It is well known that a spaced presentation leads to a better memory strength. This phenomenon is called the \textit{spacing effect}.
+
+\subsection{Performance}
+
+Performance is the speed and precision of recall (retrieval of an item from memory). The student's performance can be examined by a multiple-choice test, where the correctness of answers and response time is measured.
+
+\section{The Spacing Effect}
+
+In the ACT-R model, the memory strength $m$ of the student $s$ can be modeled by this function:
+
+\begin{equation} \label{eq-actr}
+  m_{s,n}(t) = \ln{\sum_{k=1}^{n} t_{k}^{-d}}
+\end{equation}
+
+The parameter $t$ is a vector of seconds that passed since each of the $n$ repetitions was performed by the student $s$. The parameter $d$ represents memory decay. The problem of this equation is that it doesn't take into account the spacing effect.
+
+Philip~I.~Pavlik and John~R.~Anderson developed an extended version of the equation in which the decay is a function of the activation at the time the item was presented.
+
+\begin{equation} \label{eq-pavlik-decay}
+  d_k = ce^{m_{s,k-1}} + a
+\end{equation}
+\begin{equation} \label{eq-pavlik-activation}
+  m_{s,n}(t) = \ln{\sum_{k=1}^{n} t_{k}^{-d_k}}
+\end{equation}
