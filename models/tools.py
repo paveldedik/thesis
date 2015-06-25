@@ -293,15 +293,15 @@ def find_theta(theta, data, y, maxiter=1000):
     )
 
 
-def memory_strength(practices, spacing_rate=0.2, decay_rate=0.18):
+def memory_strength(times, spacing_rate=0.2, decay_rate=0.18):
     """Calculates memory strength based on given vector of practices.
     Each element *t_i* in the vector indicates how long ago the *i*-th
     practice occured.
 
-    :param practices: Vector containing all prior practices.
+    :param times: Vector containing all prior practices.
         Each practice is represented as the number of seconds that
         passed since the student answered the question.
-    :type practices: list, :class:`numpy.array` or :class:`pandas.Series`
+    :type times: list, :class:`numpy.array` or :class:`pandas.Series`
     :param spacing_rate: The significance of the spacing effect. Lower
         values make the effect less significant. If the spacing rate
         is set to zero, the model is unaware of the spacing effect.
@@ -311,15 +311,14 @@ def memory_strength(practices, spacing_rate=0.2, decay_rate=0.18):
         and vice versa.
     :type decay_rate: float
     """
-    decays = []
     strengths = [-np.inf]
-
     get_decay = lambda s: spacing_rate * np.exp(s) + decay_rate
 
-    for i in range(len(practices)):
-        decays.append(get_decay(strengths[i]))
-        rates = practices[:i+1] ** -np.array(decays)
-        strengths.append(np.log(sum(rates)))
+    for i, t_i in enumerate(times[1:] + [0]):
+        strength = 0
+        for j, t_j in enumerate(times[:i+1]):
+            strength += (t_j - t_i) ** -get_decay(strengths[j])
+        strengths.append(np.log(strength))
 
     return strengths[-1]
 
