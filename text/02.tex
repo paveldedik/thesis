@@ -47,39 +47,43 @@ Performance is the speed and precision of recall (retrieval of an item from memo
 
 \section{The Spacing Effect}
 
-In the ACT-R model, the memory strength $m$ of the student $s$ can be modeled by this function:
+In the ACT-R model, the memory strength $m$ of the student $s$ can be modeled by the Equiation~\ref{eq-actr}.
 
 \begin{equation} \label{eq-actr}
-  m_{s,n}(t) = \ln{\sum_{k=1}^{n} t_{k}^{-d}}
+  m_n(t) = \ln{\sum_{i=1}^{n} t_{i}^{-d}}
 \end{equation}
 
-The parameter $t$ is a vector of seconds that passed since each of the $n$ repetitions was performed by the student $s$. The parameter $d$ represents memory decay. The problem of this equation is that it doesn't take into account the spacing effect.
+The parameter $t$ is a vector of seconds which passed since each of the $n$ repetitions was performed by the student $s$. The parameter $d$ represents memory decay. The problem of this equation is that it doesn't take into account the spacing effect.
 
-Philip~I.~Pavlik and John~R.~Anderson developed an extended version of the equation in which the decay is a function of the activation at the time the item was presented.
+Philip~I.~Pavlik and John~R.~Anderson developed an extended version of the equation in which the decay is a function of the activation at the time the item was presented (see Equation~\ref{eq-pavlik-decay} and Equation~\ref{eq-pavlik-activation}).
 
 \begin{equation} \label{eq-pavlik-decay}
-  d_k = ce^{m_{s,k-1}} + a
+  d_i = ce^{m_{i-1}} + a
 \end{equation}
 \begin{equation} \label{eq-pavlik-activation}
-  m_{s,n}(t) = \ln{\sum_{k=1}^{n} t_{k}^{-d_k}}
+  m_n(t) = \ln{\sum_{i=1}^{n} t_{i}^{-d_i}}
 \end{equation}
 
-Since the computation is recursive and a bit complex, we present the pseudo-code of the algorithm returning the memory activation.
+The parameters $c$ and $a$ affect the scale of the decay. Since $m_0 = -\infty$, the value of $d_i$ is always equal to $a$ for the first practice of the student. Additionally, when $c = 0$, the result of the equation is equivalent with the Equation~\ref{eq-actr}. Because the computation is recursive and a bit complex, we present the pseudo-code of the algorithm computing the memory activation function (see Algorithm~\ref{alg-memory-activation}).
 
 \begin{algorithm}
-  \caption{The function takes one parameter $T$ which is a vector of seconds that passed since the item was practices by the student. The vector is ordered in descending order, e.g. $[56800, 56400, 3600, 60, 0]$ (note that the last zero is the current practice). Returns student's memory strength during each practice.}
+  \caption{The function $\textsc{MemoryActivation}: \mathbb{N}^n \rightarrow \mathbb{R}^n$ takes the vector parameter $t$ in descending order, e.g. $[56800, 56400, 3600, 60, 0]$ (the last zero is the current practice). The result of the computation is a vector $m$ of student's memory strengths during each practice.}
+  \label{alg-memory-activation}
   \begin{algorithmic}[1]
-    \Function{MemoryActivation}{$T$}
-      \State $S \gets [-\infty]$
-      \For{$t_i$ \textbf{in} $T[2~...~n]$}
-        \State $s_i \gets 0$
-        \For{$t_j$ \textbf{in} $T[1~...~i-1]$}
-          \State $d_j \gets ce^{S[j]} + a$
-          \State $s_i \gets s_i + (t_j - t_i)^{-d_j}$
+    \Function{MemoryActivation}{$t$}
+      \State $n \gets size(t)$
+      \State $m_0 \gets -\infty$
+      \For{$i \gets 1$ \textbf{to} $n-1$}
+        \State $s \gets 0$
+        \For{$j \gets 1$ \textbf{to} $i$}
+          \State $d_j \gets ce^{m_{j-1}} + a$
+          \State $s \gets s + (t_j - t_i)^{-d_j}$
         \EndFor
-        \State $S[i] \gets \log(s_i)$
+        \State $m_i \gets \log(s)$
       \EndFor
-      \State \Return $S$
+      \State \Return $m$
     \EndFunction
   \end{algorithmic}
 \end{algorithm}
+
+Note that the time complexity of the function is $\mathcal{O}\left(\frac{n(n-1)}{2}\right)$.
