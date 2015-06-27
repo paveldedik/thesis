@@ -87,3 +87,53 @@ The parameters $c$ and $a$ affect the scale of the decay. Since $m_0 = -\infty$,
 \end{algorithm}
 
 Note that the time complexity of the function is $\mathcal{O}\left(\frac{n(n-1)}{2}\right)$.
+
+\section{Models}
+
+In this section we discuss the models relevant to our work. There are two main components that concern us. The first is the estimation of prior knowledge which we discuss only briefly. The seconds is the estimation of current knowledge and is significant for the better part of this thesis.
+
+\subsection{Elo System}
+\label{elo}
+
+Elo system is a mathematical model suited for student modeling as recent research has shown. Elo rating system and its extension Glicko is otherwise a very popular approach in competitor-versus-competitor games such as chess. In our work we employ the model for the estimation of prior knowledge of students.
+
+In the standard version of Elo system we have the student's skill $\theta_s$ and the difficulty of an item $b_i$. The Equations~\ref{eq-elo-skill},~\ref{eq-elo-difficulty} demonstrate an update of the student's skill and the item's difficulty after one answered question. The parameter $R$ is $0$ or $1$ depending on the correctness of the student's answer. The probability that a student with a given skill $\theta_s$ will answer correctly on the presented question of difficulty $b_i$ is estimated by a logistic function (see Equation~\ref{eq-elo-logistic}).
+
+\begin{equation} \label{eq-elo-skill}
+  \theta_s \gets \theta_s + K(R - P(R = 1|s,i))
+\end{equation}
+
+\begin{equation} \label{eq-elo-difficulty}
+  b_i \gets b_i - K(R - P(R = 1|s,i))
+\end{equation}
+
+\begin{equation} \label{eq-elo-logistic}
+  P(R = 1|s,i) = \frac{1}{1 + e^{-(\theta_s - b_i)}}
+\end{equation}
+
+The constant parameter $K$ affects the change in the estimates $\theta_s$ and $b_i$. Higher value means faster change after few questions, in contrast lower value makes the change slower. This is a problem since the number of answers varies throughout the time. It's been demonstrated that the use of an uncertainty function $\frac{a}{1 + bn}$, which considers the number of answers of students in the system, makes the predictions more stable and accurate.
+
+\subsection{Performance Factor Analysis}
+
+Performance Factor Analysis (PFA) is a student modeling approach based on the Learning Factor Analysis (LFA). The standard PFA equation is formulated with the incorporation of knowledge components (KCs), which may include skills, concepts or facts.
+
+\begin{equation} \label{eq-pfa-standard}
+  m(i,j \in KCs,s,f) = \sum_{j \in KCs} \beta_j + \gamma_j s_{i,j} + \delta_j f_{i,j} 
+\end{equation}
+
+\begin{equation} \label{eq-pfa-standard-p}
+  P(m) = \frac{1}{1 + e^{-m}}
+\end{equation}
+
+In Equation~\ref{eq-pfa-standard}, where $m$ is a function of the student's knowledge, the parameter $\beta_j$ is the difficulty of the knowledge component $j$. The counts of current successes and failures of the student $i$ and the knowledge component $j$ are represented by the parameters $s_{i,j}$ and $f_{i,j}$, where $\gamma_j$ and $\delta_j$ define the weight of each success and failure.
+
+The standard PFA model is defined in terms of knowledge components which is not always needed. The main disadvantage, however, is the inability to consider the order of answers. Another problem with the standard model is that it doesn't take into account the probability of guessing. Both these issues can be solved by the following model:
+
+\begin{equation} \label{eq-pfa-extended}
+  m \gets \begin{cases}
+            m + \gamma \cdot (1 - P(m)) & \text{\textbf{if }} \text{the answer was correct} \\
+            m + \delta \cdot P(m) & \text{\textbf{otherwise}}
+          \end{cases}
+\end{equation}
+
+The initial value of $m$ in Equation~\ref{eq-pfa-extended} can be estimated from the Elo model discussed in the section~\ref{elo}, i.e. $m = \theta_s - b_i$.
