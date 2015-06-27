@@ -88,9 +88,9 @@ The parameters $c$ and $a$ affect the scale of the decay. Since $m_0 = -\infty$,
 
 Note that the time complexity of the function is $\mathcal{O}\left(\frac{n(n-1)}{2}\right)$.
 
-\section{Models}
+\section{Relevant Models}
 
-In this section we discuss the models relevant to our work. There are two main components that concern us. The first is the estimation of prior knowledge which we discuss only briefly. The seconds is the estimation of current knowledge and is significant for the better part of this thesis.
+In this section we discuss the models relevant to our work. There are two main components that concern us. The first is the estimation of prior knowledge which can be helpful if we need better understanding of the student's acquired knowledge. The second is the estimation of the current knowledge which combines the knowledge the student already had and the knowledge they acquired. Estimation of current knowledge is significant for the better part of this thesis.
 
 \subsection{Elo System}
 \label{elo}
@@ -127,7 +127,7 @@ Performance Factor Analysis (PFA) is a student modeling approach based on the Le
 
 In Equation~\ref{eq-pfa-standard}, where $m$ is a function of the student's knowledge, the parameter $\beta_j$ is the difficulty of the knowledge component $j$. The counts of current successes and failures of the student $i$ and the knowledge component $j$ are represented by the parameters $s_{i,j}$ and $f_{i,j}$, where $\gamma_j$ and $\delta_j$ define the weight of each success and failure.
 
-The standard PFA model is defined in terms of knowledge components which is not always needed. The main disadvantage, however, is the inability to consider the order of answers. Another problem with the standard model is that it doesn't take into account the probability of guessing. Both these issues can be solved by the following model:
+The standard PFA model is defined in terms of knowledge components which is not always needed. The main disadvantage, however, is the inability to consider the order of answers. Another problem with the standard model is that it doesn't take into account the probability of guessing. Both these issues are solved in the following model:
 
 \begin{equation} \label{eq-pfa-extended}
   m \gets \begin{cases}
@@ -136,4 +136,8 @@ The standard PFA model is defined in terms of knowledge components which is not 
           \end{cases}
 \end{equation}
 
-The initial value of $m$ in Equation~\ref{eq-pfa-extended} can be estimated from the Elo model discussed in the section~\ref{elo}, i.e. $m = \theta_s - b_i$.
+\begin{equation} \label{eq-pfa-standard-p}
+  P(m) = \frac{1}{n} + \left(1 - \frac{1}{n}\right)\frac{1}{1 + e^{-m}}
+\end{equation}
+
+The initial value of $m$ in Equation~\ref{eq-pfa-extended} can be estimated from the Elo model which was discussed in the section~\ref{elo}, i.e. $m = \theta_s - b_i$. The parameter $n$ in the Equation~\ref{eq-pfa-standard-p} matches the number of options in multiple-choice question. Note that the probability of guess is $\frac{1}{n}$ and the probability of slip is $1 - \frac{1}{n}$.
