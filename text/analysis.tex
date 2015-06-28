@@ -1,0 +1,67 @@
+\chapter{Analysis of the Models}
+
+For the analysis we used data from the online system for practicing geography\footnote{\url{http://www.slepemapy.cz}}. The data set contains more than 2~million answers from more than 50~thousand unique users.
+
+\section{Response Time}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{img/response-time}
+  \caption{Relation between students' response time and probability of recall. Each box represents probabilities from all countries that belong in the relevant interval of response times.}
+  \label{fig-response-time}
+\end{figure}
+
+\section{Parameters}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{img/pfa-grid-search-rmse-auc}
+  \caption{Result of the grid search performed on the PFAE model.}
+  \label{fig-grid-search-rmse-auc}
+\end{figure}
+
+\section{Results}
+
+\todo{The tables in this section aren't very readable, it should contain more information presented in a different way. Also the \textit{accuracy} column is probably not very informative (replace with log likelihood and the number of correctly predicted instances?).}
+
+\subsection{All Answers}
+
+\begin{tabular}{@{}l l S[table-format=2.5] S[table-format=2.4] S[table-format=2.7] @{}}
+\toprule
+Model & Parameters & \multicolumn{1}{c}{RMSE} & \multicolumn{1}{c}{AUC} & \multicolumn{1}{c}{Accuracy} \\
+\midrule 
+PFA                    & $\gamma=2.1$, $\delta=-0.3$ & 0.3517   & 0.7913  & 0.8068  \\
+PFA Gong               & $\gamma=1.9$, $\delta=-0.2$ & 0.3445   & 0.813   & 0.837   \\
+PFA Gong + Forgetting  & $\gamma=1.7$, $\delta=0.5$ & 0.3396   & 0.827   & 0.8408  \\
+PFAE                   & $\gamma=2.9$, $\delta=-0.56$ & 0.3419   & 0.8245  & 0.8383  \\
+PFAE + Forgetting      & $\gamma=2.3$, $\delta=-0.89$ & 0.3406   & 0.8268  & 0.841  \\
+\bottomrule
+\end{tabular}
+
+\subsection{African Countries}
+
+\begin{tabular}{@{}l l S[table-format=2.5] S[table-format=2.4] S[table-format=2.7] @{}}
+\toprule
+Model & Parameters & \multicolumn{1}{c}{RMSE} & \multicolumn{1}{c}{AUC} & \multicolumn{1}{c}{Accuracy} \\
+\midrule 
+PFA                    & $\gamma=2.1$, $\delta=-0.3$ & 0.3828  & 0.7446 & 0.8086 \\
+PFA Gong               & $\gamma=1.9$, $\delta=-0.2$ & 0.3754  & 0.7733 & 0.8082 \\
+PFA Gong + Forgetting  & $\gamma=1.7$, $\delta=0.5$ & 0.3736  & 0.788  & 0.8096 \\
+PFAE                   & $\gamma=2.9$, $\delta=-0.56$ & 0.372   & 0.7735 & 0.8115 \\
+PFAE + Forgetting      & $\gamma=2.3$, $\delta=-0.89$ & 0.3702  & 0.7766 & 0.8136 \\
+\bottomrule
+\end{tabular}
+
+\subsection{USA States}
+
+\begin{tabular}{@{}l l S[table-format=2.5] S[table-format=2.4] S[table-format=2.7] @{}}
+\toprule
+Model & Parameters & \multicolumn{1}{c}{RMSE} & \multicolumn{1}{c}{AUC} & \multicolumn{1}{c}{Accuracy} \\
+\midrule 
+PFA                    & $\gamma=2.1$, $\delta=-0.3$ & 0.3878  & 0.7703 & 0.7898 \\
+PFA Gong               & $\gamma=1.9$, $\delta=-0.2$ & 0.3834  & 0.7872 & 0.7901 \\
+PFA Gong + Forgetting  & $\gamma=1.7$, $\delta=0.5$ & 0.3793  & 0.791  & 0.7940 \\
+PFAE                   & $\gamma=2.9$, $\delta=-0.56$ & 0.3788  & 0.7956 & 0.7929 \\
+PFAE + Forgetting      & $\gamma=2.3$, $\delta=-0.89$ & 0.3775  & 0.7958 & 0.7933 \\
+\bottomrule
+\end{tabular}
