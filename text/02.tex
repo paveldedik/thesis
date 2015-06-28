@@ -6,6 +6,8 @@ In this chapter we present an overview of the related research with the topic of
 
 Human brain is a complex system with the capacity to gain, store and retrieve new information. This ability is into some extent identical to all mammals. The long-term memory of humans can be thought as either procedural or declarative. The procedural memory goes beyond our conscious awareness and makes us capable of the incremental acquisition of both the motor and cognitive skills. The declarative memory (sometime referred as explicit memory) is the conscious knowledge such as the world's countries or the English vocabulary.
 
+\todo{Add an example of forgetting and spacing curves.}
+
 The study of learning and memory can be divided into the following components:
 
 \begin{itemize}
@@ -88,6 +90,8 @@ The parameters $c$ and $a$ affect the scale of the decay. Since $m_0 = -\infty$,
 
 Note that the time complexity of the function is $\mathcal{O}\left(\frac{n(n-1)}{2}\right)$.
 
+\todo{Proof of correctness?}
+
 \section{Relevant Models}
 
 In this section we discuss the models relevant to our work. There are two main components that concern us. The first is the estimation of prior knowledge which can be helpful if we need better understanding of the student's acquired knowledge. The second is the estimation of the current knowledge which combines the knowledge the student already had and the knowledge they acquired. Estimation of current knowledge is significant for the better part of this thesis.
@@ -132,7 +136,7 @@ The standard PFA model is defined in terms of knowledge components which is not 
 \begin{equation} \label{eq-pfa-extended}
   m \gets \begin{cases}
             m + \gamma \cdot (1 - P(m)) & \text{\textbf{if }} \text{the answer was correct} \\
-            m + \delta \cdot P(m) & \text{\textbf{otherwise}}
+            m + \delta \cdot P(m) & \text{\textbf{if}}
           \end{cases}
 \end{equation}
 
@@ -141,3 +145,15 @@ The standard PFA model is defined in terms of knowledge components which is not 
 \end{equation}
 
 The initial value of $m$ in Equation~\ref{eq-pfa-extended} can be estimated from the Elo model which was discussed in the section~\ref{elo}, i.e. $m = \theta_s - b_i$. The parameter $n$ in the Equation~\ref{eq-pfa-standard-p} matches the number of options in multiple-choice question. Note that the probability of guess is $\frac{1}{n}$ and the probability of slip is $1 - \frac{1}{n}$.
+
+Another variation of the original PFA model was proposed by Yue Gong. The idea of the model is based on the fact that we expect the student who answered in total of four presentations two times correctly in the last two presentations to perform better than the student who answered correctly in the first two presentations. The extended model introduces a decay factor $\xi$ that changes the behavior of the parameters $s_{i,j}$ and $f_{i,j}$ (see Equations~\ref{eq-pfa-gong-s},~\ref{eq-pfa-gong-f}).
+
+\begin{equation} \label{eq-pfa-gong-s}
+  s_{i,j} = \sum_{k=1}^{n-1} y_k \cdot \xi^{n-1-k}
+\end{equation}
+
+\begin{equation} \label{eq-pfa-gong-f}
+  f_{i,j} = \sum_{k=1}^{n-1} |y_k - 1| \cdot \xi^{n-1-k}
+\end{equation}
+
+The parameter $y_k$ represents the correctness of the $k$-th question.
