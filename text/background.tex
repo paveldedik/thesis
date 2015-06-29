@@ -1,6 +1,6 @@
 \chapter{Background}
 
-In this chapter we present an overview of the related research with the topic of our thesis. First, we describe how the human brain can acquire a new knowledge, the process of retention of information and the retrieval of information from memory. Second, we give an overview of the techniques suitable for educational systems with the focus on adaptive learning of facts.
+In this chapter we present an overview of the related research with the topic of our thesis. Firstly, we describe how the human brain can acquire a new knowledge, the process of retention of information and the retrieval of information from memory. Secondly, we give an overview of the techniques suitable for educational systems with the focus on adaptive learning of facts.
 
 \section{Learning, Memory and Performance}
 
@@ -124,6 +124,7 @@ In the standard version of Elo system we have the student's skill $\theta_s$ and
 The constant parameter $K$ affects the change in the estimates $\theta_s$ and $b_i$. Higher value means faster change after few questions, in contrast lower value makes the change slower. This is a problem since the number of answers varies throughout the time. It's been demonstrated that the use of an uncertainty function $\frac{a}{1 + bn}$, which considers the number of answers of students in the system, makes the predictions more stable and accurate.
 
 \subsection{Performance Factor Analysis}
+\label{pfa}
 
 Performance Factor Analysis (PFA) is a student modeling approach based on the Learning Factor Analysis (LFA). The standard PFA equation is formulated with the incorporation of knowledge components (KCs), which may include skills, concepts or facts.
 
@@ -164,4 +165,5 @@ Another variation of the original PFA model was proposed by Yue Gong. The idea o
   f_{i,j} = \sum_{k=1}^{n-1} |y_k - 1| \cdot \xi^{n-1-k}
 \end{equation}
 
-The parameter $y_k$ represents the correctness of the $k$-th question.
+The parameter $y_k$ represents the correctness of the $k$-th question. 
+The problem of this model is that it cannot be easily adjusted so that it includes the probability of guessing, particularly in cases where the practices were presented in the form of multiple-choice questions with varied number of options.
