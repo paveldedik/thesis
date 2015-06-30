@@ -52,6 +52,8 @@ Performance is the speed and precision of recall (retrieval of an item from memo
 \section{The Spacing Effect}
 \label{spacing-effect}
 
+\todo{Nice plot showing what the hell this is all about.}
+
 In the ACT-R model, the memory strength $m$ of the student $s$ can be modeled by the Equiation~\ref{eq-actr}.
 
 \begin{equation} \label{eq-actr}
@@ -59,8 +61,6 @@ In the ACT-R model, the memory strength $m$ of the student $s$ can be modeled by
 \end{equation}
 
 The parameter $t$ is a vector of seconds which passed since each of the $n$ repetitions was performed by the student $s$. The parameter $d$ represents memory decay. The problem of this equation is that it doesn't take into account the spacing effect.
-
-\todo{Nice plot showing what the hell this is all about.}
 
 Philip~I.~Pavlik and John~R.~Anderson developed an extended version of the equation in which the decay is a function of the activation at the time the item was presented (see Equation~\ref{eq-pavlik-decay} and Equation~\ref{eq-pavlik-activation}).
 
@@ -155,8 +155,6 @@ The initial value of $m$ in Equation~\ref{eq-pfa-extended} can be estimated from
 
 Another variation of the original PFA model was proposed by Yue Gong. The idea of the model is based on the fact that we expect the student who answered in total of four presentations two times correctly in the last two presentations to perform better than the student who answered correctly in the first two presentations. The extended model introduces a decay factor $\xi$ that changes the behavior of the parameters $s_{i,j}$ and $f_{i,j}$ (see Equations~\ref{eq-pfa-gong-s},~\ref{eq-pfa-gong-f}).
 
-\todo{Some examples would be nice.}
-
 \begin{equation} \label{eq-pfa-gong-s}
   s_{i,j} = \sum_{k=1}^{n-1} y_k \cdot \xi^{n-1-k}
 \end{equation}
@@ -167,3 +165,5 @@ Another variation of the original PFA model was proposed by Yue Gong. The idea o
 
 The parameter $y_k$ represents the correctness of the $k$-th question. 
 The problem of this model is that it cannot be easily adjusted so that it includes the probability of guessing, particularly in cases where the practices were presented in the form of multiple-choice questions with varied number of options.
+
+\todo{Some examples would be nice.}
