@@ -46,24 +46,27 @@ def load_data(path=config.DATA_ANSWERS_PATH,
 
     :param path: Path to the CSV file with the answers of users.
     :type path: str
-    :param limit: Limit the number of loaded rows.
+    :param limit: Number of loaded rows at most.
     :type limit: int
-    :param offset: Number of loaded rows.
+    :param offset: Number of rows to skip.
     :type offset: int
     :param users_path: Path to the CSV file containing all users.
-        This is neccessary so that first answers of users are truly first.
+        This is necessary so that first answers of users are truly first.
         The CSV file is used to filter the answers correctly.
     :type users_path: string
     """
-    if users_path is None:
-        data = pd.read_csv(path)[offset:offset+limit]
-        return prepare_data(data)
+    data = pd.read_csv(
+        path, skiprows=offset, nrows=limit, sep=';',
+        names=config.ANSWERS_COLUMNS)
+    data = prepare_data(data)
 
-    users = pd.read_csv(users_path)
-    new_users = users[users['first_answer_id'] > offset]
+    if users_path is not None:
+        users = pd.read_csv(users_path)
+        new_users = users[users['first_answer_id'] >= min(data['id'])]
+        data = data[data['user_id'].isin(new_users['user_id'])]
 
-    data = prepare_data(pd.read_csv(path)[offset:])
-    return data[data['user_id'].isin(new_users['user_id'])][:limit]
+    print 'Loaded {} answers.'.format(len(data))
+    return data
 
 
 def load_places(path=config.DATA_PLACES_PATH):
@@ -101,7 +104,6 @@ def prepare_data(data):
     :param data: The object containing data.
     :type data: :class:`pandas.DataFrame`.
     """
-    data.rename(columns=config.RENAMED_COLUMNS, inplace=True)
     data['is_correct'] = (data['place_id'] ==
                           data['place_answered']).astype(int)
     return data[[column for column in data.columns
