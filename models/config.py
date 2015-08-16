@@ -23,7 +23,7 @@ DATA_USERS_PATH = '/home/pavel/Projects/thesis/data/users.csv'
 #: Columns currently not used in models. They are ignored in
 #: the :func:`prepare_data` so that the memory requirements are lower.
 IGNORED_COLUMNS = [
-    'place_map', 'language', 'options', 'ip_country', 'ip_id',
+    'place_map', 'language', 'ip_country', 'ip_id',
 ]
 
 #: Columns renamed in models.

@@ -39,7 +39,7 @@ class Question(object):
         self.place_id = kwargs.pop('place_id')
         self.type = kwargs.pop('type')
         self.inserted = kwargs.pop('inserted')
-        self.number_of_options = kwargs.pop('number_of_options')
+        self.options = kwargs.pop('options')
 
 
 class Answer(Question):
@@ -221,8 +221,8 @@ class Model(object):
         :param options: Number of options in the multiple-choice question.
         :type options: int
         """
-        if options > 0:
-            val = 1 / options
+        if options:
+            val = 1 / len(options)
             return val + (1 - val) * prediction
         else:
             return prediction
@@ -330,7 +330,7 @@ class EloModel(Model):
         place = self.places[question.place_id]
 
         prediction = tools.sigmoid(user.skill - place.difficulty)
-        return self.respect_guess(prediction, question.number_of_options)
+        return self.respect_guess(prediction, question.options)
 
     def update(self, answer):
         """Updates skills of users and difficulties of places according
@@ -444,7 +444,7 @@ class PFAModel(Model):
         """
         item = self.items[question.user_id, question.place_id]
         prediction = tools.sigmoid(item.knowledge)
-        return self.respect_guess(prediction, question.number_of_options)
+        return self.respect_guess(prediction, question.options)
 
     def update(self, answer):
         """Performes update of current knowledge of a user based on the
@@ -528,7 +528,7 @@ class PFATiming(PFAModel):
             time_effect = 0
 
         prediction = tools.sigmoid(item.knowledge + time_effect)
-        return self.respect_guess(prediction, question.number_of_options)
+        return self.respect_guess(prediction, question.options)
 
 
 class PFAStaircase(PFATiming):
@@ -581,7 +581,7 @@ class PFAStaircase(PFATiming):
             time_effect = 0
 
         prediction = tools.sigmoid(item.knowledge + time_effect)
-        return self.respect_guess(prediction, question.number_of_options)
+        return self.respect_guess(prediction, question.options)
 
 
 class PFASpacing(PFATiming):
@@ -644,7 +644,7 @@ class PFASpacing(PFATiming):
             strength = 0
 
         prediction = tools.sigmoid(item.knowledge + strength)
-        return self.respect_guess(prediction, question.number_of_options)
+        return self.respect_guess(prediction, question.options)
 
 
 class PFAGong(PFAModel):
@@ -702,7 +702,7 @@ class PFAGong(PFAModel):
         )
 
         prediction = tools.sigmoid(knowledge)
-        return self.respect_guess(prediction, question.number_of_options)
+        return self.respect_guess(prediction, question.options)
 
     def update(self, answer):
         """Performes update of current knowledge of a user based on the

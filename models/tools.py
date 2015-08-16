@@ -10,6 +10,7 @@ from __future__ import division
 
 import sys
 import csv
+import ast
 from datetime import datetime
 from collections import defaultdict
 
@@ -56,7 +57,10 @@ def load_data(path=config.DATA_ANSWERS_PATH,
     :type users_path: string
     """
     data = pd.read_csv(
-        path, skiprows=offset, nrows=limit, sep=';',
+        # Skip at least the first column, which is the header containing
+        # the names of columns. This is usually not necessary, but we pass
+        # the list of the columns' aliases explicitly here (names=...).
+        path, skiprows=offset or 1, nrows=limit, sep=';',
         names=config.ANSWERS_COLUMNS)
     data = prepare_data(data)
 
@@ -106,6 +110,8 @@ def prepare_data(data):
     """
     data['is_correct'] = (data['place_id'] ==
                           data['place_answered']).astype(int)
+    data['options'] = data['options'].apply(ast.literal_eval)
+    data['inserted'] = data['inserted'].apply(to_datetime)
     return data[[column for column in data.columns
                  if column not in config.IGNORED_COLUMNS]].copy()
 
