@@ -7,7 +7,7 @@ from pip.req import parse_requirements
 
 
 # read requirements
-parsed_req = parse_requirements('requirements.txt')
+parsed_req = parse_requirements('requirements.txt', session=True)
 install_req = [str(line.req) for line in parsed_req]
 
 
