@@ -1,12 +1,11 @@
-PDFFILES=thesis.pdf
 TEMPLATE=thesis.tex
 BIB=references.bib
-.PHONY: all clean
+.PHONY: all clean thesis
 all:
-	make $(PDFFILES) clean
+	make thesis clean
 
-# This target typesets the a PDF file.
-$(PDFFILES): $(TEMPLATE) $(BIB)
+# This target typesets the PDF file.
+thesis: $(TEMPLATE) $(BIB)
 	pdflatex -shell-escape $(basename $@).tex
 	bibtex $(basename $@)
 	pdflatex -shell-escape $(basename $@).tex
