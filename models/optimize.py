@@ -356,7 +356,7 @@ class RandomSearch(object):
         return optimize.minimize(fun, [gamma, delta])
 
 
-class GradientDescent(object):
+class NaiveDescent(object):
     """Encapsulates the modified gradient descent (which is not in fact
     based on the partial derivatives of a function) for various models.
 
@@ -520,7 +520,7 @@ class GradientDescent(object):
         return self.search(pfast_fun, parameters, **search_kwargs)
 
 
-class HillClimbing(object):
+class GreedySearch(object):
     """Similar to the gradient descent method but searches for
     the optimum of a selected objective function.
 
