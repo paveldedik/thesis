@@ -313,9 +313,10 @@ class EloModel(Model):
 
     def uncertainty(self, n):
         """Uncertainty function. The purpose is to make each update on
-        the model trained with larger data set less significant.
+        the model trained with sequence of `n` answers less and less
+        significant as the number of prior answers is bigger.
 
-        :param n: Number of users or places.
+        :param n: Number of user's answers or total answers to a place.
         :type n: int
         """
         return self.alpha / (1 + self.beta * n)
@@ -550,38 +551,10 @@ class PFAStaircase(PFATiming):
         kwargs.setdefault('gamma', 2.5)
         kwargs.setdefault('delta', -0.8)
 
-        self.staircase = kwargs.pop('staircase', {})
+        self.staircase = tools.betweendict(kwargs.pop('staircase'))
+        self.time_effect = lambda k: self.staircase[k]
 
         super(PFATiming, self).__init__(*args, **kwargs)
-
-    def get_staircase_value(self, seconds):
-        """Returns the value of staircase function.
-
-        :param seconds: Number of seconds that passed since the
-            item was asked the last time.
-        :type seconds: int or float
-        """
-        for lower, upper in self.staircase:
-            if lower <= seconds <= upper:
-                return self.staircase[lower, upper]
-        return 0
-
-    def predict(self, question):
-        """Returns probability of correct answer for given question.
-
-        :param question: Asked question.
-        :type question: :class:`pandas.Series` or :class:`Question`
-        """
-        item = self.items[question.user_id, question.place_id]
-
-        if item.practices:
-            seconds = tools.time_diff(question.inserted, item.last_inserted)
-            time_effect = self.get_staircase_value(seconds)
-        else:
-            time_effect = 0
-
-        prediction = tools.sigmoid(item.knowledge + time_effect)
-        return self.respect_guess(prediction, question.options)
 
 
 class PFASpacing(PFATiming):

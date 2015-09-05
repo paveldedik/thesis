@@ -425,7 +425,7 @@ class NaiveDescent(object):
         :param init_gamma: Initial gamma value.
         :param init_delta: Initial delta value.
         :param **search_kwargs: Optional parameters passed to the
-            method :meth:`GradientDescent.serach`.
+            method :meth:`NaiveDescent.serach`.
         """
         def pfa_fun(gamma, delta):
             elo = EloModel()
@@ -446,7 +446,7 @@ class NaiveDescent(object):
         :param init_gamma: Initial gamma value.
         :param init_delta: Initial delta value.
         :param **search_kwargs: Optional parameters passed to the
-            method :meth:`GradientDescent.serach`.
+            method :meth:`NaiveDescent.serach`.
         """
         def pfag_fun(gamma, delta):
             elo = EloModel()
@@ -472,7 +472,7 @@ class NaiveDescent(object):
         :param init_staircase: Initial staircase function.
         :type init_staircase: dict
         :param **search_kwargs: Optional parameters passed to the
-            method :meth:`GradientDescent.serach`.
+            method :meth:`NaiveDescent.serach`.
         """
         interval, init_value = init_staircase.items()[0]
 
@@ -500,7 +500,7 @@ class NaiveDescent(object):
         :param init_staircase: Initial staircase function.
         :type init_staircase: dict
         :param **search_kwargs: Optional parameters passed to the
-            method :meth:`GradientDescent.serach`.
+            method :meth:`NaiveDescent.serach`.
         """
         interval, init_value = init_staircase.items()[0]
 
@@ -584,3 +584,101 @@ class GreedySearch(object):
                 break
 
         return parameters
+
+
+class GradientDescent(object):
+    """Encapsulates the modified gradient descent (which is not in fact
+    based on the partial derivatives of a function) for various models.
+
+    :param data: Data with answers in a DataFrame.
+    """
+
+    class PFAStaircaseFit(PFAStaircase):
+
+        def __init__(self, *args, **kwargs):
+            self.gamma_effect = 0
+            self.delta_effect = 0
+            self.learn_rate = kwargs.pop('learn_rate', 0.02)
+
+            super(type(self), self).__init__(*args, **kwargs)
+
+        def update(self, answer):
+            """Performes update of current knowledge of a user based on the
+            given answer.
+
+            :param answer: Answer to a question.
+            :type answer: :class:`pandas.Series` or :class:`Answer`
+            """
+            item = self.items[answer.user_id, answer.place_id]
+
+            if not item.practices:
+                self.prior.update(answer)
+
+            shift = answer.is_correct - self.predict(answer)
+
+            if item.last_inserted:
+                seconds = tools.time_diff(answer.inserted, item.last_inserted)
+                self.staircase[seconds] += self.learn_rate * shift * 5
+
+            self.gamma += self.learn_rate * shift
+            self.delta -= self.learn_rate * shift
+
+            item.add_practice(answer)
+
+            if answer.is_correct:
+                item.inc_knowledge(self.gamma * shift)
+                self.gamma_effect += shift
+            else:
+                item.inc_knowledge(self.delta * -shift)
+                self.delta_effect -= shift
+
+    def __init__(self, data):
+        self.data = data
+
+    def search(self, model_fun, parameters,
+               init_learn_rate=0.01, number_of_iter=10):
+        """Finds optimal parameters for given model.
+
+        :param model_fun: Callable that trains the model using the given
+            parameters.
+        :param parameters: Dictionary of parameters to fit.
+        :param init_learn_rate: Initial learning rate Default is :num:`0.01`.
+        :param number_of_iter: Number of iteration. Default is :num:`10`.
+        """
+        iter_params = defaultdict(dict)
+        iter_params[0] = dict(parameters)
+
+        for i in range(1, number_of_iter + 1):
+            leran_rate = init_learn_rate / i
+            model = model_fun(learn_rate=leran_rate, **iter_params[i - 1])
+            model.train(self.data)
+
+            for param in parameters:
+                iter_params[i][param] = getattr(model, param)
+            print iter_params[i]['gamma'], iter_params[i]['delta']
+        return iter_params
+
+    def search_staircase(self, init_gamma=2.8, init_delta=-0.8,
+                         init_staircase=None):
+        """Finds optimal parameters for the `PFAStaircase` model.
+
+        :param init_gamma: Initial gamma value.
+        :param init_delta: Initial delta value.
+        :param init_staircase: Initial staircase function.
+        :type init_staircase: dict
+        """
+        def model_fun(**init_params):
+            prior = EloModel()
+            return self.PFAStaircaseFit(prior, **init_params)
+
+        parameters = {
+            'gamma': init_gamma,
+            'delta': init_delta,
+            'staircase': dict.fromkeys([
+                (0, 60), (60, 90), (90, 150), (150, 300), (300, 600),
+                (60*10, 60*30), (60*30, 60*60*3), (60*60*3, 60*60*24),
+                (60*60*24, 60*60*24*3), (60*60*24*3, 60*60*24*30),
+                (60*60*24*30, np.inf),
+            ], 0)
+        }
+        return self.search(model_fun, parameters)
