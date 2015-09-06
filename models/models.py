@@ -551,7 +551,7 @@ class PFAStaircase(PFATiming):
         kwargs.setdefault('gamma', 2.5)
         kwargs.setdefault('delta', -0.8)
 
-        self.staircase = tools.betweendict(kwargs.pop('staircase'))
+        self.staircase = tools.intervaldict(kwargs.pop('staircase'))
         self.time_effect = lambda k: self.staircase[k]
 
         super(PFATiming, self).__init__(*args, **kwargs)

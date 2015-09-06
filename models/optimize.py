@@ -175,8 +175,8 @@ class GridResult(object):
         )
 
 
-class GradientResult(object):
-    """Representation of the result of gradient descent."""
+class DescentResult(object):
+    """Representation of the result of NaiveDescent."""
 
     def __init__(self, params, grads):
         self.params = pd.DataFrame(params)
@@ -198,6 +198,89 @@ class GradientResult(object):
         ).format(
             self.iterations,
             self.best.round(3),
+        )
+
+
+class GradientResult(object):
+    """Representation of the result of GradientDescent."""
+
+    def __init__(self, model, parameters):
+        self.model = model
+        self.parameters = parameters
+        self.iterations = range(len(parameters))
+
+        self.deltas = [params['delta'] for params in self.parameters]
+        self.gammas = [params['gamma'] for params in self.parameters]
+        self.staircases = [params['staircase'] for params in self.parameters]
+
+        self.intervals = list(sorted(i for i in self.staircases[-1]))
+
+    @property
+    def best(self):
+        """The best fitted parameters."""
+        return {
+            'gamma': self.gammas[-1],
+            'delta': self.deltas[-1],
+            'staircase': self.staircases[-1],
+        }
+
+    def plot(self, **kwargs):
+        """Plots the result of the gradient descent.
+        Uses :func:`~matplotlib.pyplot.plot` to plot the data.
+
+        :param **kwargs: Key-word arguments passed to the
+            :func:`~matplotlib.pyplot.plot`.
+        """
+        results = sorted(self.staircases[-1].items(), key=lambda x: x[0])
+        staircase_times = self.model.metadata['staircase_times']
+
+        x_axis = [np.mean(staircase_times[i]) for i in self.intervals]
+        y_axis = [value for interval, value in results]
+
+        xlabel = kwargs.pop('xlabel', 'Time from previous attempt in seconds.')
+        ylabel = kwargs.pop('ylabel', 'Memory activation')
+        title = kwargs.pop('title', '')
+
+        plot = plt.plot(x_axis, y_axis, '.-', **kwargs)
+        plt.xscale('log')
+        plt.title(title)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+
+        return plot
+
+    def format_staircases(self, indexes=None):
+        """Formats staircase function in a readable way.
+
+        :param indexes: Staircases to show (referenced by the index).
+            `[-1]` formats only the last staircase values. By default,
+            all staircase values are formated.
+        """
+        indexes = indexes or self.iterations
+        staircases = [self.staircases[i] for i in indexes]
+
+        ranges = sorted([x[1] for x in staircases[0]])
+        head = ('{:9.0f}' * len(staircases[0])).format(*ranges)
+
+        body = ''
+        for staircase in staircases:
+            stair = list(sorted(staircase.items(), key=lambda x: x[0]))
+            body += ('{:+9.3f}' * len(stair)).format(*[v for k, v in stair])
+            body += '\n'
+
+        return '{}\n{}'.format(head, body)
+
+    def __repr__(self):
+        return (
+            'Iterations: {0}\n'
+            'Gamma: {1:.5f}\n'
+            'Delta: {2:.5f}\n'
+            'Staircase:\n{3}'
+        ).format(
+            len(self.iterations),
+            self.best['gamma'],
+            self.best['delta'],
+            self.format_staircases([-1])
         )
 
 
@@ -417,7 +500,7 @@ class NaiveDescent(object):
         gradients = descent.pop('grad')
         fitted_params = descent
 
-        return GradientResult(fitted_params, gradients)
+        return DescentResult(fitted_params, gradients)
 
     def search_pfa(self, init_gamma, init_delta, **search_kwargs):
         """Finds optimal parameters for the PFAModel.
@@ -596,9 +679,17 @@ class GradientDescent(object):
     class PFAStaircaseFit(PFAStaircase):
 
         def __init__(self, *args, **kwargs):
-            self.gamma_effect = 0
-            self.delta_effect = 0
             self.learn_rate = kwargs.pop('learn_rate', 0.02)
+
+            self.log_metadata = kwargs.pop('log_metadata', False)
+            self.log_staircase = kwargs.pop('log_staircase', False)
+            self.metadata = {}
+
+            if self.log_metadata:
+                self.metadata['diffs'] = []
+                if self.log_staircase:
+                    self.metadata['staircase_items'] = defaultdict(lambda: 0)
+                    self.metadata['staircase_times'] = defaultdict(list)
 
             super(type(self), self).__init__(*args, **kwargs)
 
@@ -611,32 +702,49 @@ class GradientDescent(object):
             """
             item = self.items[answer.user_id, answer.place_id]
 
-            if not item.practices:
-                self.prior.update(answer)
-
             shift = answer.is_correct - self.predict(answer)
+            has_practices = bool(item.practices)
 
-            if item.last_inserted:
+            if has_practices:
                 seconds = tools.time_diff(answer.inserted, item.last_inserted)
-                self.staircase[seconds] += self.learn_rate * shift * 5
+                self.staircase[seconds] += self.learn_rate * shift * 3
+            else:
+                item.gamma_effect = 0
+                item.delta_effect = 0
 
-            self.gamma += self.learn_rate * shift
-            self.delta -= self.learn_rate * shift
-
-            item.add_practice(answer)
+            self.gamma += self.learn_rate * shift * item.gamma_effect
+            self.delta += self.learn_rate * shift * item.delta_effect
 
             if answer.is_correct:
                 item.inc_knowledge(self.gamma * shift)
-                self.gamma_effect += shift
+                item.gamma_effect += shift
             else:
-                item.inc_knowledge(self.delta * -shift)
-                self.delta_effect -= shift
+                item.inc_knowledge(self.delta * shift)
+                item.delta_effect += shift
+
+            if self.log_metadata:
+                self.metadata['diffs'].append(shift)
+                if self.log_staircase and has_practices:
+                    interval = self.staircase.get_interval(seconds)
+                    self.metadata['staircase_items'][interval] += 1
+                    self.metadata['staircase_times'][interval] += [seconds]
+
+            item.add_practice(answer)
+
+        def train(self, data):
+            """Trains the model on given data set.
+
+            :param data: Data set on which to train the model.
+            :type data: :class:`pandas.DataFrame`
+            """
+            self.prior.train(data)
+            super(type(self), self).train(data)
 
     def __init__(self, data):
         self.data = data
 
-    def search(self, model_fun, parameters,
-               init_learn_rate=0.01, number_of_iter=10):
+    def search(self, model_fun, init_parameters,
+               init_learn_rate=0.01, number_of_iter=10, log_metadata=True):
         """Finds optimal parameters for given model.
 
         :param model_fun: Callable that trains the model using the given
@@ -644,22 +752,39 @@ class GradientDescent(object):
         :param parameters: Dictionary of parameters to fit.
         :param init_learn_rate: Initial learning rate Default is :num:`0.01`.
         :param number_of_iter: Number of iteration. Default is :num:`10`.
+        :param log_metadata: Whether to log metadata information.
         """
-        iter_params = defaultdict(dict)
-        iter_params[0] = dict(parameters)
+        print_format = '{:10.5f} {:10.5f} {:10.5f}'
+
+        def pretty_echo(p):
+            string = print_format.format(
+                p['gamma'], p['delta'], p.get('off', np.inf))
+            tools.echo(string, clear=False)
+
+        pretty_echo(init_parameters)
+        parameters = [init_parameters]
 
         for i in range(1, number_of_iter + 1):
-            leran_rate = init_learn_rate / i
-            model = model_fun(learn_rate=leran_rate, **iter_params[i - 1])
+            model_kwargs = {
+                'learn_rate': init_learn_rate / i,
+                'log_metadata': log_metadata,
+                'log_staircase': i == number_of_iter,
+            }
+            model_kwargs.update(parameters[i-1])
+
+            model = model_fun(**model_kwargs)
             model.train(self.data)
 
-            for param in parameters:
-                iter_params[i][param] = getattr(model, param)
-            print iter_params[i]['gamma'], iter_params[i]['delta']
-        return iter_params
+            parameters.append({})
+            for param in parameters[i-1]:
+                parameters[i][param] = getattr(model, param)
+
+            pretty_echo(dict(gamma=model.gamma, delta=model.delta,
+                             off=np.mean(model.metadata['diffs'])))
+        return GradientResult(model, parameters)
 
     def search_staircase(self, init_gamma=2.8, init_delta=-0.8,
-                         init_staircase=None):
+                         init_staircase=None, **kwargs):
         """Finds optimal parameters for the `PFAStaircase` model.
 
         :param init_gamma: Initial gamma value.
@@ -676,9 +801,8 @@ class GradientDescent(object):
             'delta': init_delta,
             'staircase': dict.fromkeys([
                 (0, 60), (60, 90), (90, 150), (150, 300), (300, 600),
-                (60*10, 60*30), (60*30, 60*60*3), (60*60*3, 60*60*24),
-                (60*60*24, 60*60*24*3), (60*60*24*3, 60*60*24*30),
-                (60*60*24*30, np.inf),
+                (600, 60*30), (60*30, 60*60*3), (60*60*3, 60*60*24),
+                (60*60*24, 60*60*24*3), (60*60*24*3, np.inf),
             ], 0)
         }
-        return self.search(model_fun, parameters)
+        return self.search(model_fun, parameters, **kwargs)

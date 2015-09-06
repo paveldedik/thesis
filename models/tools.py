@@ -511,7 +511,7 @@ class keydefaultdict(defaultdict):
             return ret
 
 
-class betweendict(dict):
+class intervaldict(dict):
     """Dictionary that expects intervals of length two as keys.
     Items from the dictionary are retrieved according to the interval
     value.
@@ -524,25 +524,22 @@ class betweendict(dict):
 
     """
 
-    def __getitem__(self, key):
+    def get_interval(self, key):
         if isinstance(key, tuple):
-            return dict.__getitem__(self, key)
+            return key
         for k, v in self.items():
             if k[0] <= key < k[1]:
-                return v
+                return k
         raise KeyError('Key {!r} is not between any values in '
                        'the BetweenDict'.format(key))
 
+    def __getitem__(self, key):
+        interval = self.get_interval(key)
+        return dict.__getitem__(self, interval)
+
     def __setitem__(self, key, value):
-        if isinstance(key, tuple):
-            return dict.__setitem__(self, key, value)
-        for k, v in self.items():
-            if k[0] <= key < k[1]:
-                dict.__setitem__(self, k, value)
-                break
-        else:
-            raise KeyError('Key {!r} is not between any values in '
-                           'the BetweenDict'.format(key))
+        interval = self.get_interval(key)
+        dict.__setitem__(self, interval, value)
 
     def __contains__(self, key):
         try:
