@@ -744,7 +744,8 @@ class GradientDescent(object):
         self.data = data
 
     def search(self, model_fun, init_parameters,
-               init_learn_rate=0.01, number_of_iter=10, log_metadata=True):
+               init_learn_rate=0.01, number_of_iter=10, log_metadata=True,
+               echo_iterations=True):
         """Finds optimal parameters for given model.
 
         :param model_fun: Callable that trains the model using the given
@@ -757,6 +758,8 @@ class GradientDescent(object):
         print_format = '{:10.5f} {:10.5f} {:10.5f}'
 
         def pretty_echo(p):
+            if not echo_iterations:
+                return
             string = print_format.format(
                 p['gamma'], p['delta'], p.get('off', np.inf))
             tools.echo(string, clear=False)
@@ -766,7 +769,7 @@ class GradientDescent(object):
 
         for i in range(1, number_of_iter + 1):
             model_kwargs = {
-                'learn_rate': init_learn_rate / i,
+                'learn_rate': init_learn_rate / (i / 2),
                 'log_metadata': log_metadata,
                 'log_staircase': i == number_of_iter,
             }
@@ -783,7 +786,7 @@ class GradientDescent(object):
                              off=np.mean(model.metadata['diffs'])))
         return GradientResult(model, parameters)
 
-    def search_staircase(self, init_gamma=2.8, init_delta=-0.8,
+    def search_staircase(self, init_gamma=2.5, init_delta=0.8,
                          init_staircase=None, **kwargs):
         """Finds optimal parameters for the `PFAStaircase` model.
 
@@ -802,7 +805,7 @@ class GradientDescent(object):
             'staircase': dict.fromkeys([
                 (0, 60), (60, 90), (90, 150), (150, 300), (300, 600),
                 (600, 60*30), (60*30, 60*60*3), (60*60*3, 60*60*24),
-                (60*60*24, 60*60*24*3), (60*60*24*3, np.inf),
+                (60*60*24, 60*60*24*7), (60*60*24*7, np.inf),
             ], 0)
         }
         return self.search(model_fun, parameters, **kwargs)
