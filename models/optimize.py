@@ -277,7 +277,7 @@ class GradientResult(object):
             'Delta: {2:.5f}\n'
             'Staircase:\n{3}'
         ).format(
-            len(self.iterations),
+            len(self.iterations)-1,
             self.best['gamma'],
             self.best['delta'],
             self.format_staircases([-1])
