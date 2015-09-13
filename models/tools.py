@@ -42,7 +42,7 @@ def echo(msg, clear=True):
 
 def load_data(path=config.DATA_ANSWERS_PATH,
               users_path=config.DATA_USERS_PATH,
-              limit=10000, offset=0):
+              limit=10000, offset=0, echo_loaded=True):
     """Loads CSV file with answers into :class:`pandas.DataFrame`.
 
     :param path: Path to the CSV file with the answers of users.
@@ -69,7 +69,8 @@ def load_data(path=config.DATA_ANSWERS_PATH,
         new_users = users[users['first_answer_id'] >= min(data['id'])]
         data = data[data['user_id'].isin(new_users['user_id'])]
 
-    print 'Loaded {} answers.'.format(len(data))
+    if echo_loaded:
+        echo('Loaded {} answers.'.format(len(data)), clear=False)
     return data
 
 

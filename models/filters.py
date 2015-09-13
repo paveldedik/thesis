@@ -53,3 +53,47 @@ def usa_states(data):
         if place['code'].startswith('us-')
     }
     return data['place_id'].isin(places)
+
+
+def user_answered(data, condition):
+    """Only users with the total number answers according to the
+    :fun:`condition`.
+    """
+    assert callable(condition), "The condition must be a function."
+    user_values = data['user_id'].value_counts()
+    users_with_answers = user_values[condition(user_values)]
+    return data['user_id'].isin(users_with_answers.index)
+
+
+def place_answered(data, condition):
+    """Only places with the total number of answers according to the
+    :fun:`condition`.
+    """
+    assert callable(condition), "The condition must be a function."
+    place_values = data['place_id'].value_counts()
+    places_with_answers = place_values[condition(place_values)]
+    return data['place_id'].isin(places_with_answers.index)
+
+
+def user_item_answered(data, condition):
+    """Only the items with the total number of answers according to the
+    :fun:`condition`.
+    """
+    assert callable(condition), "The condition must be a function."
+
+    items = data['user_id'].map(str) + ',' + data['place_id'].map(str)
+    item_values = items.value_counts()
+
+    items_with_answers = item_values[condition(item_values)]
+    return items.isin(items_with_answers.index)
+
+
+def for_staircase(data):
+    """Data suitable for calculating staircase function."""
+    return (
+        user_answered(data, lambda x: x >= 20)
+        &
+        place_answered(data, lambda x: x >= 50)
+        &
+        user_item_answered(data, lambda x: x >= 3)
+    )

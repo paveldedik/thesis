@@ -685,6 +685,8 @@ class GradientDescent(object):
             self.log_staircase = kwargs.pop('log_staircase', False)
             self.metadata = {}
 
+            self.seed = kwargs.pop('seed', 0.2)
+
             if self.log_metadata:
                 self.metadata['diffs'] = []
                 if self.log_staircase:
@@ -714,6 +716,11 @@ class GradientDescent(object):
 
             self.gamma += self.learn_rate * shift * item.gamma_effect
             self.delta += self.learn_rate * shift * item.delta_effect
+
+            # if not np.random.randint(1000):
+            #     self.gamma += np.random.uniform(-self.seed, self.seed)
+            # if not np.random.randint(1000):
+            #     self.delta += np.random.uniform(-self.seed, self.seed)
 
             if answer.is_correct:
                 item.inc_knowledge(self.gamma * shift)
@@ -766,9 +773,11 @@ class GradientDescent(object):
 
         pretty_echo(init_parameters)
         parameters = [init_parameters]
+        init_seed = 0.2
 
         for i in range(1, number_of_iter + 1):
             model_kwargs = {
+                'seed': init_seed / (i ** 2),
                 'learn_rate': init_learn_rate / (i / 2),
                 'log_metadata': log_metadata,
                 'log_staircase': i == number_of_iter,
