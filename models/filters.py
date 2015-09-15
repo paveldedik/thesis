@@ -11,45 +11,79 @@ Some selected filters of data (e.g. European countries, Czech rivers).
 from . import tools
 
 
+_cache = {}
+
+
+def place_type(data, type_id):
+    """Filters data by any given place type.
+
+    :param data: Data to filter.
+    :param type_id: Type of place either by ID or name.
+    """
+    if 'places' not in _cache:
+        _cache['places'] = tools.load_places()
+    if 'place_types' not in _cache:
+        _cache['place_types'] = tools.load_place_types()
+
+    places = tools.get_places(type_id, **_cache)
+    return data['place_id'].isin(places)
+
+
+def timezone_prefix(data, prefix):
+    """Filters data by any country's timezone prefix.
+
+    :param data: Data to filter.
+    :param prefix: Country's timezone prefix.
+    """
+    if 'places' not in _cache:
+        _cache['places'] = tools.load_places()
+
+    places = tools.get_places_by_prefix(prefix, places=_cache['places'])
+    return data['place_id'].isin(places)
+
+
+def countries(data):
+    """List of world countries."""
+    return place_type(data, 'country')
+
+
+def cities(data):
+    """List of cities."""
+    return place_type(data, 'city')
+
+
 def open_questions(data):
     """List only open questions."""
     return data['number_of_options'] == 0
 
 
-def world_countries(data):
-    """List of world countries."""
-    places = tools.get_places()
-    return data['place_id'].isin(places)
-
-
 def european_countries(data):
     """List of European countries."""
-    places = tools.get_places('Europe')
-    return data['place_id'].isin(places)
+    return timezone_prefix(data, 'Europe')
 
 
 def african_countries(data):
     """List of African countries."""
-    places = tools.get_places('Africa')
-    return data['place_id'].isin(places)
+    return timezone_prefix(data, 'Africa')
 
 
 def asian_countries(data):
     """List of Asian countries."""
-    places = tools.get_places('Asia')
-    return data['place_id'].isin(places)
+    return timezone_prefix(data, 'Asia')
 
 
 def american_countries(data):
     """List of American countries."""
-    places = tools.get_places('America')
-    return data['place_id'].isin(places)
+    return timezone_prefix(data, 'America')
 
 
 def usa_states(data):
     """List of USA states."""
+    if 'places' not in _cache:
+        _cache['places'] = tools.load_places()
+
     places = {
-        idx for idx, place in tools.load_places().T.to_dict().items()
+        idx for idx, place in _cache['places'].T.to_dict().items()
         if place['code'].startswith('us-')
     }
     return data['place_id'].isin(places)
@@ -97,3 +131,15 @@ def for_staircase(data):
         &
         user_item_answered(data, lambda x: x >= 3)
     )
+
+
+def classmates(data, minimum=10):
+    """Filters data so that only classmates are counted
+    (i.e. the answers of students who use the system at school).
+    """
+    users = set()
+    for index, group in data.groupby(['ip_id']):
+        classmates = set(group['user_id'].values)
+        if len(classmates) >= minimum:
+            users |= classmates
+    return data['user_id'].isin(users)

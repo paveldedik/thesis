@@ -6,16 +6,24 @@ Configurations
 
 """
 
+import os
+
+
 ### Developer-specific configurations
 
+DATA_HOME = '/home/pavel/Projects/thesis/data/'
+
 #: Path to the CSV file containing all answers.
-DATA_ANSWERS_PATH = '/home/pavel/Projects/thesis/data/answers.csv'
+DATA_ANSWERS_PATH = os.path.join(DATA_HOME, 'answers.csv')
 
 #: Path to the CSV file containing all places.
-DATA_PLACES_PATH = '/home/pavel/Projects/thesis/data/places.csv'
+DATA_PLACES_PATH = os.path.join(DATA_HOME, 'places.csv')
+
+#: Path to the CSV file containing all place types.
+DATA_PLACE_TYPES_PATH = os.path.join(DATA_HOME, 'place_type.csv')
 
 #: Path to the CSV file containing users (see :func:`generate_users`).
-DATA_USERS_PATH = '/home/pavel/Projects/thesis/data/users.csv'
+DATA_USERS_PATH = os.path.join(DATA_HOME, 'users.csv')
 
 
 ### Other configurations
@@ -23,7 +31,7 @@ DATA_USERS_PATH = '/home/pavel/Projects/thesis/data/users.csv'
 #: Columns currently not used in models. They are ignored in
 #: the :func:`prepare_data` so that the memory requirements are lower.
 IGNORED_COLUMNS = [
-    'place_map', 'language', 'ip_country', 'ip_id',
+    'place_map', 'language', 'ip_country',
 ]
 
 #: Columns renamed in models.

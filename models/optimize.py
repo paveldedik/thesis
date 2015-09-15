@@ -814,7 +814,7 @@ class GradientDescent(object):
             'staircase': dict.fromkeys([
                 (0, 60), (60, 90), (90, 150), (150, 300), (300, 600),
                 (600, 60*30), (60*30, 60*60*3), (60*60*3, 60*60*24),
-                (60*60*24, 60*60*24*7), (60*60*24*7, np.inf),
+                (60*60*24, 60*60*24*5), (60*60*24*5, np.inf),
             ], 0)
         }
         return self.search(model_fun, parameters, **kwargs)

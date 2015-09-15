@@ -60,7 +60,7 @@ def load_data(path=config.DATA_ANSWERS_PATH,
         # Skip at least the first column, which is the header containing
         # the names of columns. This is usually not necessary, but we pass
         # the list of the columns' aliases explicitly here (names=...).
-        path, skiprows=offset or 1, nrows=limit, sep=';',
+        path, skiprows=int(offset or 1), nrows=int(limit), sep=';',
         names=config.ANSWERS_COLUMNS)
     data = prepare_data(data)
 
@@ -80,7 +80,16 @@ def load_places(path=config.DATA_PLACES_PATH):
     :param path: Path to CSV file.
     :type path: str
     """
-    return pd.read_csv(path, index_col='id')
+    return pd.read_csv(path, index_col='id', sep=';')
+
+
+def load_place_types(path=config.DATA_PLACE_TYPES_PATH):
+    """Loads CSV file with places into :class:`pandas.DataFrame`.
+
+    :param path: Path to CSV file.
+    :type path: str
+    """
+    return pd.read_csv(path, index_col='name', sep=';')
 
 
 def generate_users(data, users_path=config.DATA_USERS_PATH):
@@ -92,7 +101,7 @@ def generate_users(data, users_path=config.DATA_USERS_PATH):
     :type users_path: string
     """
     users = {}
-    for index, row in data.iterrows():
+    for index, row in data.sort(['inserted']).iterrows():
         if row.user_id not in users:
             users[row.user_id] = (row.id, row.inserted)
 
@@ -425,7 +434,25 @@ def timezones(prefix=''):
     return timezone_country
 
 
-def get_places(prefix=''):
+def get_places(place_type, places=None, place_types=None):
+    """Returns ids of requested type.
+
+    :param place_type: ID of the place type or name.
+    :type place_type: int or string
+    """
+    try:
+        type_id = int(place_type)
+    except ValueError:
+        if place_types is None:
+            place_types = load_place_types()
+        type_id = place_types.ix[place_type].values[0]
+
+    if places is None:
+        places = load_places()
+    return set(places[places['type'] == type_id].index)
+
+
+def get_places_by_prefix(prefix='', places=None):
     """Returns ids of all countries by the given timezone prefix.
 
     :param prefix: Timezone prefix. Default is no prefix (ids of all
@@ -433,12 +460,13 @@ def get_places(prefix=''):
     :type prefix: string
     :rtype: set
     """
-    result = set()
-    places = load_places().T.to_dict()
+    if places is None:
+        places = load_places()
     codes = {
         place['code'].upper(): place_id
-        for place_id, place in places.items()
+        for place_id, place in places.T.to_dict().items()
     }
+    result = set()
     for timezone, code in timezones(prefix).items():
         if code in codes:
             result.add(codes[code])
