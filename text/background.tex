@@ -1,12 +1,14 @@
 \chapter{Background}
 
-Throughout the last one hundred years, researchers have been trying to figure out the cognitive processes in our brain responsible for the ability to learn~\cite{RichardE.Mayer2010}. Understanding the process of learning can be very helpful in educational systems, where we want to improve the student's representation in terms of their knowledge, behavior and response to a particular stimulus. The construction of a quantitative representation, called a \textit{student model}, is known as \textit{student modeling}~\cite{Sison1998}. A student model typically tries to approximate an average learner in a chosen domain (e.g. the knowledge of animals, computer science, geography etc.). This, however, doesn't mean that all the representations of learners in the system behave in the same way, the differences between students are defined by their prior knowledge, speed of learning and other parameters.
-
 In this chapter we present an overview of the related research with the topic of our thesis. Firstly, we describe how the human brain can acquire new knowledge, the process of retention of information and the retrieval of information from memory. Secondly, we give an overview of the techniques suitable for educational systems with the focus on adaptive learning of facts.
 
-\section{The Study of Human Memory and Learning}
+\section{Student Modeling and Memory}
 
-The Greek philosopher and mathematician Plato compared human mind to an aviary in which each bird represented a memory. Today we have a much better analogy for the human memory, it's the hardware responsible for the storage and organization of all the data in the modern computers. This analogy is very useful for a better understanding of the human biological storage. The study of learning and memory can be divided into the following components:
+Throughout the last one hundred years, researchers have been trying to figure out the complex cognitive processes in the human brain responsible for our ability to learn~\cite{RichardE.Mayer2010}. Understanding the process of learning can be very helpful in education and educational systems where we wish to improve the student's representation in order to be able to better adapt to the needs and knowledge of an individual student practicing a particular domain (e.g. the knowledge of animals, Japanese vocabulary or geography). The construction of a quantitative representation, called a \textit{student model}, is known as \textit{student modeling}~\cite{Sison1998}.
+
+The Greek philosopher and mathematician Plato compared human mind to an aviary in which each bird represented a memory~\cite{MichaelW.Eysenck2008}. Today, we have a much better intuition on the human biological storage, it's the hardware responsible for the storage and organization of data in modern computers. This analogy of computer data storage is way better than the one Plato used and it seems to go well with what actually happens when we retrieve an item from memory or forget something.
+
+So far, we haven't mentioned learning, which is very closely related to memory as well as to the topic of our thesis. The study of learning and memory can be divided even further when we realize that we need some way to observe what the students know by experiments. All in all, this chapter is explained in three parts:
 
 \begin{itemize}
   \item Learning
@@ -14,19 +16,43 @@ The Greek philosopher and mathematician Plato compared human mind to an aviary i
   \item Performance
 \end{itemize}
 
-This distinction is not very important and each component is in fact very closely related to each other.
+In a book released by a professor of psychology at the University of California Richard~E.~Mayer, the science of learning is organized into three components, that is the science of:
 
-\section{Learning}
+\begin{itemize}
+  \item Learning
+  \item Instruction
+  \item Assessment
+\end{itemize}
 
-\todo{Figures displaying the power law of learning and forgetting might help.}
+All of these components are to some extent related with our research. The science of learning is the most related since it concerns human memory and learning. The science of instruction is about the manipulation of the student's environment in order to foster learning, it's the scientific study of how to help people learn. In educational systems, this is usually done by incorporating \textit{instructional policies}, the strategies or a set of instructions that help students maintain engagement and increase the amount gained knowledge in one session, instructional policies guide students during learning (e.g. by the selection of appropriate questions or the number of options in multiple-choice tests). Lastly, the science of assessment seeks to determine what people know~\cite{RichardE.Mayer2010}.
 
-Richard E. Mayer formulated learning as a change in what the learner knows caused by the learner's experience~\cite{RichardE.Mayer2010}. More specifically, learning is the process of encoding information~\cite{Lewis}. For example the encoding of the location of Portugal can be seen as learning the shape of the country, its neighbor Spain and the surrounding ocean.
+\subsection{Learning}
+
+\begin{figure}[htbp]
+\centering
+  \begin{subfigure}{.49\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{img/learning-curve}
+    \caption{Learning curve}
+    \label{fig:learning-curve}
+  \end{subfigure}
+  \begin{subfigure}{.49\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{img/forgetting-curve}
+    \caption{Forgetting curve}
+    \label{fig:forgetting-curve}
+  \end{subfigure}
+% \caption{Learning curve (left) and forgetting curve (right).}
+\label{fig:learning-forgetting-curves}
+\end{figure}
+
+Richard E. Mayer formulated learning as a change in what the learner knows caused by the learner's experience~\cite{RichardE.Mayer2010}. More specifically, learning is the process of encoding, modifying and reinforcing information~\cite{Lewis}. For example the encoding of the location of Portugal can be seen as learning the shape of the country, its neighbor Spain and the surrounding ocean.
 
 A learning curve is the rate of the student's progress in gaining new skill or knowledge by experience in the environment (e.g. by participating in a discussion, reading a book or riding a bike). Generally, the change in learner's skill or knowledge is proportional to the product of amount learned and amount to yet learn. Several functions modeling the learning curve were proposed in the past, namely the power law, exponential and hyperbolic function. Even though some researchers believe in a bias introduced by averaging many trials during the evaluation of the function, learning is widely believed to follow the power law~\cite{Klusasek2014}.
 
 In order to be able to model learning we need to be able to measure \textit{memory strength}, which is just a measurement of the ability to retrieve an item from memory. Memory strength can be measured indirectly by observing the following attributes of students when an item is practiced:
 
-\begin{description}
+\begin{description}[leftmargin=0cm]
   \item[Probability of recall] Probability of the student recalling the practiced item, which can be measured as the fraction of the number of successful recollections and the number of all presentation of the specific item.
   \item[Latency of recall] Latency of the student when retrieving the practiced item from their memory. Latency of recall can be measured by observing the response times of students.
   \item[Savings in relearning] The number of required revisions of the practiced item in order to fully regain its knowledge~\cite{MichaelW.Eysenck2008}.
@@ -34,76 +60,33 @@ In order to be able to model learning we need to be able to measure \textit{memo
 
 We can further distinguish the following levels of learning as measured by memory strength:
 
-\begin{description}
+\begin{description}[leftmargin=0cm]
   \item[Familiarity] The student has feeling they knew the item in the past but cannot remember anymore.
   \item[Recognition] The student recognized the item when presented multiple-choice options but couldn't remember otherwise.
   \item[Recall] The student is able to recall the item with some effort. Note that cognitive science distinguishes \textit{free recall} and \textit{cued recall}. Free recall is the ability to remember the item without any help (e.g. recalling the name of a country), in the case of cued recall, we are given an information which can help us remember (e.g. first letter of the country we are to remember).
   \item[Automaticity] The student recalls the item instantaneously when presented. Note that the level of automaticity can be measured by the latency of recall.
 \end{description}
 
-\section{Memory}
+\subsection{Memory}
 
 Memory is the biological storage that retains the information, e.g. the location of Portugal. The student's memory, however, decays with time. This memory decay is called \textit{forgetting} and similarly as learning it respects the power law.
 
 Forgetting can be reduced by repetition. Repetition can be massed or spaced. In a massed presentation the item is revised in a short interval many times over. In contrast, a spaced presentation usually consists of revisions performed in a longer period of time with pauses between presentations. It is well known that a spaced presentation leads to a better memory strength~\cite{RichardE.Mayer2010}. This phenomenon is called the \textit{spacing effect}.
 
-In the ACT-R model~\cite{Pavlik2003}, the memory strength $m$ of the student $s$ can be modeled by the equation~\ref{eq-actr}.
+The long-term memory of humans can be thought as:
 
-\begin{equation} \label{eq-actr}
-  m_n(t) = \ln{\sum_{i=1}^{n} t_{i}^{-d}}
-\end{equation}
+\begin{itemize}
+  \item Procedural (knowing how)
+  \item Declarative (knowing what)
+\end{itemize}
 
-The parameter $t$ is a vector of seconds that passed since each of the $n$ repetitions were performed by the student $s$. The parameter $d$ represents memory decay (the speed of forgetting). Note that the equation is just a simplification of the reality and does not take into account many very important aspects of forgetting, e.g. the mentioned spacing effect.
+The procedural memory goes beyond our conscious awareness and makes us capable of the incremental acquisition of both the motor and cognitive skills. The declarative memory (sometimes referred as explicit memory) is the conscious knowledge such as the world's countries or the English vocabulary~\cite{MichaelW.Eysenck2008}.
 
-\subsection{The Spacing Effect}
-\label{spacing-effect}
+\subsection{Performance}
 
-\todo{Nice plot showing what the hell this is all about.}
+The performance of students is the determination of what they know. Performance can be estimated from the speed and precision of recall, e.g. by a multiple-choice test, where the correctness of answers and response time is measured~\cite{Lewis}. Performance can be seen as an instrument that describes the student's knowledge, the understanding of which is important because it helps us guide the instructional policy.
 
-Philip~I.~Pavlik and John~R.~Anderson~\cite{Pavlik2005} developed an extended version of the equation in which the decay is a function of the activation at the time the item was presented (see Equation~\ref{eq-pavlik-decay} and Equation~\ref{eq-pavlik-activation}).
-
-\begin{equation} \label{eq-pavlik-decay}
-  d_i = ce^{m_{i-1}} + a
-\end{equation}
-\begin{equation} \label{eq-pavlik-activation}
-  m_n(t) = \ln{\sum_{i=1}^{n} t_{i}^{-d_i}}
-\end{equation}
-
-The parameters $c$ and $a$ affect the scale of the decay. Since $m_0 = -\infty$, the value of $d_i$ is always equal to $a$ for the first practice of the student. Additionally, when $c = 0$, the result of the equation is equivalent with the Equation~\ref{eq-actr}. Because the computation is recursive and a bit complex, we present the pseudo-code of the algorithm computing the memory activation function (see Algorithm~\ref{alg-memory-activation}).
-
-\begin{algorithm}
-  \caption{The function $\textsc{MemoryActivation}: \mathbb{N}^n \rightarrow \mathbb{R}^n$ takes the vector parameter $t$ in descending order, e.g. $[56800, 56400, 3600, 60, 0]$ (the last zero is the current practice). The result of the computation is a vector $m$ of student's memory strengths during each practice.}
-  \label{alg-memory-activation}
-  \begin{algorithmic}[1]
-    \Function{MemoryActivation}{$t$}
-      \State $n \gets size(t)$
-      \State $m_0 \gets -\infty$
-      \For{$i \gets 1$ \textbf{to} $n-1$}
-        \State $s \gets 0$
-        \For{$j \gets 1$ \textbf{to} $i$}
-          \State $d_j \gets ce^{m_{j-1}} + a$
-          \State $s \gets s + (t_j - t_i)^{-d_j}$
-        \EndFor
-        \State $m_i \gets \log(s)$
-      \EndFor
-      \State \Return $m$
-    \EndFunction
-  \end{algorithmic}
-\end{algorithm}
-
-\todo{Proof of correctness? Perhaps not necessary.}
-
-Note that the time complexity of the function is $\mathcal{O}\left(\frac{n(n-1)}{2}\right)$.
-
-\subsection{Procedural and Declarative Memory}
-
-The long-term memory of humans can be thought as either procedural (\textit{knowing how}) or declarative (\textit{knowing that}). The procedural memory goes beyond our conscious awareness and makes us capable of the incremental acquisition of both the motor and cognitive skills. The declarative memory (sometime referred as explicit memory) is the conscious knowledge such as the world's countries or the English vocabulary~\cite{MichaelW.Eysenck2008}.
-
-\section{Performance}
-
-The performance of students is the determination of what they know. Performance can be estimated from the speed and precision of recall, e.g. by a multiple-choice test, where the correctness of answers and response time is measured~\cite{Lewis}. Performance can be seen as an instrument that describes the learner's knowledge, the understanding of which is important because it helps us guide the \textit{instructional policy}. Instructional policy is the strategy or a set of instructions that helps students maintain engagement and increase the amount gained knowledge in one session.
-
-\section{Relevant Models}
+\section{Relevant Student Models}
 \label{relevant-models}
 
 In this section we discuss the models relevant to our work. There are two main components that concern us. The first is the estimation of prior knowledge which can be helpful if we need better understanding of the student's acquired knowledge. The second is the estimation of the current knowledge which combines the knowledge the student already had and the knowledge they acquired. Estimation of current knowledge is significant for the better part of this thesis.
@@ -113,7 +96,7 @@ In this section we discuss the models relevant to our work. There are two main c
 
 Elo system is a mathematical model suited for student modeling as recent research has shown. Elo rating system and its extension Glicko is otherwise a very popular approach in competitor-versus-competitor games such as chess~\cite{Vanek2014}. In our work we employ the model for the estimation of prior knowledge of students.
 
-In the standard version of Elo system we have the student's skill $\theta_s$ and the difficulty of an item $b_i$. The Equations~\ref{eq-elo-skill},~\ref{eq-elo-difficulty} demonstrate an update of the student's skill and the item's difficulty after one answered question. The parameter $R$ is $0$ or $1$ depending on the correctness of the student's answer. The probability that a student with a given skill $\theta_s$ will answer correctly on the presented question of difficulty $b_i$ is estimated by a logistic function (see Equation~\ref{eq-elo-logistic}).
+In the standard version of Elo system we have the student's skill $\theta_s$ and the difficulty of an item $b_i$. Equations~\ref{eq-elo-skill} and~\ref{eq-elo-difficulty} demonstrate an update of the student's skill and the item's difficulty after one answered question. The parameter $R$ is $0$ or $1$ depending on the correctness of the student's answer. The probability that a student with a given skill $\theta_s$ will answer correctly on the presented question of difficulty $b_i$ is estimated by a logistic function (see Equation~\ref{eq-elo-logistic}).
 
 \begin{equation} \label{eq-elo-skill}
   \theta_s \gets \theta_s + K(R - P(R = 1|s,i))
@@ -173,3 +156,51 @@ The parameter $y_k$ represents the correctness of the $k$-th question.
 The problem of this model is that it cannot be easily adjusted so that it includes the probability of guessing, particularly in cases where the practices were presented in the form of multiple-choice questions with varied number of options.
 
 \todo{Some examples would be nice.}
+
+\subsection{Models of Students' Memory}
+\label{spacing-effect}
+
+\todo{Nice plot showing what the hell this is all about.}
+
+In the ACT-R model~\cite{Pavlik2003}, the memory strength $m$ of the student $s$ can be modeled by the Equation~\ref{eq-actr}.
+
+\begin{equation} \label{eq-actr}
+  m_n(t) = \ln{\sum_{i=1}^{n} t_{i}^{-d}}
+\end{equation}
+
+The parameter $t$ is a vector of seconds that passed since each of the $n$ repetitions were performed by the student $s$. The parameter $d$ represents memory decay (the speed of forgetting). Note that the equation is just a simplification of the reality and does not take into account many very important aspects of forgetting, e.g. the mentioned spacing effect.
+
+Philip~I.~Pavlik and John~R.~Anderson~\cite{Pavlik2005} developed an extended version of the equation in which the decay is a function of the activation at the time the item was presented (see Equation~\ref{eq-pavlik-decay} and Equation~\ref{eq-pavlik-activation}).
+
+\begin{equation} \label{eq-pavlik-decay}
+  d_i = ce^{m_{i-1}} + a
+\end{equation}
+\begin{equation} \label{eq-pavlik-activation}
+  m_n(t) = \ln{\sum_{i=1}^{n} t_{i}^{-d_i}}
+\end{equation}
+
+The parameters $c$ and $a$ affect the scale of the decay. Since $m_0 = -\infty$, the value of $d_i$ is always equal to $a$ for the first practice of the student. Additionally, when $c = 0$, the result of the equation is equivalent with the Equation~\ref{eq-actr}. Because the computation is recursive and a bit complex, we present the pseudo-code of the algorithm computing the memory activation function (see Algorithm~\ref{alg-memory-activation}).
+
+\begin{algorithm}
+  \caption{The function $\textsc{MemoryActivation}: \mathbb{N}^n \rightarrow \mathbb{R}^n$ takes the vector parameter $t$ in descending order, e.g. $[56800, 56400, 3600, 60, 0]$ (the last zero is the current practice). The result of the computation is a vector $m$ of student's memory strengths during each practice.}
+  \label{alg-memory-activation}
+  \begin{algorithmic}[1]
+    \Function{MemoryActivation}{$t$}
+      \State $n \gets size(t)$
+      \State $m_0 \gets -\infty$
+      \For{$i \gets 1$ \textbf{to} $n-1$}
+        \State $s \gets 0$
+        \For{$j \gets 1$ \textbf{to} $i$}
+          \State $d_j \gets ce^{m_{j-1}} + a$
+          \State $s \gets s + (t_j - t_i)^{-d_j}$
+        \EndFor
+        \State $m_i \gets \log(s)$
+      \EndFor
+      \State \Return $m$
+    \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+
+\todo{Proof of correctness? Perhaps not necessary.}
+
+Note that the time complexity of the function is $\mathcal{O}\left(\frac{n(n-1)}{2}\right)$.

@@ -12,7 +12,7 @@ In this chapter we discuss several models which aim at modeling students' memory
   \item The prior knowledge of each student is different. If the student already has the practiced item in their long term memory, the process of forgetting is much slower.
 \end{itemize}
 
-\subsection{PFA: The Extended Model}
+\subsection{The Extended Model}
 
 One possibility how to incorporate timing information into the PFA model is by changing the memory activation in prediction. The times of previous attempts are passed to a \textit{time effect function} which may increase the probability of recall (see Equation~\ref{eq-pfa-standard-time-p}).
 
@@ -22,7 +22,7 @@ One possibility how to incorporate timing information into the PFA model is by c
 
 Since this is an extension of the standard PFA model, it is possible to integrate the estimation of prior knowledge as well as the probability of guessing into the model.
 
-\subsection{PFA: The Alternative Model}
+\subsection{The Alternative Model}
 
 Another way of dealing with timing between attempts is by changing the decay factor $\xi$ of the model presented in chapter~\ref{pfa}. The model takes into account the order of questions, yet doesn't consider timing between student's practices of an item. This problem can be resolved by replacing the parameter $\xi$ with time effect functions.
 
@@ -38,7 +38,7 @@ Equations~\ref{eq-pfa-gong-time-s},~\ref{eq-pfa-gong-time-f} show the incorporat
 
 As was discussed in the chapter~\ref{pfa}, the problem arises with multiple-choice questions. Another difficulty is the choice of a time effect function that fits the data well. The function should theoretically represent the rate at witch the effect of learning decays with the passage of time.
 
-\subsection{PFA: The Spacing Effect}
+\subsection{The Spacing Effect}
 
 \todo{Better and more extensive explanation (experiments aren't quite finished yet).}
 
@@ -69,4 +69,6 @@ In our case we are not only interested in the correctness of student's answers, 
   \label{fig-grid-search-rmse-auc}
 \end{figure}
 
-\subsection{Random Search}
+\subsection{Greedy Search}
+
+\subsection{Gradient Descent}
