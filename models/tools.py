@@ -354,7 +354,7 @@ def retrieval_prob(strength, tau=-0.704, s=0.255):
 
 def automaticity_level(t):
     """Calculates the level of automaticity (the effort the user had to
-    make to retrieve the item from memory) based on response time. The values
+    make to retrieve an item from memory) based on response time. The values
     of parameters are based on some statistical experiments.
 
     :param t: Response time in seconds.
@@ -480,12 +480,12 @@ def to_place_name(place_id, places=None):
     :type place_id: integer
     :param places: Dictionary of places can be given so that
         there is no need to load it every time the function is called
-        (e.g. in for-loop).
+        (e.g. in a for-loop).
     :type places: dict
     :rtype: string
     """
     places = places or load_places().T.to_dict()
-    return str(places[place_id]['name_en']).decode('utf-8')
+    return str(places[place_id]['name']).decode('utf-8')
 
 
 class cached_property(object):
@@ -547,7 +547,7 @@ class intervaldict(dict):
 
     Example::
 
-        d = betweendict({(1, 2): 'a', (8, 10): 'b'})
+        d = intervaldict({(1, 2): 'a', (8, 10): 'b'})
         d[8.2]  # returns 'b'
         d[1]  # returns 'a'
 
@@ -560,7 +560,7 @@ class intervaldict(dict):
             if k[0] <= key < k[1]:
                 return k
         raise KeyError('Key {!r} is not between any values in '
-                       'the BetweenDict'.format(key))
+                       'the intervaldict'.format(key))
 
     def __getitem__(self, key):
         interval = self.get_interval(key)
