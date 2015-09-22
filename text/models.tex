@@ -4,7 +4,7 @@ The models presented in chapter~\ref{relevant-models} seem to work well in the c
 
 \section{Models Based on Timing Information}
 
-In this chapter we discuss several models which aim at modeling students' memory with the usage of timing information of answers. There are several several issues to consider beforehand:
+In this chapter we discuss several models which aim at modeling students' memory with the usage of timing information of answers. There are several issues to consider beforehand:
 
 \begin{itemize}
   \item Students have different skills and thus the rate of retention loss varies.
@@ -24,7 +24,7 @@ Since this is an extension of the standard PFA model, it is possible to integrat
 
 \subsection{The Alternative Model}
 
-Another way of dealing with timing between attempts is by changing the decay factor $\xi$ of the model presented in chapter~\ref{pfa}. The model takes into account the order of questions, yet doesn't consider timing between student's practices of an item. This problem can be resolved by replacing the parameter $\xi$ with time effect functions.
+Another way of dealing with timing between attempts is by changing the decay factor $\xi$ of the model presented in chapter~\ref{pfa}. The model takes into account the order of questions, yet doesn't consider timing between student's practices of an item. This problem can be resolved by replacing the parameter $\xi$ with some time effect functions.
 
 \begin{equation} \label{eq-pfa-gong-time-s}
   s_{i,j} = \sum_{k=1}^{n-1} y_k \cdot f(t_k)
