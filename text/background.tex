@@ -4,7 +4,7 @@ In this chapter we present an overview of the related research with the topic of
 
 \section{Student Modeling and Memory}
 
-Throughout the last one hundred years, researchers have been trying to figure out the complex cognitive processes in the human brain responsible for our ability to learn~\cite{RichardE.Mayer2010}. Understanding the process of learning can be very helpful in education and educational systems where we wish to improve the student's representation in order to be able to better adapt to the needs and knowledge of an individual student practicing a particular domain (e.g. the knowledge of animals, Japanese vocabulary or geography). The construction of a quantitative representation, called a \textit{student model}, is known as \textit{student modeling}~\cite{Sison1998}.
+Throughout the last one hundred years, researchers have been trying to figure out the complex cognitive processes in the human brain, which are responsible for our ability to learn~\cite{RichardE.Mayer2010}. Understanding the process of learning can be very helpful in education and educational systems where we wish to improve the student's representation. This is useful if we want to adapt our system to the needs and knowledge of individual students practicing a particular domain (e.g. the knowledge of animals, Japanese vocabulary or geography). The construction of a quantitative representation, called a \textit{student model}, is known as \textit{student modeling}~\cite{Sison1998}.
 
 The Greek philosopher and mathematician Plato compared human mind to an aviary in which each bird represented a memory~\cite{MichaelW.Eysenck2008}. Today, we have a much better intuition on the human biological storage -- the hardware responsible for the storage and organization of data in modern computers. This analogy of computer data storage is much better than the one Plato used and it seems to be very close and accurate depiction of the human memory.
 
@@ -16,15 +16,15 @@ So far, we haven't mentioned learning, which is very closely related to memory a
   \item Performance
 \end{itemize}
 
-In a book released by a professor of psychology at the University of California Richard~E.~Mayer, the science of learning is organized into three components, that is the science of:
+This distinction is not very important, however, it can help the reader better understand the underlying problem discussed in our thesis, the connection between computer science and psychology. In a book released by a professor of psychology at the University of California Richard~E.~Mayer, the science of learning is organized differently, that is into the following three components:
 
 \begin{itemize}
-  \item Learning
-  \item Instruction
-  \item Assessment
+  \item The science of learning
+  \item The science of instruction
+  \item The science of assessment
 \end{itemize}
 
-All of these components are to some extent related to our research. However, the science of learning is the most related since it concerns human memory and learning. The science of instruction is about the manipulation of the student's environment in order to foster learning, it's the scientific study of how to help people learn. In educational systems, this is usually done by incorporating \textit{instructional policies}, the strategies or a set of instructions that help students maintain engagement and increase the amount gained knowledge in one session, instructional policies guide students during learning (e.g. by the selection of appropriate questions or the number of options in multiple-choice tests). Lastly, the science of assessment seeks to determine what people know, which is important so that we are able to quantify the effectiveness of different instructional methods~\cite{RichardE.Mayer2010}.
+All of these components are to some extent related to our research. However, the science of learning is the most related since it concerns human memory and learning. The science of instruction is about the manipulation of the student's environment in order to foster learning, it's the scientific study of how to help people learn. In educational systems, this is usually done by incorporating \textit{instructional policies}, the strategies or a set of instructions that help students maintain engagement and increase the amount gained knowledge in one session. Instructional policies guide students during learning by e.g. the selection of appropriate questions or the number of options in multiple-choice tests. Lastly, the science of assessment seeks to determine what people know, which is important so that we are able to quantify the effectiveness of different instructional methods~\cite{RichardE.Mayer2010}.
 
 \subsection{Learning}
 
@@ -46,15 +46,21 @@ All of these components are to some extent related to our research. However, the
 \label{fig:learning-forgetting-curves}
 \end{figure}
 
-Richard E. Mayer formulated learning as a change in what the learner knows caused by the learner's experience~\cite{RichardE.Mayer2010}. More specifically, learning is the process of encoding, modifying and reinforcing information~\cite{Lewis}. For example the encoding of the location of Portugal can be seen as learning the shape of the country, its neighbor Spain and the surrounding ocean.
+Richard E. Mayer formulated learning as a change in what the student knows caused by the student's experience~\cite{RichardE.Mayer2010}. More specifically, learning is the process of encoding, modifying and reinforcing information~\cite{Lewis}. For example the encoding of the location of Portugal can be seen as learning the shape of the country, its neighbor Spain and the surrounding ocean.
 
-A learning curve is the rate of the student's progress in gaining new skill or knowledge by experience in the environment (e.g. by participating in a discussion, reading a book or riding a bike). Generally, the change in learner's skill or knowledge is proportional to the product of amount learned and amount to yet learn. Several functions modeling the learning curve were proposed in the past, namely the power law, exponential and hyperbolic function. Even though some researchers believe in a bias introduced by averaging many trials during the evaluation of the function, learning is widely believed to follow the power law~\cite{Klusasek2014}.
+A learning curve is the rate of the student's progress in gaining new skill or knowledge by experience in the environment (e.g. by participating in a discussion, reading a book or riding a bike). Generally, the speed of learning is proportional to the product of amount learned and amount to yet learn. This can be written mathematically:
 
-In order to be able to model learning we need to be able to measure \textit{memory strength}, which is just a measurement of the ability to retrieve an item from memory. Memory strength can be measured indirectly by observing the following attributes of students when an item is practiced:
+\begin{equation} \label{learning-differential}
+  \frac{dK}{dt} = a \cdot (K_{max} - K)
+\end{equation}
+
+The coefficient $a$ in the Equeation~\ref{learning-differential} represents the rate of learning. $K$ is the student's knowledge and $K_{max}$ the maximum knowledge possible. Several functions modeling the learning curve were proposed in the past, namely the power law, exponential and hyperbolic function. Most researchers nowadays believe that learning follows the power law~\cite{Klusasek2014}.
+
+In order to model learning we need to be able to measure \textit{memory strength}, which is a measurement of the ability to retrieve an \textit{item} from memory. In our case an item is any information that can be learned. Memory strength can be measured indirectly by observing the following attributes of students when an item is practiced:
 
 \begin{description}[leftmargin=0cm]
-  \item[Probability of recall] Probability of the student recalling the practiced item, which can be measured as the fraction of the number of successful recollections and the number of all presentation of the specific item.
-  \item[Latency of recall] Latency of the student when retrieving the practiced item from their memory. Latency of recall can be measured by observing the response times of students.
+  \item[Probability of recall] Probability of the student recalling the practiced item, this can be measured as the fraction of the number of successful recollections and the number of all presentations.
+  \item[Latency of recall] Latency of the student when retrieving the practiced item from memory. Latency of recall can be measured by observing the response times of students.
   \item[Savings in relearning] The number of required revisions of the practiced item in order to fully regain its knowledge~\cite{MichaelW.Eysenck2008}.
 \end{description}
 
@@ -63,7 +69,7 @@ We can further distinguish the following levels of learning as measured by memor
 \begin{description}[leftmargin=0cm]
   \item[Familiarity] The student has feeling they knew the item in the past but cannot remember anymore.
   \item[Recognition] The student recognized the item when presented multiple-choice options but couldn't remember otherwise.
-  \item[Recall] The student is able to recall the item with some effort. Note that cognitive science distinguishes \textit{free recall} and \textit{cued recall}. Free recall is the ability to remember the item without any help (e.g. recalling the name of a country), in the case of cued recall, we are given an information which can help us remember (e.g. first letter of the country we are to remember).
+  \item[Recall] The student is able to recall the item with some effort. Note that in cognitive science we distinguishe \textit{free recall} and \textit{cued recall}. Free recall is the ability to remember an item without any help (e.g. recalling the name of a country), in the case of cued recall, we are given an information which can help us remember (e.g. first letter of the country we are to remember).
   \item[Automaticity] The student recalls the item instantaneously when presented. Note that the level of automaticity can be measured by the latency of recall.
 \end{description}
 
@@ -71,16 +77,9 @@ We can further distinguish the following levels of learning as measured by memor
 
 Memory is the biological storage that retains the information, e.g. the location of Portugal. The student's memory, however, decays with time. This memory decay is called \textit{forgetting} and similarly as learning it respects the power law.
 
-Forgetting can be reduced by repetition. Repetition can be massed or spaced. In a massed presentation the item is revised in a short interval many times over. In contrast, a spaced presentation usually consists of revisions performed in a longer period of time with pauses between presentations. It is well known that a spaced presentation leads to a better memory strength~\cite{RichardE.Mayer2010}. This phenomenon is called the \textit{spacing effect}.
+Forgetting can be reduced by repetition. Repetition can be massed or spaced, in a massed presentation the item is revised in a short interval many times over. In contrast, a spaced presentation usually consists of revisions performed in a longer period of time with pauses between presentations. It is well known that a spaced presentation leads to a better memory strength~\cite{RichardE.Mayer2010}. This phenomenon is called the \textit{spacing effect}.
 
-The long-term memory of humans can be thought as:
-
-\begin{itemize}
-  \item Procedural (knowing how)
-  \item Declarative (knowing what)
-\end{itemize}
-
-The procedural memory goes beyond our conscious awareness and makes us capable of the incremental acquisition of both the motor and cognitive skills. The declarative memory (sometimes referred as explicit memory) is the conscious knowledge such as the world's countries or the English vocabulary~\cite{MichaelW.Eysenck2008}.
+The next matter we haven't mentioned as of yet are the two kinds of long-term memory, that is the procedural (knowing how) and declarative (knowing what) memory. The procedural memory is the memory we aren't consciously aware and which makes humans capable of the acquisition of both the motor and cognitive skills. The declarative memory (sometimes referred as explicit memory) is the conscious knowledge such as the world's countries or the English vocabulary~\cite{MichaelW.Eysenck2008}.
 
 \subsection{Performance}
 
