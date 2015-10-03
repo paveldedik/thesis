@@ -8,6 +8,8 @@ Some selected filters of data (e.g. European countries, Czech rivers).
 
 """
 
+from datetime import timedelta
+
 from . import tools
 
 
@@ -93,7 +95,7 @@ def user_answered(data, condition):
     """Only users with the total number answers according to the
     :fun:`condition`.
     """
-    assert callable(condition), "The condition must be a function."
+    assert callable(condition), "The condition is not a function."
     user_values = data['user_id'].value_counts()
     users_with_answers = user_values[condition(user_values)]
     return data['user_id'].isin(users_with_answers.index)
@@ -103,7 +105,7 @@ def place_answered(data, condition):
     """Only places with the total number of answers according to the
     :fun:`condition`.
     """
-    assert callable(condition), "The condition must be a function."
+    assert callable(condition), "The condition is not a function."
     place_values = data['place_id'].value_counts()
     places_with_answers = place_values[condition(place_values)]
     return data['place_id'].isin(places_with_answers.index)
@@ -113,7 +115,7 @@ def user_item_answered(data, condition):
     """Only the items with the total number of answers according to the
     :fun:`condition`.
     """
-    assert callable(condition), "The condition must be a function."
+    assert callable(condition), "The condition is not a function."
 
     items = data['user_id'].map(str) + ',' + data['place_id'].map(str)
     item_values = items.value_counts()
@@ -131,6 +133,23 @@ def for_staircase(data):
         &
         user_item_answered(data, lambda x: x >= 3)
     )
+
+
+def sequentize(data, delta=timedelta(days=5)):
+    """Creates sequences of answers where the timedelta between
+    the first and the last answer to an item is at least as big as
+    specified by the parameter ``delta``.
+    """
+    groups = data.sort(['inserted']).groupby(['user_id', 'place_id'])
+    first, last = groups.first(), groups.last()
+
+    filtered = (last['inserted'] - first['inserted'])
+    filtered = filtered[filtered > delta]
+
+    users = filtered.index.get_level_values('user_id')
+    places = filtered.index.get_level_values('place_id')
+
+    return data['user_id'].isin(users) & data['place_id'].isin(places)
 
 
 def classmates(data, minimum=10):

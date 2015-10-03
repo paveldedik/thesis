@@ -683,9 +683,9 @@ class GradientDescent(object):
 
             self.log_metadata = kwargs.pop('log_metadata', False)
             self.log_staircase = kwargs.pop('log_staircase', False)
-            self.metadata = {}
 
-            self.seed = kwargs.pop('seed', 0.2)
+            self.metadata = {}
+            self.seed = kwargs.pop('seed')
 
             if self.log_metadata:
                 self.metadata['diffs'] = []
@@ -717,10 +717,11 @@ class GradientDescent(object):
             self.gamma += self.learn_rate * shift * item.gamma_effect
             self.delta += self.learn_rate * shift * item.delta_effect
 
-            # if not np.random.randint(1000):
-            #     self.gamma += np.random.uniform(-self.seed, self.seed)
-            # if not np.random.randint(1000):
-            #     self.delta += np.random.uniform(-self.seed, self.seed)
+            if self.seed is not None:
+                if not np.random.randint(1000):
+                    self.gamma += np.random.uniform(-self.seed, self.seed)
+                if not np.random.randint(1000):
+                    self.delta += np.random.uniform(-self.seed, self.seed)
 
             if answer.is_correct:
                 item.inc_knowledge(self.gamma * shift)
@@ -752,7 +753,7 @@ class GradientDescent(object):
 
     def search(self, model_fun, init_parameters,
                init_learn_rate=0.01, number_of_iter=10, log_metadata=True,
-               echo_iterations=True):
+               echo_iterations=True, init_seed=None):
         """Finds optimal parameters for given model.
 
         :param model_fun: Callable that trains the model using the given
@@ -773,11 +774,10 @@ class GradientDescent(object):
 
         pretty_echo(init_parameters)
         parameters = [init_parameters]
-        init_seed = 0.2
 
         for i in range(1, number_of_iter + 1):
             model_kwargs = {
-                'seed': init_seed / (i ** 2),
+                'seed': init_seed / (i ** 2) if init_seed else None,
                 'learn_rate': init_learn_rate / (i / 2),
                 'log_metadata': log_metadata,
                 'log_staircase': i == number_of_iter,
@@ -811,7 +811,7 @@ class GradientDescent(object):
         parameters = {
             'gamma': init_gamma,
             'delta': init_delta,
-            'staircase': dict.fromkeys([
+            'staircase': init_staircase or dict.fromkeys([
                 (0, 60), (60, 90), (90, 150), (150, 300), (300, 600),
                 (600, 60*30), (60*30, 60*60*3), (60*60*3, 60*60*24),
                 (60*60*24, 60*60*24*5), (60*60*24*5, np.inf),
