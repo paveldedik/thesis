@@ -28,13 +28,6 @@ All of these components are to some extent related to our research. However, the
 
 \subsection{Learning}
 
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=\textwidth]{img/learning-forgetting-curves}
-  \caption{Learning curve (left) and forgetting curve (right).}
-  \label{fig:learning-forgetting-curves}
-\end{figure}
-
 Richard E. Mayer formulated learning as a change in what the student knows caused by the student's experience~\cite{RichardE.Mayer2010}. More specifically, learning is the process of encoding, modifying and reinforcing information~\cite{Lewis}. For example the encoding of the location of Portugal can be seen as learning the shape of the country, its neighbor Spain and the surrounding ocean.
 
 A learning curve is the rate of the student's progress in gaining new skill or knowledge by experience in the environment (e.g. by participating in a discussion, reading a book or riding a bike). Generally, the speed of learning is proportional to the product of amount learned and amount to yet learn. This can be written mathematically:
@@ -43,9 +36,34 @@ A learning curve is the rate of the student's progress in gaining new skill or k
   \frac{dK}{dt} = a \cdot (K_{max} - K)
 \end{equation}
 
-The coefficient $a$ in the Equeation~\ref{learning-differential} represents the rate of learning. $K$ is the student's knowledge and $K_{max}$ the maximum knowledge possible. Several functions modeling the learning curve were proposed in the past, namely the power law, exponential and hyperbolic function. Most researchers nowadays believe that learning follows the power law~\cite{Klusasek2014}.
+The coefficient $a$ in the Equation~\ref{learning-differential} represents the rate of learning. $K$ is the student's knowledge and $K_{max}$ the maximum knowledge possible. Several functions modeling the learning curve were proposed in the past, namely the power law, exponential and hyperbolic function. Most researchers nowadays believe that learning follows the power law~\cite{Klusasek2014}.
 
-In order to model learning we need to be able to measure \textit{memory strength}, which is a measurement of the ability to retrieve an \textit{item} from memory. In our case an item is any information that can be learned. Memory strength can be measured indirectly by observing the following attributes of students when an item is practiced:
+\subsection{Memory}
+
+Memory is the biological storage that retains encoded information, e.g. the location of Portugal. We recognize at least three types of memory (the sensory memory, the short-term memory and the long-term memory) all of which don't retain information permanently and decay with time. The long-term memory decay is called \textit{forgetting} and similarly as learning the speed of forgetting is inversely proportional to the volume of remaining material.
+
+\begin{equation} \label{forgetting-differential}
+  \frac{dK}{dt} = -bK
+\end{equation}
+
+In Equation~\ref{forgetting-differential} the parameter $p$ represents the rate of forgetting and $K$ is the student's knowledge of the material. Solving the differential equation yields a negative exponential. Most researchers believe that forgetting respects the power law~\cite{MichaelW.Eysenck2008}, however, in some cases it is argued that exponential functions with time scaled to $\sqrt{t}$ describes the phenomenon better~\cite{White2001}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{img/learning-forgetting-curves}
+  \caption{Learning curve (left) and forgetting curve (right).}
+  \label{fig:learning-forgetting-curves}
+\end{figure}
+
+The effect of forgetting (i.e. the loss of information) can be reduced by repetition. Repetition can be massed or spaced, in a massed presentation an item is typically revised in a short interval many times over. In contrast, a spaced presentation usually consists of revisions performed across longer periods of time with pauses between presentations. It is well known that a spaced presentation leads to a better and more stable long-term memory~\cite{RichardE.Mayer2010}. This phenomenon is called the \textit{spacing effect}.
+
+It's worth mentioning that our concern is only the factual knowledge which is stored as the declarative memory, that is the conscious knowledge (knowing what) such as the world's countries or the English vocabulary. On the other hand the procedural memory (knowing how) is the memory we aren't consciously aware of and which makes humans capable of the acquisition of both the motor and cognitive skills. For example riding a bike or swimming are tasks that are learned and collected as procedural memories~\cite{MichaelW.Eysenck2008}.
+
+\subsection{Performance}
+
+The performance of students is the determination of what they know. Performance can be estimated from the speed and precision of recall, e.g. by a multiple-choice test, where the correctness of answers and response time is measured~\cite{Lewis}. Performance can be seen as an instrument that describes the student's knowledge, the understanding of which is important because it helps us guide the instructional policy.
+
+One of the most useful metric of student's performance is the \textit{memory strength} (a measurement of the ability to retrieve an \textit{item} from memory). In our case an item is any factual information that can be learned. Memory strength can be measured indirectly by observing the following attributes of students when an item is practiced:
 
 \begin{description}[leftmargin=0cm]
   \item[Probability of recall] Probability of the student recalling the practiced item, this can be measured as the fraction of the number of successful recollections and the number of all presentations.
@@ -68,18 +86,6 @@ We can further distinguish the following levels of learning as measured by memor
   \item[Recall] The student is able to recall the item with some effort. Note that in cognitive science we distinguishe \textit{free recall} and \textit{cued recall}. Free recall is the ability to remember an item without any help (e.g. recalling the name of a country), in the case of cued recall, we are given an information which can help us remember (e.g. first letter of the country we are to remember).
   \item[Automaticity] The student recalls the item instantaneously when presented. Note that the level of automaticity can be measured by the latency of recall.
 \end{description}
-
-\subsection{Memory}
-
-Memory is the biological storage that retains encoded information, e.g. the location of Portugal. We recognize at least three types of memory (the sensory memory, the short-term memory and the long-term memory) all of which don't retain information permanently and decay with time. The long-term memory decay is called \textit{forgetting} and similarly as learning it respects the power law~\cite{MichaelW.Eysenck2008}.
-
-The effect of forgetting (i.e. loss of information) can be reduced by repetition. Repetition can be massed or spaced, in a massed presentation an item is revised in a short intervals many times over. In contrast, a spaced presentation usually consists of revisions performed across longer periods of time with pauses between presentations. It is well known that a spaced presentation leads to a better memory strength~\cite{RichardE.Mayer2010}. This phenomenon is called the \textit{spacing effect}.
-
-The next matter we shell discuss is the classification of long-term memory by information type. Most importantly we shell distinguish the procedural (knowing how) and declarative (knowing what) memory. The procedural memory is the memory we aren't consciously aware of and which makes humans capable of the acquisition of both the motor and cognitive skills. For example riding a bike or swimming are tasks that are learned and collected as procedural memories. The declarative memory is the conscious knowledge such as the world's countries or the English vocabulary~\cite{MichaelW.Eysenck2008}.
-
-\subsection{Performance}
-
-The performance of students is the determination of what they know. Performance can be estimated from the speed and precision of recall, e.g. by a multiple-choice test, where the correctness of answers and response time is measured~\cite{Lewis}. Performance can be seen as an instrument that describes the student's knowledge, the understanding of which is important because it helps us guide the instructional policy.
 
 \section{Relevant Student Models}
 \label{relevant-models}
@@ -160,7 +166,7 @@ The parameter $y_k$ represents the correctness of the $k$-th question. For examp
 
 The problem of this model is that it cannot be easily adjusted so that it includes the probability of guessing, particularly in cases where the practices were presented in the form of multiple-choice questions with varied number of options.
 
-\subsection{Models of Students' Memory}
+\subsection{Models of Forgetting}
 \label{spacing-effect}
 
 \todo{Nice plot showing what the hell this is all about.}
@@ -191,9 +197,9 @@ The parameters $c$ and $a$ affect the scale of the decay. Since $m_0 = -\infty$,
     \Function{MemoryActivation}{$t$}
       \State $n \gets size(t)$
       \State $m_0 \gets -\infty$
-      \For{$i \gets 1$ \textbf{to} $n-1$}
+      \For{$i \gets 2$ \textbf{to} $n$}
         \State $s \gets 0$
-        \For{$j \gets 1$ \textbf{to} $i$}
+        \For{$j \gets 1$ \textbf{to} $i-1$}
           \State $d_j \gets ce^{m_{j-1}} + a$
           \State $s \gets s + (t_j - t_i)^{-d_j}$
         \EndFor
