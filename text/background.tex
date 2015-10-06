@@ -71,11 +71,11 @@ We can further distinguish the following levels of learning as measured by memor
 
 \subsection{Memory}
 
-Memory is the biological storage that retains the information, e.g. the location of Portugal. The student's memory, however, decays with time. This memory decay is called \textit{forgetting} and similarly as learning it respects the power law.
+Memory is the biological storage that retains encoded information, e.g. the location of Portugal. We recognize at least three types of memory (the sensory memory, the short-term memory and the long-term memory) all of which don't retain information permanently and decay with time. The long-term memory decay is called \textit{forgetting} and similarly as learning it respects the power law~\cite{MichaelW.Eysenck2008}.
 
-Forgetting can be reduced by repetition. Repetition can be massed or spaced, in a massed presentation the item is revised in a short interval many times over. In contrast, a spaced presentation usually consists of revisions performed in a longer period of time with pauses between presentations. It is well known that a spaced presentation leads to a better memory strength~\cite{RichardE.Mayer2010}. This phenomenon is called the \textit{spacing effect}.
+The effect of forgetting (i.e. loss of information) can be reduced by repetition. Repetition can be massed or spaced, in a massed presentation an item is revised in a short intervals many times over. In contrast, a spaced presentation usually consists of revisions performed across longer periods of time with pauses between presentations. It is well known that a spaced presentation leads to a better memory strength~\cite{RichardE.Mayer2010}. This phenomenon is called the \textit{spacing effect}.
 
-The next matter we haven't mentioned as of yet are the two kinds of long-term memory, that is the procedural (knowing how) and declarative (knowing what) memory. The procedural memory is the memory we aren't consciously aware and which makes humans capable of the acquisition of both the motor and cognitive skills. The declarative memory (sometimes referred as explicit memory) is the conscious knowledge such as the world's countries or the English vocabulary~\cite{MichaelW.Eysenck2008}.
+The next matter we shell discuss is the classification of long-term memory by information type. Most importantly we shell distinguish the procedural (knowing how) and declarative (knowing what) memory. The procedural memory is the memory we aren't consciously aware of and which makes humans capable of the acquisition of both the motor and cognitive skills. For example riding a bike or swimming are tasks that are learned and collected as procedural memories. The declarative memory is the conscious knowledge such as the world's countries or the English vocabulary~\cite{MichaelW.Eysenck2008}.
 
 \subsection{Performance}
 
@@ -105,7 +105,7 @@ In the standard version of Elo system we have the student's skill $\theta_s$ and
   P(R = 1|s,i) = \frac{1}{1 + e^{-(\theta_s - b_i)}}
 \end{equation}
 
-The constant parameter $K$ affects the change in the estimates $\theta_s$ and $b_i$. Higher value means faster change after few questions, in contrast lower value makes the change slower. This is a problem since the number of answers varies throughout the time. It's been demonstrated that the use of an uncertainty function $\frac{a}{1 + bn}$, which considers the number of answers of students in the system, makes the predictions more stable and increases accuracy~\cite{Vanek2014}.
+The constant parameter $K$ affects the change in the estimates $\theta_s$ and $b_i$. Higher value means faster change after few questions, in contrast lower value makes the change slower. This is a problem since the number of answers varies over time. It's been demonstrated that the use of an uncertainty function $\frac{a}{1 + bn}$, which considers the number of answers of students in the system, makes the predictions more stable and increases accuracy~\cite{Vanek2014}.
 
 \subsection{Performance Factor Analysis}
 \label{pfa}
@@ -120,9 +120,9 @@ Performance Factor Analysis (PFA) is a student modeling approach based on the Le
   P(m) = \frac{1}{1 + e^{-m}}
 \end{equation}
 
-In Equation~\ref{eq-pfa-standard}, where $m$ is a function of the student's knowledge, the parameter $\beta_j$ is the difficulty of the knowledge component $j$. The counts of current successes and failures of the student $i$ and the knowledge component $j$ are represented by the parameters $s_{i,j}$ and $f_{i,j}$, where $\gamma_j$ and $\delta_j$ define the weight of each success and failure.
+In Equation~\ref{eq-pfa-standard}, where $m$ is a function of the student's knowledge, the parameter $\beta_j$ is the difficulty of the knowledge component $j$. The counts of current successes and failures of the student $i$ and the knowledge component $j$ are represented by the parameters $s_{i,j}$ and $f_{i,j}$, where $\gamma_j$ and $\delta_j$ describe the weight of each success and failure.
 
-The standard PFA model is defined in terms of knowledge components which is not always needed. The main disadvantage, however, is the inability to consider the order of answers. Another problem with the standard model is that it doesn't take into account the probability of guessing. Both these issues are solved in the following model:
+The standard PFA model is defined in terms of knowledge components which is not always needed. The main disadvantage, however, is the inability to consider the order of answers. Another problem with the standard model is that it doesn't take into account the probability of guessing~\cite{Papousek2014}. Both these issues are solved in the following model:
 
 \begin{equation} \label{eq-pfa-extended}
   m \gets \begin{cases}
@@ -140,17 +140,25 @@ The initial value of $m$ in Equation~\ref{eq-pfa-extended} can be estimated from
 Another variation of the original PFA model was proposed by Yue Gong~\cite{Gong2011}. The idea of the model is based on the fact that we expect the student who answered in total of four presentations two times correctly in the last two presentations to perform better than the student who answered correctly in the first two presentations. The extended model introduces a decay factor $\xi$ that changes the behavior of the parameters $s_{i,j}$ and $f_{i,j}$ (see Equations~\ref{eq-pfa-gong-s},~\ref{eq-pfa-gong-f}).
 
 \begin{equation} \label{eq-pfa-gong-s}
-  s_{i,j} = \sum_{k=1}^{n-1} y_k \cdot \xi^{n-1-k}
+  s_{i,j} = \sum_{k=1}^{n} y_k \cdot \xi^{n-k}
 \end{equation}
 
 \begin{equation} \label{eq-pfa-gong-f}
-  f_{i,j} = \sum_{k=1}^{n-1} |y_k - 1| \cdot \xi^{n-1-k}
+  f_{i,j} = \sum_{k=1}^{n} |y_k - 1| \cdot \xi^{n-k}
 \end{equation}
 
-The parameter $y_k$ represents the correctness of the $k$-th question. 
-The problem of this model is that it cannot be easily adjusted so that it includes the probability of guessing, particularly in cases where the practices were presented in the form of multiple-choice questions with varied number of options.
+The parameter $y_k$ represents the correctness of the $k$-th question. For example suppose that a student was presented with a question in five trials, suppose that the student answered incorrectly in the first three trials and answered correctly in the last two. Now for the given value of $\xi = 0.8$ we can calculate the values of $s_{i,j}$ and $f_{i,j}$:
 
-\todo{Some examples would be nice.}
+\begin{equation} \label{eq-pfa-gong-s-example}
+  \begin{split}
+  s_{i,j} & = 0 \cdot 0.8^4 + 0 \cdot 0.8^3 + 0 \cdot 0.8^2 + 1 \cdot 0.8^1 + 1 \cdot 0.8^0 \\
+  & = 1.8 \\
+  f_{i,j} & = 1 \cdot 0.8^4 + 1 \cdot 0.8^3 + 1 \cdot 0.8^2 + 0 \cdot 0.8^1 + 0 \cdot 0.8^0 \\
+  & = 1.56
+  \end{split}
+\end{equation}
+
+The problem of this model is that it cannot be easily adjusted so that it includes the probability of guessing, particularly in cases where the practices were presented in the form of multiple-choice questions with varied number of options.
 
 \subsection{Models of Students' Memory}
 \label{spacing-effect}
@@ -195,7 +203,5 @@ The parameters $c$ and $a$ affect the scale of the decay. Since $m_0 = -\infty$,
     \EndFunction
   \end{algorithmic}
 \end{algorithm}
-
-\todo{Proof of correctness? Perhaps not necessary.}
 
 Note that the time complexity of the function is $\mathcal{O}\left(\frac{n(n-1)}{2}\right)$.

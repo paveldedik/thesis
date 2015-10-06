@@ -1,5 +1,5 @@
-Modeling Students' Memory
-=========================
+Modeling Human Memory for Adaptive Educational Systems
+======================================================
 
 ![Forgetting Curve](/img/pfa-proper-gradient-descent-staircase-2.png)
 
