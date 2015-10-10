@@ -47,6 +47,12 @@ class PerformanceResult(object):
         return sk.metrics.roc_auc_score(self.observed, self.predicted)
 
     @tools.cached_property
+    def ll(self):
+        """Log-likelihood, i.e. the logarithm of the likelihood.
+        """
+        return sk.metrics.log_loss(self.observed, self.predicted)
+
+    @tools.cached_property
     def off(self):
         """Difference between observed frequency of correct
         answers and average prediction.
@@ -77,6 +83,7 @@ class PerformanceResult(object):
         return (
             'RMSE: {self.rmse}\n'
             'AUC: {self.auc}\n'
+            'LL: {self.ll}\n'
             'OFF: {self.off}\n'
             'CORRECT: {self.correct}\n'
             'ACCURACY: {self.accuracy}\n'

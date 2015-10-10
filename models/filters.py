@@ -56,7 +56,7 @@ def cities(data):
 
 def open_questions(data):
     """List only open questions."""
-    return data['number_of_options'] == 0
+    return data['options'].apply(len) == 0
 
 
 def european_countries(data):

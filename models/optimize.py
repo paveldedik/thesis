@@ -685,7 +685,8 @@ class GradientDescent(object):
             self.log_staircase = kwargs.pop('log_staircase', False)
 
             self.metadata = {}
-            self.seed = kwargs.pop('seed')
+            self.random_factor = kwargs.pop('random_factor')
+            self.random_chance = kwargs.pop('random_chance', 1000)
 
             if self.log_metadata:
                 self.metadata['diffs'] = []
@@ -717,11 +718,17 @@ class GradientDescent(object):
             self.gamma += self.learn_rate * shift * item.gamma_effect
             self.delta += self.learn_rate * shift * item.delta_effect
 
-            if self.seed is not None:
-                if not np.random.randint(1000):
-                    self.gamma += np.random.uniform(-self.seed, self.seed)
-                if not np.random.randint(1000):
-                    self.delta += np.random.uniform(-self.seed, self.seed)
+            if self.random_factor is not None:
+                factor = self.random_factor
+                chance = self.random_chance
+
+                if not np.random.randint(chance):
+                    self.gamma += np.random.uniform(-factor, factor)
+                if not np.random.randint(chance):
+                    self.delta += np.random.uniform(-factor, factor)
+                if has_practices and not np.random.randint(chance):
+                    self.staircase[seconds] += \
+                        np.random.uniform(-factor, factor)
 
             if answer.is_correct:
                 item.inc_knowledge(self.gamma * shift)
@@ -753,7 +760,7 @@ class GradientDescent(object):
 
     def search(self, model_fun, init_parameters,
                init_learn_rate=0.01, number_of_iter=10, log_metadata=True,
-               echo_iterations=True, init_seed=None):
+               echo_iterations=True, random_factor=None, random_chance=None):
         """Finds optimal parameters for given model.
 
         :param model_fun: Callable that trains the model using the given
@@ -777,10 +784,12 @@ class GradientDescent(object):
 
         for i in range(1, number_of_iter + 1):
             model_kwargs = {
-                'seed': init_seed / (i ** 2) if init_seed else None,
                 'learn_rate': init_learn_rate / (i / 2),
                 'log_metadata': log_metadata,
                 'log_staircase': i == number_of_iter,
+                'random_factor': (random_factor / (i ** 2)
+                                  if random_factor else None),
+                'random_chance': random_chance or 1000,
             }
             model_kwargs.update(parameters[i-1])
 

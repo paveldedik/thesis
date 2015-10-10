@@ -634,10 +634,10 @@ class PFAGong(PFAModel):
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('gamma', 1.5)
-        kwargs.setdefault('delta', -0.1)
+        kwargs.setdefault('gamma', 2.1)
+        kwargs.setdefault('delta', -0.8)
 
-        self.decay = kwargs.pop('decay', 0.9)
+        self.decay = kwargs.pop('decay', 0.8)
 
         super(PFAGong, self).__init__(*args, **kwargs)
 
@@ -710,7 +710,7 @@ class PFAForgetting(PFAGong):
     """
 
     def __init__(self, *args, **kwargs):
-        time_effect = lambda t: 1.4 - 0.1*np.log(t)
+        time_effect = lambda t: 1.1 - 0.075 * np.log(t)
         self.time_effect = kwargs.pop('time_effect_fun', time_effect)
 
         kwargs.setdefault('gamma', 1.7)
