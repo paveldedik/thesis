@@ -710,7 +710,7 @@ class PFAForgetting(PFAGong):
     """
 
     def __init__(self, *args, **kwargs):
-        time_effect = lambda t: 1.1 - 0.075 * np.log(t)
+        time_effect = lambda t: 1.1 - 0.08 * np.log(t)
         self.time_effect = kwargs.pop('time_effect_fun', time_effect)
 
         kwargs.setdefault('gamma', 1.7)

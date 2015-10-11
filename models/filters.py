@@ -152,6 +152,66 @@ def sequentize(data, delta=timedelta(days=5)):
     return data['user_id'].isin(users) & data['place_id'].isin(places)
 
 
+class PresentationsFilter(object):
+
+    def __init__(self, data, chunks=4, spacing=timedelta(hours=9)):
+        self.data = data
+        self.chunks = chunks
+        self.spacing = spacing
+        self.groups = data.sort(['inserted']).groupby(['user_id', 'place_id'])
+
+    def is_spaced(self, group):
+        chunks_so_far = 1
+        previous_item = None
+
+        for item in group['inserted']:
+            if previous_item is not None:
+                chunks_so_far += (item - previous_item) > self.spacing
+            previous_item = item
+
+        return chunks_so_far >= self.chunks
+
+    def __call__(self, filter_func):
+        items_only = set()
+        for index in filter_func(self.groups):
+            items_only.add('{}|{}'.format(*index))
+
+        item_ids = (self.data['user_id'].map(str) + '|' +
+                    self.data['place_id'].map(str))
+
+        return item_ids.isin(items_only)
+
+
+def spaced_presentations(data, chunks=4, spacing=timedelta(hours=9)):
+    """Filters out the items that were practiced most likely in
+    a massed presentation. Only the items practiced in spaced
+    presentations are returned.
+    """
+    pfilter = PresentationsFilter(data, chunks, spacing)
+
+    def spaced_only(groups):
+        for index, group in groups:
+            if len(group) >= 8 and pfilter.is_spaced(group):
+                yield index
+
+    return pfilter(spaced_only)
+
+
+def massed_presentations(data, chunks=3, spacing=timedelta(hours=9)):
+    """Filters out the items that were practiced most likely in
+    a spaced presentation. Only the items practiced in massed
+    presentations are returned.
+    """
+    pfilter = PresentationsFilter(data, chunks, spacing)
+
+    def massed_only(groups):
+        for index, group in groups:
+            if len(group) >= 8 and not pfilter.is_spaced(group):
+                yield index
+
+    return pfilter(massed_only)
+
+
 def classmates(data, minimum=10):
     """Filters data so that only classmates are counted
     (i.e. the answers of students who use the system at school).
