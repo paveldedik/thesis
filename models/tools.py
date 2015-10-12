@@ -74,22 +74,22 @@ def load_data(path=config.DATA_ANSWERS_PATH,
     return data
 
 
-def load_places(path=config.DATA_PLACES_PATH):
+def load_places(path=config.DATA_PLACES_PATH, index_col='id'):
     """Loads CSV file with places into :class:`pandas.DataFrame`.
 
     :param path: Path to CSV file.
     :type path: str
     """
-    return pd.read_csv(path, index_col='id', sep=';')
+    return pd.read_csv(path, index_col=index_col, sep=';')
 
 
-def load_place_types(path=config.DATA_PLACE_TYPES_PATH):
+def load_place_types(path=config.DATA_PLACE_TYPES_PATH, index_col='name'):
     """Loads CSV file with places into :class:`pandas.DataFrame`.
 
     :param path: Path to CSV file.
     :type path: str
     """
-    return pd.read_csv(path, index_col='name', sep=';')
+    return pd.read_csv(path, index_col=index_col, sep=';')
 
 
 def generate_users(data, users_path=config.DATA_USERS_PATH):
@@ -474,7 +474,7 @@ def get_places_by_prefix(prefix='', places=None):
 
 
 def to_place_name(place_id, places=None):
-    """Takes ID of a place and returns its english name.
+    """Takes ID of a place and returns its English name.
 
     :param place_id: ID of the place.
     :type place_id: integer
@@ -485,7 +485,29 @@ def to_place_name(place_id, places=None):
     :rtype: string
     """
     places = places or load_places().T.to_dict()
-    return str(places[place_id]['name']).decode('utf-8')
+    return unicode(places[place_id]['name']).decode('utf-8')
+
+
+def to_place_type(place_id, places=None, place_types=None):
+    """Takes ID of a place and returns its type name.
+
+    :param place_id: ID of the place.
+    :type place_id: integer
+    :param places: Dictionary of places can be given so that
+        there is no need to load it every time the function is called
+        (e.g. in a for-loop).
+    :type places: dict
+    :param place_types: Dictionary of place types can be given so that
+        there is no need to load it every time the function is called
+        (e.g. in a for-loop).
+    :type place_types: dict
+    :rtype: string
+    """
+    places = places or load_places().T.to_dict()
+    place_type_id = places[place_id]['type']
+
+    place_types = place_types or load_place_types(index_col='id').T.to_dict()
+    return unicode(place_types[place_type_id]['name']).decode('utf-8')
 
 
 class cached_property(object):
