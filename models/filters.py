@@ -8,6 +8,7 @@ Some selected filters of data (e.g. European countries, Czech rivers).
 
 """
 
+import collections
 from datetime import timedelta
 
 from . import tools
@@ -152,64 +153,57 @@ def sequentize(data, delta=timedelta(days=5)):
     return data['user_id'].isin(users) & data['place_id'].isin(places)
 
 
-class PresentationsFilter(object):
+class SessionsFilter(object):
 
-    def __init__(self, data, chunks=4, spacing=timedelta(hours=9)):
+    def __init__(self, data, spacing=timedelta(hours=16)):
         self.data = data
-        self.chunks = chunks
         self.spacing = spacing
-        self.groups = data.sort(['inserted']).groupby(['user_id', 'place_id'])
+        self.groups = data.sort(['inserted']).groupby(['user_id'])
 
-    def is_spaced(self, group):
-        chunks_so_far = 1
-        previous_item = None
+    def get_sessions(self):
+        sessions = collections.defaultdict(list)
+        for index, group in self.groups:
+            itemids = set()
+            previous = None
+            for itemid, inserted in group[['id', 'inserted']].as_matrix():
+                if previous and len(itemids) >= 10 and \
+                   (inserted - previous) > self.spacing:
+                    sessions[index].append(itemids)
+                    itemids = set()
+                itemids.add(itemid)
+                previous = inserted
+        return sessions
 
-        for item in group['inserted']:
-            if previous_item is not None:
-                chunks_so_far += (item - previous_item) > self.spacing
-            previous_item = item
+    def filter_ids(self, user_sessions, filter_cond):
+        itemids = set()
+        for sessions in user_sessions.values():
+            if filter_cond(sessions):
+                for session in sessions:
+                    itemids |= session
+        return itemids
 
-        return chunks_so_far >= self.chunks
-
-    def __call__(self, filter_func):
-        items_only = set()
-        for index in filter_func(self.groups):
-            items_only.add('{}|{}'.format(*index))
-
-        item_ids = (self.data['user_id'].map(str) + '|' +
-                    self.data['place_id'].map(str))
-
-        return item_ids.isin(items_only)
+    def __call__(self, filter_cond):
+        sessions = self.get_sessions()
+        itemids = self.filter_ids(sessions, filter_cond)
+        return self.data['id'].isin(itemids)
 
 
-def spaced_presentations(data, chunks=4, spacing=timedelta(hours=9)):
+def spaced_presentations(data, filter_cond=lambda s: len(s) > 2, **kwargs):
     """Filters out the items that were practiced most likely in
     a massed presentation. Only the items practiced in spaced
     presentations are returned.
     """
-    pfilter = PresentationsFilter(data, chunks, spacing)
-
-    def spaced_only(groups):
-        for index, group in groups:
-            if len(group) >= 8 and pfilter.is_spaced(group):
-                yield index
-
-    return pfilter(spaced_only)
+    pfilter = SessionsFilter(data, **kwargs)
+    return pfilter(filter_cond)
 
 
-def massed_presentations(data, chunks=3, spacing=timedelta(hours=9)):
+def massed_presentations(data, filter_cond=lambda s: len(s) == 2, **kwargs):
     """Filters out the items that were practiced most likely in
     a spaced presentation. Only the items practiced in massed
     presentations are returned.
     """
-    pfilter = PresentationsFilter(data, chunks, spacing)
-
-    def massed_only(groups):
-        for index, group in groups:
-            if len(group) >= 8 and not pfilter.is_spaced(group):
-                yield index
-
-    return pfilter(massed_only)
+    pfilter = SessionsFilter(data, **kwargs)
+    return pfilter(filter_cond)
 
 
 def classmates(data, minimum=10):
