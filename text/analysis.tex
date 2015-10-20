@@ -21,11 +21,11 @@ The models were implemented in Python programming language. Experiments were per
 
 \section{Response Time}
 
-The response time of student to a question indicates how much well the item is learned. If the student answered quickly, almost automatically, it is very likely they either know the place very well or don't at all, depending on the correctness of their answer. On the other hand when the answer takes more time, the student is probably familiar with the item and might even recall the correct answer.
+The response time of student to a question indicates how much well the item is learned. If the student answered quickly, almost automatically, it is very likely they either know the place very well or don't at all, depending on the correctness of their answer. On the other hand when the response is longer, the student is probably familiar with the item and might even recall the correct answer.
 
 The Figure~\ref{fig-response-time} demonstrates the relationship between students' response time and the probability of recall. If the student's answer was suspiciously fast (response time is lower than 800 milliseconds), it usually means they guessed and don't know the correct answer. If the response time is between 1500 and 2000 milliseconds, it may indicate the student knows the place.
 
-Note that some places are bigger on the map then other, i.e. a question requiring the student to choose Russia on the map has generally lower response time than a question requiring to choose Andora.
+Note that some places are bigger on the map then other, i.e. a question requiring the student to choose Russia on the map has generally lower response time than a question requiring to choose Andorra.
 
 \begin{figure}[htbp]
   \centering
@@ -34,88 +34,8 @@ Note that some places are bigger on the map then other, i.e. a question requirin
   \label{fig-response-time}
 \end{figure}
 
-\section{Time Effect Function}
-
-\begin{figure}[htbp]
-  \centering
-    \begin{subfigure}{.49\textwidth}
-      \centering
-      \includegraphics[width=\textwidth]{img/performance-across-time-rmse-parameters-1}
-    \end{subfigure}
-    \begin{subfigure}{.49\textwidth}
-      \centering
-      \includegraphics[width=\textwidth]{img/performance-across-time-rmse-parameters-2}
-    \end{subfigure}
-  \label{fig-performance-across-time}
-  \caption{Performance of models across time for three different settings of time effect function.}
-\end{figure}
-
-\section{Confusion Network}
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=\textwidth]{img/graph-confusion-european-countries}
-  \caption{Confusion network of European countres. The edges between countries represent confusion between students. Red edge means the two countries are confused by students quite often, yellow or no edge means the opposite.}
-  \label{fig-confusion-european-countries}
-\end{figure}
-
-\section{Correlation Network}
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=\textwidth]{img/graph-correlation-american-countries}
-  \caption{Correlation network of American countries. The edges between countries represent Spearman's correlation of difficulties between students. Note that the edges with correlation lower than 0.8 and p-value above 0.05 are skipped.}
-  \label{fig-correlation-american-countries}
-\end{figure}
+\section{Calibration}
 
 \section{Model Comparison}
 
 \todo{The tables in this section aren't very readable, it should contain more information presented in a different way. Also it would be more interesting to adjust the parameters $\gamma$, $\delta$ for each data set.}
-
-\begin{table}
-  \centering
-  \begin{tabular}{@{}l l S[table-format=2.5] S[table-format=2.4] S[table-format=2.7] @{}}
-  \toprule
-  Model & Parameters & \multicolumn{1}{c}{RMSE} & \multicolumn{1}{c}{AUC}    \\
-  \midrule 
-  PFA                    & $\gamma=2.1$, $\delta=-0.3$ & 0.3517    & 0.7913  \\
-  PFA Gong               & $\gamma=1.9$, $\delta=-0.2$ & 0.3445    & 0.813   \\
-  PFA Gong + Forgetting  & $\gamma=1.7$, $\delta=0.5$   & 0.3396   & 0.827   \\
-  PFAE                   & $\gamma=2.9$, $\delta=-0.56$ & 0.3419   & 0.8245  \\
-  PFAE + Forgetting      & $\gamma=2.3$, $\delta=-0.89$ & 0.3406   & 0.8268  \\
-  \bottomrule
-  \end{tabular}
-  \caption{Model comparison (whole data set).}
-\end{table}
-
-\begin{table}
-  \centering
-  \begin{tabular}{@{}l l S[table-format=2.5] S[table-format=2.4] S[table-format=2.7] @{}}
-  \toprule
-  Model & Parameters & \multicolumn{1}{c}{RMSE} & \multicolumn{1}{c}{AUC}   \\
-  \midrule 
-  PFA                    & $\gamma=2.1$, $\delta=-0.3$ & 0.3828  & 0.7446   \\
-  PFA Gong               & $\gamma=1.9$, $\delta=-0.2$  & 0.3754  & 0.7733  \\
-  PFA Gong + Forgetting  & $\gamma=1.7$, $\delta=0.5$   & 0.3736  & 0.788   \\
-  PFAE                   & $\gamma=2.9$, $\delta=-0.56$ & 0.372   & 0.7735  \\
-  PFAE + Forgetting      & $\gamma=2.3$, $\delta=-0.89$ & 0.3702  & 0.7766  \\
-  \bottomrule
-  \end{tabular}
-  \caption{Model comparison (only African countries).}
-\end{table}
-
-\begin{table}
-  \centering
-  \begin{tabular}{@{}l l S[table-format=2.5] S[table-format=2.4] S[table-format=2.7] @{}}
-  \toprule
-  Model & Parameters & \multicolumn{1}{c}{RMSE} & \multicolumn{1}{c}{AUC}   \\
-  \midrule 
-  PFA                    & $\gamma=2.1$, $\delta=-0.3$  & 0.3878  & 0.7703  \\
-  PFA Gong               & $\gamma=1.9$, $\delta=-0.2$  & 0.3834  & 0.7872  \\
-  PFA Gong + Forgetting  & $\gamma=1.7$, $\delta=0.5$   & 0.3793  & 0.791   \\
-  PFAE                   & $\gamma=2.9$, $\delta=-0.56$ & 0.3788  & 0.7956  \\
-  PFAE + Forgetting      & $\gamma=2.3$, $\delta=-0.89$ & 0.3775  & 0.7958  \\
-  \bottomrule
-  \end{tabular}
-  \caption{Model comparison (only USA states).}
-\end{table}
