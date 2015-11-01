@@ -38,12 +38,6 @@ Equations~\ref{eq-pfa-gong-time-s},~\ref{eq-pfa-gong-time-f} show the incorporat
 
 As was discussed in the chapter~\ref{pfa}, the problem arises with multiple-choice questions. Another difficulty is the choice of a time effect function that fits the data well. The function should theoretically represent the rate at witch the effect of learning decays with the passage of time.
 
-\subsection{The Spacing Effect}
-
-\todo{Better and more extensive explanation (experiments aren't quite finished yet).}
-
-Time effect function is applied only if the student's answers were mostly incorrect (the student probably doesn't have the knowledge of the fact in their long-term memory).
-
 \section{Fitting Parameters}
 
 The goal of the fitting procedure is to find the optimal parameters that perform well on new samples (in our case predict the student's ability to answer a question correctly). In this chapter we describe some metrics commonly used for the evaluation of predictive performance (i.e. the fitness of parameters in the model) and the principal algorithms that are suitable for parameter estimation in our case.
@@ -62,6 +56,8 @@ In our case we are not only interested in the correctness of student's answers, 
 
 \subsection{Grid Search}
 
+This technique is used for parameter optimization, it searches a small part of the whole space of all possible values. The most fitted values are estimated using a chosen metric for evaluation (e.g. RMSE). Put together, this method exhaustively generates a grid of all combinations of selected parameter values. The fittest combination has the lowest error. The figure~\ref{fig-grid-search-rmse-auc} portrays an example of the grid search on PFA model with two parameters.
+
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{img/pfa-grid-search-rmse-auc}
@@ -69,6 +65,25 @@ In our case we are not only interested in the correctness of student's answers, 
   \label{fig-grid-search-rmse-auc}
 \end{figure}
 
+The disadvantage of this evaluation method is the high computational complexity which makes it very hard to use especially in cases where the model contains a lot of parameters. Another disadvantage is that when the grid is very high-dimensional we don't have any simple way to plot or visualize the error space.
+
 \subsection{Greedy Search}
+\label{greedy-search}
+
+This method starts from a given position in the parameter space and evaluates the model's error (using some common metric). The model is then evaluated using the parameters from the enclosing neighborhood and the best option is selected. This continues until there is no other parameter value in the neighborhood with a better value. TODO: elaborate, describe the usage of randomness and decreasing size of one step.
 
 \subsection{Gradient Descent}
+
+The goal of gradient descent algorithm is to find the best parameters for a function called hypothesis~\cite{Klusasek2014}. Gradient descent is somewhat similar to the greedy search algorithm presented in the previous section~\ref{greedy-search} as it tries to find the lowest value of the cost function $J(p)$. The cost function represents the error of any chosen hypothesis $h_{p}(x) = p^T x = \sum^n_{i=0} p_i x_i$, where $p_i$ is the value of the $i$-th parameter and $x_i$ the $i$-th feature (e.g. the skill of a student).
+
+\begin{equation} \label{cost-function}
+  J(p) = \frac{1}{2m} \sum^m_{k=1} (h_p(x^{(k)}) - y^{(k)})^2
+\end{equation}
+
+The cost function in Equation~\ref{cost-function} is the sum of all squared errors of hypotheses $h_p$ over all examples from data set of size $m$ divided by $2m$. The goal is to minimize the value of $J(p)$ which can be done very efficiently by the estimation of the gradient using the following update rule (TODO: visualize the space with two parameters, elaborate):
+
+\begin{equation} \label{cost-function-update}
+  p_j \gets p_j - \alpha \frac{\partial}{\partial p_j} J(p)~~\text{for all } j
+\end{equation}
+
+The partial derivatives help indicate the surface of the cost function, it gives us the information which direction to take in order to reach the closest local minimum. The value of $\alpha$ is the size of one step or a learning rate, if the value is too big the algorithm might not be able to ever reach a local minimum, in contrast if the value is very small, it is less efficient and the computation takes longer. Now we can imagine that the main difference between gradient descent and greedy search is that the latter doesn't have any indication of which turn to take next and how big one step in a direction should be.
