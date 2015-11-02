@@ -32,6 +32,20 @@ Note that some places are bigger on the map then other, i.e. a question requirin
   \label{fig-response-time}
 \end{figure}
 
-\section{Calibration}
+\section{Memory Decay}
 
-\section{Evaluation}
+In this chapter we evaluate and analyze several models with the focus on memory decay and forgetting. Since we use abbreviations for the models, here is a list of all evaluated models as they occur in our experiments:
+
+\begin{itemize}
+  \item \textbf{PFA} -- this is the original performance factor analysis which we described in chapter~\ref{pfa}. Our implementation, however doesn't consider multiple knowledge components as there is only one.
+  \item \textbf{PFA/E} -- a version of the original PFA model with some aspects of Elo model we depicted in chapter~\ref{pfae}.
+  \item \textbf{PFA/E/T} -- an extended version of the PFA/E model which adapts the idea of a time effect function. We presented the model in chapter~\ref{pfaet}. In our analysis we examined several time effect functions.
+  \item \textbf{PFA/G} -- another version of the original PFA model with a decay factor, the characteristics of the model were outlined in chapter~\ref{pfag}. The implementation doesn't consider multiple knowledge components.
+  \item \textbf{PFA/G/T} -- our version of the PFA/G model which uses a time effect function instead of a decay factor. The differences we stated in chapter~\ref{pfagt}.
+\end{itemize}
+
+\subsection{Parameters}
+
+\subsection*{Calibration}
+
+\subsection{Evaluation}
