@@ -56,6 +56,8 @@ In our case we are not only interested in the correctness of student's answers, 
   LL = \sum_{i=1}^n y_i \log(x_i) + (1 - y_i) \log(1 - x_i)
 \end{equation}
 
+TODO: Describe advantages and disadvantage of each metrics. Which techniques are suitable for our applications (RMSE, LL). Use this paper:~\cite{Pelanek2015a}.
+
 \subsection{Grid Search}
 
 This technique is used for parameter optimization, it searches a small part of the whole space of all possible values. The most fitted values are estimated using a chosen metric for evaluation (e.g. RMSE). Put together, this method exhaustively generates a grid of all combinations of selected parameter values. The fittest combination has the lowest error. The figure~\ref{fig-grid-search-rmse-auc} portrays an example of the grid search on PFA model with two parameters.
@@ -89,3 +91,17 @@ The cost function in Equation~\ref{cost-function} is the sum of all squared erro
 \end{equation}
 
 The partial derivatives help indicate the surface of the cost function, it gives us the information which direction to take in order to reach the closest local minimum. The value of $\alpha$ is the size of one step or a learning rate, if the value is too big the algorithm might not be able to ever reach a local minimum, in contrast if the value is very small, it is less efficient and the computation takes longer. Now we can imagine that the main difference between gradient descent and greedy search is that the latter doesn't have any indication of which turn to take next and how big one step in a direction should be.
+
+\subsection*{Gradient Descent in Online Learning}
+
+In online learning, straightforward way to use optimization methods such as gradient descent doesn't exist. We can, however reuse some aspects of several algorithms used in machine learning and data mining for parameter optimization.
+
+The most obvious and easiest way to implement gradient descent in online learning could average the difference between observation (correctness of student's answer $y_n$) and prediction (model's predicted probability that the user $n$ answers correctly $P_n$). The batch update rule similar to the one used in the original gradient descent would be defined as follows:
+
+\begin{equation} \label{online-learning-batch-rule}
+ p_j := p_j - \alpha~\frac{1}{n}\sum_{i=0}^n (P_n - y_n)~~\text{for all } j
+\end{equation}
+
+It is very easy to demonstrate that this method doesn't work very well even when the number of parameters is equal to 2. The parameters get easily stuck in the local minimum as can be observed in the Figure~(TODO: figure).
+
+Radek Pelánek invented a better, more complicated way of parameter fitting~\cite{Pelanek2015} that is very practical particularly in our case where we need to find the most optimal and best calibrated time effect function. (TODO: elaborate, properly describe the method and its applications)
