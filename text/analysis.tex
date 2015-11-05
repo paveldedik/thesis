@@ -44,7 +44,23 @@ In this chapter we evaluate and analyze several models with the focus on memory 
   \item \textbf{PFA/G/T} -- our version of the PFA/G model which uses a time effect function instead of a decay factor. The differences we stated in chapter~\ref{pfagt}.
 \end{itemize}
 
+Note that in some analyses we also use the Elo model briefly described in chapter~\ref{elo} for the estimation of prior knowledge.
+
 \subsection{Parameters}
+
+Standard PFA model has 3 parameters, the initial difficulty of an item $\beta$, weight of each success $\gamma$ and failure $\delta$. In cases where we use Elo model for prior knowledge estimation, we can replace the parameter $\beta$ with $\theta_s - b_c$ which leaves us with only 2 parameters we need to estimate. Nevertheless, a time effect function has to be chosen as well for the PFA/E/T and PFA/G/T models.
+
+\subsection*{Time Effect Functions}
+
+In chapter~\ref{memory} we mentioned that forgetting usually respects the power law, which is often true in cases where the students have no prior knowledge of the practiced material. We tested several simple analytical function:
+
+\begin{itemize}
+  \item $f(t) = a - b \cdot \log(t)$
+  \item $f(t) = a e^{b t}$
+  \item $f(t) = a / t$
+\end{itemize}
+
+Each of these time effect functions can be seen on the figure~(TODO: figure) with logarithmically scaled $x$-axis. 
 
 \subsection*{Calibration}
 
