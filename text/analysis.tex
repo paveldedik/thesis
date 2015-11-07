@@ -41,7 +41,7 @@ In this chapter we evaluate and analyze several models with the focus on memory 
   \item \textbf{PFA/E} -- a version of the original PFA model with some aspects of Elo model we depicted in chapter~\ref{pfae}.
   \item \textbf{PFA/E/T} -- an extended version of the PFA/E model which adapts the idea of a time effect function. We presented the model in chapter~\ref{pfaet}. In our analysis we examined several time effect functions.
   \item \textbf{PFA/G} -- another version of the original PFA model with a decay factor, the characteristics of the model were outlined in chapter~\ref{pfag}. The implementation doesn't consider multiple knowledge components.
-  \item \textbf{PFA/G/T} -- our version of the PFA/G model which uses a time effect function instead of a decay factor. The differences we stated in chapter~\ref{pfagt}.
+  \item \textbf{PFA/G/T} -- our version of the PFA/G model which uses a time effect function instead of a decay factor. The differences were stated in chapter~\ref{pfagt}.
 \end{itemize}
 
 Note that in some analyses we also use the Elo model briefly described in chapter~\ref{elo} for the estimation of prior knowledge.
@@ -55,13 +55,61 @@ Standard PFA model has 3 parameters, the initial difficulty of an item $\beta$, 
 In chapter~\ref{memory} we mentioned that forgetting usually respects the power law, which is often true in cases where the students have no prior knowledge of the practiced material. We tested several simple analytical function:
 
 \begin{itemize}
-  \item $f(t) = a - b \cdot \log(t)$
-  \item $f(t) = a e^{b t}$
-  \item $f(t) = a / t$
+  \item $f(t) = a - c \cdot \log(t)$
+  \item $f(t) = a \cdot e^{c t}$
+  \item $f(t) = a / t^c$
 \end{itemize}
 
-Each of these time effect functions can be seen on the figure~(TODO: figure) with logarithmically scaled $x$-axis. 
+Figures of each of these time effect functions with logarithmically scaled $x$-axis can be seen on the figure~\ref{fig-time-effect-functions}. As all functions have only the two parameters $a$ and $c$, we optimized them with the greedy search algorithm detailed in chapter~\ref{greedy-search}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{img/time-effect-functions}
+  \caption{Candidates of time effect functions we inspected and evaluated in our analysis. Note that the $x$-axis is log scaled.}
+  \label{fig-time-effect-functions}
+\end{figure}
+
+The used data set contains genuinely very different students with distinct prior knowledge, some students are still in school and practice geography in classes, other students already finished school and want to revive their forgotten knowledge (this is further analyzed in chapter~\ref{further-analysis}). There are also tremendous differences between continents, regions and types of places, all of which vary in the easiness of learning, some are harder to retain and are forgotten faster. These attributes make it very different from standard models that try to capture the students with fixed age or no prior knowledge of the learned material.
+
+Since our goal is to model the forgetting of students who use the system for practicing geography slepemapy.cz, probably the most accurate and best calibrated model can be achieved by learning the time effect function from the data set by using the adjusted gradient descent described in chapter~\ref{gradient-descent}.
+
+Because we want to approximate the exact shape of time effect function, we need to define a staircase function with fixed intervals $\boldsymbol{I}$. In each interval $(I_k, I_{k+1}\rangle$, we preserve a learned value $a_k$ which represents an increase in memory activation. The formal definition of the staircase function $f(t)$ is formalized in Equation~\ref{eq-staircase}.
+
+\begin{equation} \label{eq-staircase}
+  f(t) = \begin{cases}
+            a_1, & \text{if } I_0 < t \leq I_1 \\
+            a_2, & \text{if } I_1 < t \leq I_2 \\
+                 & \hspace{1em} \dots \\
+            a_n, & \text{if } I_{n-1} < t \leq I_n
+         \end{cases}
+\end{equation}
+
+Applying simple linear algebra, we can further modify the staircase function so that the memory activation between two points is a linear function, which makes a better approximation of the learned values:
+
+\begin{equation} \label{eq-staircase-2}
+  f(t) = \begin{cases}
+            a_1, & \text{if } I_0 < t \leq I_1 \\
+            (t - a_1) \frac{I_2 - I_1}{a_2 - a_1} + I_1, & \text{if } I_1 < t \leq I_2 \\
+            \hspace{9em} \dots \\
+            (t - a_{n-1}) \frac{I_n - I_{n-1}}{a_n - a_{n-1}} + I_{n-1}, & \text{if } I_{n-1} < t \leq I_n     
+         \end{cases}
+\end{equation}
+
+Note that $I_0$ is in our case always equal to $0$ and $I_n$ to infinity (in which case the memory activation in the interval is equal to $a_n$).
+
+In our experiments we divided the vector $\boldsymbol{I}$ in 10 intervals, we chose the following values: $(0s, 60s\rangle$,$(60s, 90s\rangle$, $(90s, 2.5m\rangle$, $(2.5m, 5m\rangle$, $(5m, 10m\rangle$, $(10m, 30m\rangle$, $(30m, 3h\rangle$, $(3h, 24h\rangle$, $(24h, 5d\rangle$, $(5d, \infty)$. The staircase function obtained using gradient descent for parameter optimization is illustrated in Figure~\ref{learned-time-effect-function}. Note that $\gamma = 1.814 \pm 0.276$ and $\delta = 0.827 \pm 0.095$.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{img/learned-time-effect-function}
+  \caption{Time effect function as learned from the data with standard deviations. Each point represents average of 10 independent data sets containing answers of users who used the system continuously at least for one week and answered more than 100 answers.}
+  \label{learned-time-effect-function}
+\end{figure}
 
 \subsection*{Calibration}
 
 \subsection{Evaluation}
+\label{evaluation}
+
+\section{Further Analysis}
+\label{further-analysis}
