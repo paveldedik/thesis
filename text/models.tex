@@ -100,7 +100,7 @@ In online learning, straightforward way to use optimization methods such as grad
 The most obvious and easiest way to implement gradient descent in online learning could average the difference between observation (correctness of student's answer $y_n$) and prediction (model's predicted probability that the user $n$ answers correctly $P_n$). The batch update rule similar to the one used in the original gradient descent would be defined as follows:
 
 \begin{equation} \label{online-learning-batch-rule}
- p_j := p_j - \alpha~\frac{1}{n}\sum_{i=0}^n (P_n - y_n)~~\text{for all } j
+ p_j \gets p_j - \alpha~\frac{1}{n}\sum_{i=0}^n (P_n - y_n)~~\text{for all } j
 \end{equation}
 
 It is very easy to demonstrate that this method doesn't work very well even when the number of parameters is equal to 2. The parameters get easily stuck in the local minimum as can be observed in the Figure~\ref{fig-grid-search-rmse-off}.
