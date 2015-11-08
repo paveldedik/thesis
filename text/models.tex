@@ -49,11 +49,11 @@ The goal of the fitting procedure is to find the optimal parameters that perform
 In our case we are not only interested in the correctness of student's answers, our aim is to predict the probability of correct answer as it may indicate how well the student knows the answer. The information of student's knowledge is crucial if we don't want the student to be demotivated by overly difficult or simple questions.
 
 \begin{equation} \label{rmse}
-  RMSE = \sqrt{\frac{\sum_{i=1}^n (x_i - y_i)^2}{n}}
+  RMSE = \sqrt{\frac{\sum_{i=1}^n (p_i - y_i)^2}{n}}
 \end{equation}
 
 \begin{equation} \label{ll}
-  LL = \sum_{i=1}^n y_i \log(x_i) + (1 - y_i) \log(1 - x_i)
+  LL = \sum_{i=1}^n y_i \log(p_i) + (1 - y_i) \log(1 - p_i)
 \end{equation}
 
 TODO: Describe advantages and disadvantage of each metrics. Which techniques are suitable for our applications (RMSE, LL). Use this paper:~\cite{Pelanek2015a}.
@@ -79,28 +79,35 @@ This method starts from a given position in the parameter space and evaluates th
 \subsection{Gradient Descent}
 \label{gradient-descent}
 
-The goal of gradient descent algorithm is to find the best parameters for a function called hypothesis~\cite{Klusasek2014}. Gradient descent is somewhat similar to the greedy search algorithm presented in the previous section~\ref{greedy-search} as it tries to find the lowest value of the cost function $J(p)$. The cost function represents the error of any chosen hypothesis $h_{p}(x) = p^T x = \sum^n_{i=0} p_i x_i$, where $p_i$ is the value of the $i$-th parameter and $x_i$ the $i$-th feature (e.g. the skill of a student).
+The goal of gradient descent algorithm is to find the best parameters for a function called hypothesis~\cite{Klusasek2014}. Gradient descent is somewhat similar to the greedy search algorithm presented in the previous section~\ref{greedy-search} as it tries to find the lowest value of the cost function $J(\rho)$. The cost function represents the error of any chosen hypothesis $h_{\rho}(x_i) = \rho^T x_i = \sum^n_{j=0} \rho_j x_{i,j}$, where $\rho_j$ is the value of the $j$-th parameter and $x_{i,j}$ the $i$-th value of the $j$-th feature (e.g. the skill of the student $i$).
 
 \begin{equation} \label{cost-function}
-  J(p) = \frac{1}{2m} \sum^m_{k=1} (h_p(x^{(k)}) - y^{(k)})^2
+  J(\rho) = \frac{1}{2m} \sum^m_{i=1} (h_{\rho}(x_{i,.}) - y_i)^2
 \end{equation}
 
-The cost function in Equation~\ref{cost-function} is the sum of all squared errors of hypotheses $h_p$ over all examples from data set of size $m$ divided by $2m$. The goal is to minimize the value of $J(p)$ which can be done very efficiently by the estimation of the gradient using the following update rule (TODO: visualize the space with two parameters, elaborate):
+The cost function in Equation~\ref{cost-function} is the sum of all squared errors of hypotheses $h_{\rho}$ over all examples from data set of size $m$ divided by $2m$. The goal is to minimize the value of $J(\rho)$ which can be done very efficiently by the estimation of the gradient using the following update rule (TODO: elaborate):
 
 \begin{equation} \label{cost-function-update}
-  p_j \gets p_j - \alpha \frac{\partial}{\partial p_j} J(p)~~\text{for all } j
+  \rho_j \gets \rho_j - \alpha \frac{\partial}{\partial \rho_j} J(\rho)~~\text{for all } j
 \end{equation}
 
 The partial derivatives help indicate the surface of the cost function, it gives us the information which direction to take in order to reach the closest local minimum. The value of $\alpha$ is the size of one step or a learning rate, if the value is too big the algorithm might not be able to ever reach a local minimum, in contrast if the value is very small, it is less efficient and the computation takes longer. Now we can imagine that the main difference between gradient descent and greedy search is that the latter doesn't have any indication of which turn to take next and how big one step in a direction should be.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{img/gradient-descent}
+  \caption{3D visualization showing first 7 iterations of gradient descent applied to an example with two parameters.}
+  \label{fig-gradient-descent}
+\end{figure}
 
 \subsection*{Gradient Descent in Online Learning}
 
 In online learning, straightforward way to use optimization methods such as gradient descent doesn't exist. We can, however reuse some aspects of several algorithms used in machine learning and data mining for parameter optimization.
 
-The most obvious and easiest way to implement gradient descent in online learning could average the difference between observation (correctness of student's answer $y_n$) and prediction (model's predicted probability that the user $n$ answers correctly $P_n$). The batch update rule similar to the one used in the original gradient descent would be defined as follows:
+The most obvious and easiest way to implement gradient descent in online learning could average the difference between observation (correctness of student's answer $y_i$) and prediction (model's predicted probability that the user $i$ answers correctly $p_i$). The batch update rule similar to the one used in the original gradient descent would be defined as follows:
 
 \begin{equation} \label{online-learning-batch-rule}
- p_j \gets p_j - \alpha~\frac{1}{n}\sum_{i=0}^n (P_n - y_n)~~\text{for all } j
+ \rho_j \gets \rho_j - \alpha~\frac{1}{n}\sum_{i=0}^n (p_i - y_i)~~\text{for all } j
 \end{equation}
 
 It is very easy to demonstrate that this method doesn't work very well even when the number of parameters is equal to 2. The parameters get easily stuck in the local minimum as can be observed in the Figure~\ref{fig-grid-search-rmse-off}.
@@ -108,8 +115,55 @@ It is very easy to demonstrate that this method doesn't work very well even when
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{img/pfa-grid-search-rmse-off}
-  \caption{Result of the grid search performed on the PFAE model with 2 parameters. The figure on the right hand size shows the averages of $P_n - y_n$ over all answers for a grid of parameters.}
+  \caption{Result of the grid search performed on the PFAE model with 2 parameters. The figure on the right hand size shows the averages of $p_i - y_i$ over all answers for a grid of parameters.}
   \label{fig-grid-search-rmse-off}
 \end{figure}
 
 Radek Pelánek invented a better, more complicated way of parameter fitting~\cite{Pelanek2015} that is very practical particularly in our case where we need to find the most optimal and best calibrated time effect function. (TODO: elaborate, properly describe the method and its applications)
+
+\section{Time Effect Functions}
+\label{time-effect-functions}
+
+In chapter~\ref{memory} we mentioned that forgetting usually respects the power law, which is often true in cases where the students have no prior knowledge of the practiced material. For our purpose, we have chosen the following functions with parameter $t$ representing the time of the last presentation and two parameters $a$ and $b$:
+
+\begin{itemize}
+  \item $f(t) = a - c \cdot \log(t)$
+  \item $f(t) = a \cdot e^{c \sqrt{t}}$
+  \item $f(t) = a / t^c$
+\end{itemize}
+
+Figures of each of these time effect functions with logarithmically scaled $x$-axis are depicted on Figure~\ref{fig-time-effect-functions}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{img/time-effect-functions}
+  \caption{Candidates of time effect functions we inspected and evaluated in our analysis. Note that the $x$-axis is log scaled.}
+  \label{fig-time-effect-functions}
+\end{figure}
+
+\subsection{The Staircase Function}
+\label{staircase-function}
+
+If we want to approximate the exact shape of time effect function, we need to define a staircase function with fixed intervals $\iota$. In each interval $(\iota_i, \iota_{i+1}]$, we preserve a learned value $a_i$ which represents an increase in memory activation. The formal definition of the staircase function $f(t)$ is formalized in Equation~\ref{eq-staircase}.
+
+\begin{equation} \label{eq-staircase}
+  f(t) = \begin{cases}
+            a_1, & \text{if } \iota_0 < t \leq \iota_1 \\
+            a_2, & \text{if } \iota_1 < t \leq \iota_2 \\
+                 & \hspace{1em} \dots \\
+            a_n, & \text{if } \iota_{n-1} < t \leq \iota_n
+         \end{cases}
+\end{equation}
+
+Applying simple linear algebra, we can further modify the staircase function so that the memory activation between two points is a linear function, which makes a better approximation of the learned values:
+
+\begin{equation} \label{eq-staircase-2}
+  f(t) = \begin{cases}
+            a_1, & \text{if } \iota_0 < t \leq \iota_1 \\
+            (t - a_1) \frac{\iota_2 - \iota_1}{a_2 - a_1} + \iota_1, & \text{if } \iota_1 < t \leq \iota_2 \\
+            \hspace{9em} \dots \\
+            (t - a_{n-1}) \frac{\iota_n - \iota_{n-1}}{a_n - a_{n-1}} + \iota_{n-1}, & \text{if } \iota_{n-1} < t \leq \iota_n     
+         \end{cases}
+\end{equation}
+
+Note that $\iota_0$ is in our case always equal to $0$ and $\iota_n$ to infinity (in which case the memory activation in the interval is equal to $a_n$).
