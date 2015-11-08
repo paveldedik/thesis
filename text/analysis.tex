@@ -68,7 +68,7 @@ In our experiments with the staircase function, we divided the vector $\iota$ in
 Calibration can be used to detect the deviation of model's predictions from the averaged observed frequency of correctness of answers. This is very useful in our case where we need to find out how a model performs with each time effect function over timing distance between concrete practices of individual students. The choice of RMSE isn't very helpful here because it considers all deviations simply as errors in predictions, i.e. it doesn't show whether the averaged prediction overstates or understates the observed frequency of correct answers. The metric we used in order to calibrate the models is shown in figure~\ref{eq-callibration}.
 
 \begin{equation} \label{eq-callibration}
-  Calibration = \frac{1}{n} \sum_{i=0}^{n} (p_i - y_i)
+  \mathit{Correctness} - \mathit{Prediction} = \frac{1}{n} \sum_{i=0}^{n} (y_i - p_i)
 \end{equation}
 
 \subsection{Evaluation}

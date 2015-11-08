@@ -82,7 +82,7 @@ This method starts from a given position in the parameter space and evaluates th
 The goal of gradient descent algorithm is to find the best parameters for a function called hypothesis~\cite{Klusasek2014}. Gradient descent is somewhat similar to the greedy search algorithm presented in the previous section~\ref{greedy-search} as it tries to find the lowest value of the cost function $J(\rho)$. The cost function represents the error of any chosen hypothesis $h_{\rho}(x_i) = \rho^T x_i = \sum^n_{j=0} \rho_j x_{i,j}$, where $\rho_j$ is the value of the $j$-th parameter and $x_{i,j}$ the $i$-th value of the $j$-th feature (e.g. the skill of the student $i$).
 
 \begin{equation} \label{cost-function}
-  J(\rho) = \frac{1}{2m} \sum^m_{i=1} (h_{\rho}(x_{i,.}) - y_i)^2
+  J(\rho) = \frac{1}{2m} \sum^m_{i=1} (h_{\rho}(x_i) - y_i)^2
 \end{equation}
 
 The cost function in Equation~\ref{cost-function} is the sum of all squared errors of hypotheses $h_{\rho}$ over all examples from data set of size $m$ divided by $2m$. The goal is to minimize the value of $J(\rho)$ which can be done very efficiently by the estimation of the gradient using the following update rule (TODO: elaborate):
@@ -155,15 +155,22 @@ If we want to approximate the exact shape of time effect function, we need to de
          \end{cases}
 \end{equation}
 
-Applying simple linear algebra, we can further modify the staircase function so that the memory activation between two points is a linear function, which makes a better approximation of the learned values:
+Applying simple linear algebra, we can further modify the staircase function so that the memory activation between two points is a linear function, this makes a better approximation of the learned values. The definition of the adjusted function is described in Equations~\ref{eq-staircase-iota-prime-definiton} and~\ref{eq-staircase-linear}, where $T$ is a set of all timing distances of all answers.
 
-\begin{equation} \label{eq-staircase-2}
+\begin{equation} \label{eq-staircase-iota-prime-definiton}
+\begin{split}
+  \hat{\iota}_0 &= \iota_0 \\
+  \hat{\iota}_i &= \mathit{mean}\{t \in T~|~\iota_{i-1} < t \leq \iota_i\}
+\end{split}
+\end{equation}
+
+\begin{equation} \label{eq-staircase-linear}
   f(t) = \begin{cases}
-            a_1, & \text{if } \iota_0 < t \leq \iota_1 \\
-            (t - a_1) \frac{\iota_2 - \iota_1}{a_2 - a_1} + \iota_1, & \text{if } \iota_1 < t \leq \iota_2 \\
+            a_1, & \text{if } \hat{\iota}_0 < t \leq \hat{\iota}_1 \\
+            (t - a_1) \frac{\hat{\iota}_2 - \hat{\iota}_1}{a_2 - a_1} + \hat{\iota}_1, & \text{if } \hat{\iota}_1 < t \leq \hat{\iota}_2 \\
             \hspace{9em} \dots \\
-            (t - a_{n-1}) \frac{\iota_n - \iota_{n-1}}{a_n - a_{n-1}} + \iota_{n-1}, & \text{if } \iota_{n-1} < t \leq \iota_n     
+            (t - a_{n-1}) \frac{\hat{\iota}_n - \hat{\iota}_{n-1}}{a_n - a_{n-1}} + \hat{\iota}_{n-1}, & \text{if } \hat{\iota}_{n-1} < t \leq \hat{\iota}_n     
          \end{cases}
 \end{equation}
 
-Note that $\iota_0$ is in our case always equal to $0$ and $\iota_n$ to infinity (in which case the memory activation in the interval is equal to $a_n$).
+Note that $\hat{\iota}_0$ is in our case always equal to $0$ and $\hat{\iota}_n$ to infinity (in which case the memory activation in the interval is equal to $a_n$).
