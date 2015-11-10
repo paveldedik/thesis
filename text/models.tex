@@ -167,9 +167,9 @@ Applying simple linear algebra, we can further modify the staircase function so 
 \begin{equation} \label{eq-staircase-linear}
   f(t) = \begin{cases}
             a_1, & \text{if } \hat{\iota}_0 < t \leq \hat{\iota}_1 \\
-            (t - a_1) \frac{\hat{\iota}_2 - \hat{\iota}_1}{a_2 - a_1} + \hat{\iota}_1, & \text{if } \hat{\iota}_1 < t \leq \hat{\iota}_2 \\
+            (t - \hat{\iota}_1) \frac{a_2 - a_1}{\hat{\iota}_2 - \hat{\iota}_1} + a_1, & \text{if } \hat{\iota}_1 < t \leq \hat{\iota}_2 \\
             \hspace{9em} \dots \\
-            (t - a_{n-1}) \frac{\hat{\iota}_n - \hat{\iota}_{n-1}}{a_n - a_{n-1}} + \hat{\iota}_{n-1}, & \text{if } \hat{\iota}_{n-1} < t \leq \hat{\iota}_n     
+            (t - \hat{\iota}_{n-1}) \frac{a_n - a_{n-1}}{\hat{\iota}_n - \hat{\iota}_{n-1}} + a_{n-1}, & \text{if } \hat{\iota}_{n-1} < t \leq \hat{\iota}_n     
          \end{cases}
 \end{equation}
 

@@ -488,6 +488,25 @@ def to_place_name(place_id, places=None):
     return unicode(places[place_id]['name']).decode('utf-8')
 
 
+def connect_points(points):
+    """Connects points by linear functions.
+
+    :param vector: Vector containing points to be connected by
+        linear functions.
+    :param vals: Values valid for each point.
+    """
+    intervals = {}
+    formula = '({{{4}}} - {0}) * ({3} - {2}) / ({1} - {0}) + {2}'
+    for i in range(len(points)-1):
+        (x1, y1), (x2, y2) = points[i], points[i+1]
+        intervals[x1, x2] = formula.format(x1, x2, y1, y2, 'x')
+    interval_dict = intervaldict(intervals)
+
+    def linear_fit(x):
+        return eval(interval_dict[x].format(x=x))
+    return linear_fit
+
+
 def to_place_type(place_id, places=None, place_types=None):
     """Takes ID of a place and returns its type name.
 
