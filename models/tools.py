@@ -253,6 +253,17 @@ def rmse(y_true, y_pred):
     return np.sqrt(mean_squared_error(y_true, y_pred))
 
 
+def log_likelihood(y_true, y_pred):
+    """Calculates Log Likelihood for given vectors.
+
+    :param y_true: Vector containing *true* values.
+    :type y_true: list, :class:`numpy.array` or :class:`pandas.Series`
+    :param y_pred: Vector containing *predicted* values.
+    :type y_true: list, :class:`numpy.array` or :class:`pandas.Series`
+    """
+    return (y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred)).sum()
+
+
 def sigmoid(x):
     """Implementation of the sigmoid (logistic) function.
 

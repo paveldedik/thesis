@@ -50,7 +50,7 @@ class PerformanceResult(object):
     def ll(self):
         """Log-likelihood, i.e. the logarithm of the likelihood.
         """
-        return sk.metrics.log_loss(self.observed, self.predicted)
+        return tools.log_likelihood(self.observed, self.predicted)
 
     @tools.cached_property
     def off(self):

@@ -19,7 +19,7 @@ from scipy import optimize
 
 from . import tools
 from .tests import PerformanceTest
-from .models import EloModel, PFAModel, PFASpacing, PFAStaircase, PFAGong
+from .models import EloModel, PFAExt, PFAExtSpacing, PFAExtStaircase, PFAGong
 
 
 class GridResult(object):
@@ -345,20 +345,20 @@ class GridSearch(object):
             ylabel='beta',
         )
 
-    def search_pfa(self, gammas, deltas):
+    def search_pfae(self, gammas, deltas):
         """Performes grid search on PFA extended model using given parameters.
 
-        :param gammas: Gamma parameters (see :class:`PFAModel`).
+        :param gammas: Gamma parameters (see :class:`PFAExt`).
         :type gammas: list or :class:`numpy.array`
-        :param deltas: Delta paramters (see :class:`PFAModel`).
+        :param deltas: Delta paramters (see :class:`PFAExt`).
         :type deltas: list or :class:`numpy.array`
         """
-        def pfa_factory(x, y):
+        def pfae_factory(x, y):
             elo = EloModel()
-            return PFAModel(elo, gamma=x, delta=y)
+            return PFAExt(elo, gamma=x, delta=y)
 
         return self.search(
-            factory=pfa_factory,
+            factory=pfae_factory,
             xvalues=gammas,
             yvalues=deltas,
             xlabel='gammas',
@@ -369,14 +369,14 @@ class GridSearch(object):
         """Performes grid search on PFA extended with spacing and forgetting
         using given parameters.
 
-        :param decays: Decay rates (see :class:`PFASpacing`).
+        :param decays: Decay rates (see :class:`PFAExtSpacing`).
         :type decays: list or :class:`numpy.array`
-        :param spacings: Spacing rates (see :class:`PFASpacing`).
+        :param spacings: Spacing rates (see :class:`PFAExtSpacing`).
         :type spacings: list or :class:`numpy.array`
         """
         def pfas_factory(x, y):
             elo = EloModel()
-            return PFASpacing(elo, decay_rate=x, spacing_rate=y)
+            return PFAExtSpacing(elo, decay_rate=x, spacing_rate=y)
 
         return self.search(
             factory=pfas_factory,
@@ -416,20 +416,20 @@ class RandomSearch(object):
 
         return optimize.minimize(fun, [alpha, beta])
 
-    def search_pfa(self, gamma, delta):
+    def search_pfae(self, gamma, delta):
         """Performes random search on ELO model using given initial
         parameters.
 
-        :param gamma: Initial gamma value (see :class:`PFAModel`).
+        :param gamma: Initial gamma value (see :class:`PFAExt`).
         :type gamma: float
-        :param delta: Initial delta value (see :class:`PFAModel`).
+        :param delta: Initial delta value (see :class:`PFAExt`).
         :type delta: float
         """
         elo = EloModel()
 
         def fun(x):
-            pfa = PFAModel(elo, gamma=x[0], delta=x[1])
-            test = PerformanceTest(pfa, self.data)
+            pfae = PFAExt(elo, gamma=x[0], delta=x[1])
+            test = PerformanceTest(pfae, self.data)
 
             test.run()
 
@@ -502,8 +502,8 @@ class NaiveDescent(object):
 
         return DescentResult(fitted_params, gradients)
 
-    def search_pfa(self, init_gamma, init_delta, **search_kwargs):
-        """Finds optimal parameters for the PFAModel.
+    def search_pfae(self, init_gamma, init_delta, **search_kwargs):
+        """Finds optimal parameters for the PFAExt.
 
         :param init_gamma: Initial gamma value.
         :param init_delta: Initial delta value.
@@ -512,11 +512,11 @@ class NaiveDescent(object):
         """
         def pfa_fun(gamma, delta):
             elo = EloModel()
-            pfa = PFAModel(elo, gamma=gamma, delta=delta)
-            pfa_test = PerformanceTest(pfa, self.data)
+            pfae = PFAExt(elo, gamma=gamma, delta=delta)
+            pfae_test = PerformanceTest(pfae, self.data)
 
-            pfa_test.run()
-            return pfa_test.results['train'].off
+            pfae_test.run()
+            return pfae_test.results['train'].off
 
         parameters = {
             'gamma': init_gamma, 'delta': init_delta
@@ -546,7 +546,7 @@ class NaiveDescent(object):
 
     def search_staircase(self, init_gamma, init_delta, init_staircase,
                          **search_kwargs):
-        """Finds optimal parameters for the `PFAStaircase` model.
+        """Finds optimal parameters for the `PFAExtStaircase` model.
 
         :param init_gamma: Initial gamma value.
         :type init_gamma: int or float
@@ -563,7 +563,7 @@ class NaiveDescent(object):
             elo = EloModel()
             staircase = {interval: staircase_value}
 
-            pfa = PFAStaircase(elo, gamma=gamma, delta=delta,
+            pfa = PFAExtStaircase(elo, gamma=gamma, delta=delta,
                                staircase=staircase)
             pfa_test = PerformanceTest(pfa, self.data)
 
@@ -578,7 +578,7 @@ class NaiveDescent(object):
         return self.search(pfast_fun, parameters, **search_kwargs)
 
     def search_staircase_only(self, init_staircase, **search_kwargs):
-        """Finds optimal parameters for the `PFAStaircase` model.
+        """Finds optimal parameters for the `PFAExtStaircase` model.
 
         :param init_staircase: Initial staircase function.
         :type init_staircase: dict
@@ -591,7 +591,7 @@ class NaiveDescent(object):
             elo = EloModel()
             staircase = {interval: staircase_value}
 
-            pfa = PFAStaircase(elo, staircase=staircase)
+            pfa = PFAExtStaircase(elo, staircase=staircase)
             pfa_test = PerformanceTest(pfa, self.data)
 
             pfa_test.run()
@@ -676,7 +676,7 @@ class GradientDescent(object):
     :param data: Data with answers in a DataFrame.
     """
 
-    class PFAStaircaseFit(PFAStaircase):
+    class PFAExtStaircaseFit(PFAExtStaircase):
 
         def __init__(self, *args, **kwargs):
             self.learn_rate = kwargs.pop('learn_rate', 0.02)
@@ -806,7 +806,7 @@ class GradientDescent(object):
 
     def search_staircase(self, init_gamma=2.5, init_delta=0.8,
                          init_staircase=None, **kwargs):
-        """Finds optimal parameters for the `PFAStaircase` model.
+        """Finds optimal parameters for the `PFAExtStaircase` model.
 
         :param init_gamma: Initial gamma value.
         :param init_delta: Initial delta value.
@@ -815,7 +815,7 @@ class GradientDescent(object):
         """
         def model_fun(**init_params):
             prior = EloModel()
-            return self.PFAStaircaseFit(prior, **init_params)
+            return self.PFAExtStaircaseFit(prior, **init_params)
 
         parameters = {
             'gamma': init_gamma,

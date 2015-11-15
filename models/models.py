@@ -22,11 +22,12 @@ __all__ = (
     'EloModel',
     'EloResponseTime',
     'PFAModel',
-    'PFATiming',
-    'PFAStaircase',
-    'PFASpacing',
+    'PFAExt',
+    'PFAExtTiming',
+    'PFAExtStaircase',
+    'PFAExtSpacing',
     'PFAGong',
-    'PFAForgetting'
+    'PFAGongTiming',
 )
 
 
@@ -148,7 +149,7 @@ class Item(object):
     def knowledge(self):
         """Knowledge of the item by the user."""
         return (
-              self.user.skill - self.place.difficulty
+            (self.user.skill - self.place.difficulty)
             + sum(self.knowledge_increments)
         )
 
@@ -213,6 +214,8 @@ class Item(object):
 class Model(object):
     """Abstract model class."""
 
+    ABBR = None
+
     def respect_guess(self, prediction, options):
         """Updates prediction with respect to guessing paramter.
 
@@ -272,15 +275,19 @@ class DummyPriorModel(Model):
 
     class _User(object):
         """Returns a user with given ID."""
-        skill = 0.0
+
+        def __init__(self, skill):
+            self.skill = skill
 
     class _Place(object):
         """Returns a place with given ID."""
-        difficulty = 0.0
 
-    def __init__(self):
-        self.users = defaultdict(lambda: self._User())
-        self.places = defaultdict(lambda: self._Place())
+        def __init__(self, difficulty):
+            self.difficulty = difficulty
+
+    def __init__(self, skill=0.0, difficulty=0.0):
+        self.users = defaultdict(lambda: self._User(skill))
+        self.places = defaultdict(lambda: self._Place(difficulty))
 
     def update(self, answer):
         pass
@@ -294,6 +301,7 @@ class EloModel(Model):
     The model is parametrized with `alpha` and `beta`. These parameters
     affect the uncertainty function.
     """
+    ABBR = 'Elo'
 
     def __init__(self, alpha=1, beta=0.05):
         self.alpha = alpha
@@ -380,6 +388,7 @@ class EloResponseTime(EloModel):
     """Extension of the Elo model that takes response time of user
     into account.
     """
+    ABBR = 'Elo/RT'
 
     def __init__(self, *args, **kwargs):
         self.zeta = kwargs.pop('zeta', 3)
@@ -409,7 +418,7 @@ class EloResponseTime(EloModel):
 
 
 class PFAModel(Model):
-    """PFA model for estimation of current knowledge.
+    """Standard Performance Factor Analysis.
 
     :param gamma: The significance of the update when the student
         answered correctly.
@@ -418,11 +427,12 @@ class PFAModel(Model):
         answered incorrectly.
     :type delta: float
     """
+    ABBR = 'PFA'
 
-    def __init__(self, prior, gamma=3.4, delta=-0.3):
+    def __init__(self, prior=None, gamma=3.4, delta=-0.3):
         super(PFAModel, self).__init__()
 
-        self.prior = prior
+        self.prior = prior or DummyPriorModel()
         self.gamma = gamma
         self.delta = delta
 
@@ -436,6 +446,73 @@ class PFAModel(Model):
             lambda *args: Item(self.prior, *args)
         )
         self.predictions = {}
+
+    def predict(self, question):
+        """Returns probability of correct answer for given question.
+
+        :param question: Asked question.
+        :type question: :class:`pandas.Series` or :class:`Question`
+        """
+        item = self.items[question.user_id, question.place_id]
+
+        knowledge = (
+            item.knowledge +
+            self.gamma * len(item.correct) +
+            self.delta * len(item.incorrect)
+        )
+
+        return tools.sigmoid(knowledge)
+
+    def update(self, answer):
+        """Performes update of current knowledge of a user based on the
+        given answer.
+
+        :param answer: Answer to a question.
+        :type answer: :class:`pandas.Series` or :class:`Answer`
+        """
+        item = self.items[answer.user_id, answer.place_id]
+
+        if not item.practices:
+            self.prior.update(answer)
+
+        prediction = self.predict(answer)
+        self.predictions[answer.id] = prediction
+
+        item.add_practice(answer)
+
+    def train(self, data):
+        """Trains the model on given data set.
+
+        :param data: Data set on which to train the model.
+        :type data: :class:`pandas.DataFrame`
+        """
+        self.init_model()
+        data.sort(['inserted']).apply(self.update, axis=1)
+
+    @classmethod
+    def split_data(self, data):
+        """Classmethod that splits data into training set and test set.
+
+        :param data: The object containing data.
+        :type data: :class:`pandas.DataFrame`.
+        """
+        test_set = tools.last_answers(data)
+        train_set = data[~data['id'].isin(test_set['id'])]
+
+        return train_set, test_set
+
+
+class PFAExt(PFAModel):
+    """PFA model for estimation of current knowledge.
+
+    :param gamma: The significance of the update when the student
+        answered correctly.
+    :type gamma: float
+    :param delta: The significance of the update when the student
+        answered incorrectly.
+    :type delta: float
+    """
+    ABBR = 'PFA/E'
 
     def predict(self, question):
         """Returns probability of correct answer for given question.
@@ -469,30 +546,9 @@ class PFAModel(Model):
         else:
             item.inc_knowledge(self.delta * prediction)
 
-    def train(self, data):
-        """Trains the model on given data set.
 
-        :param data: Data set on which to train the model.
-        :type data: :class:`pandas.DataFrame`
-        """
-        self.init_model()
-        data.sort(['inserted']).apply(self.update, axis=1)
-
-    @classmethod
-    def split_data(self, data):
-        """Classmethod that splits data into training set and test set.
-
-        :param data: The object containing data.
-        :type data: :class:`pandas.DataFrame`.
-        """
-        test_set = tools.last_answers(data)
-        train_set = data[~data['id'].isin(test_set['id'])]
-
-        return train_set, test_set
-
-
-class PFATiming(PFAModel):
-    """Alternative version of :class:`PFASpacing` which ignores
+class PFAExtTiming(PFAExt):
+    """Alternative version of :class:`PFAExtSpacing` which ignores
     spacing effect. Only forgetting is considered.
 
     :param gamma: The significance of the update when the student
@@ -504,6 +560,7 @@ class PFATiming(PFAModel):
     :param time_effect_fun: Time effect function.
     :type time_effect_fun: callable
     """
+    ABBR = 'PFA/E/T'
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('gamma', 2.3)
@@ -512,7 +569,7 @@ class PFATiming(PFAModel):
         time_effect = lambda t: 80 / t
         self.time_effect = kwargs.pop('time_effect_fun', time_effect)
 
-        super(PFATiming, self).__init__(*args, **kwargs)
+        super(PFAExtTiming, self).__init__(*args, **kwargs)
 
     def predict(self, question):
         """Returns probability of correct answer for given question.
@@ -532,8 +589,8 @@ class PFATiming(PFAModel):
         return self.respect_guess(prediction, question.options)
 
 
-class PFAStaircase(PFATiming):
-    """Alternative version of :class:`PFASpacing` which ignores
+class PFAExtStaircase(PFAExtTiming):
+    """Alternative version of :class:`PFAESpacing` which ignores
     spacing effect. Only forgetting is considered given by staircase
     fucntion.
 
@@ -546,6 +603,7 @@ class PFAStaircase(PFATiming):
     :param time_effect_fun: Values for staircase function.
     :type time_effect_fun: dict (tuples as keys)
     """
+    ABBR = 'PFA/E/T staircase'
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('gamma', 2.5)
@@ -554,10 +612,10 @@ class PFAStaircase(PFATiming):
         self.staircase = tools.intervaldict(kwargs.pop('staircase'))
         self.time_effect = lambda k: self.staircase[k]
 
-        super(PFATiming, self).__init__(*args, **kwargs)
+        super(PFAExtTiming, self).__init__(*args, **kwargs)
 
 
-class PFASpacing(PFATiming):
+class PFAExtSpacing(PFAExtTiming):
     """Extended version of PFA that takes into account the effect of
     forgetting and spacing.
 
@@ -576,6 +634,7 @@ class PFASpacing(PFATiming):
         and vice versa.
     :type decay_rate: float
     """
+    ABBR = 'PFA/E/S'
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('gamma', 2.8)
@@ -585,7 +644,7 @@ class PFASpacing(PFATiming):
         self.decay_rate = kwargs.pop('decay_rate', 0.18)
         self.iota = kwargs.pop('iota', 1.5)
 
-        super(PFASpacing, self).__init__(*args, **kwargs)
+        super(PFAExtSpacing, self).__init__(*args, **kwargs)
 
     def memory_strength(self, question):
         """Estimates memory strength of an item.
@@ -632,6 +691,7 @@ class PFAGong(PFAModel):
     :param decay: Decay rate of answers.
     :type decay: float
     """
+    ABBR = 'PFA/G'
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('gamma', 2.1)
@@ -695,7 +755,7 @@ class PFAGong(PFAModel):
         item.add_practice(answer)
 
 
-class PFAForgetting(PFAGong):
+class PFAGongTiming(PFAGong):
     """Performance Factor Analysis combining some aspects of both
     the Yue Gong's PFA and the ACT-R model.
 
@@ -708,6 +768,7 @@ class PFAForgetting(PFAGong):
     :param time_effect_fun: Time effect function.
     :type time_effect_fun: callable
     """
+    ABBR = 'PFA/G/T'
 
     def __init__(self, *args, **kwargs):
         time_effect = lambda t: 1.1 - 0.08 * np.log(t)
