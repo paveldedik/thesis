@@ -49,12 +49,13 @@ In this chapter we evaluate and analyze several models with the focus on memory 
 Note that for the estimation of prior knowledge we sometime use the Elo model briefly described in chapter~\ref{elo}. In any case, we always explicitly mention when the dedicated prior knowledge estimator is used.
 
 \subsection{Parameters}
+\label{parameters}
 
 Standard PFA model has 3 parameters, the initial difficulty of an item $\beta$, weight of each success $\gamma$ and failure $\delta$. In cases where we use Elo model for prior knowledge estimation, we can replace the parameter $\beta$ with $\theta_s - b_c$ which leaves us with only 2 parameters we need to estimate. Nonetheless, a time effect function from the list presented in chapter~\ref{time-effect-functions} has to be chosen as well for the PFA/E/T and PFA/G/T models.
 
 As all the simple functions (logarithmic, exponential and polynomial) have only the two parameters $a$ and $c$, we fitted the models using the greedy search algorithm detailed in chapter~\ref{greedy-search}. However, because our goal is to model the forgetting of students who use the system for practicing geography slepemapy.cz, we also evaluated the staircase function formalized in chapter \ref{staircase-function}. In the case of a staircase function we learn the time effect function from the data set, this could lead to the most accurate and best calibrated model. For the purpose of parameter optimization, we used the adjusted gradient descent described in chapter~\ref{gradient-descent}.
 
-In our experiments with the staircase function, we divided the vector $\iota$ in 10 intervals, we chose the following values: $(0s, 60s]$,$(60s, 90s]$, $(90s, 2.5m]$, $(2.5m, 5m]$, $(5m, 10m]$, $(10m, 30m]$, $(30m, 3h]$, $(3h, 24h]$, $(24h, 5d]$, $(5d, \infty)$. The obtained staircase function is illustrated in Figure~\ref{learned-time-effect-function}. It is evident from the figure that the parameters are rather stable (with $\gamma = 1.814 \pm 0.276$ and $\delta = 0.827 \pm 0.095$) and the staircase function is a good choice for a time effect function.
+In our experiments with the staircase function, we divided the vector $\iota$ in 10 intervals, we chose the following values: $(0s, 60s]$,$(60s, 90s]$, $(90s, 2.5m]$, $(2.5m, 5m]$, $(5m, 10m]$, $(10m, 30m]$, $(30m, 3h]$, $(3h, 24h]$, $(24h, 5d]$, $(5d, \infty)$. The obtained staircase function is illustrated in Figure~\ref{learned-time-effect-function}. It is evident from the figure that the parameters are rather stable (with $\gamma = 1.814 \pm 0.276$ and $\delta = 0.827 \pm 0.095$) and the staircase function is thus a good choice for a time effect function.
 
 \begin{figure}[htbp]
   \centering
@@ -65,11 +66,78 @@ In our experiments with the staircase function, we divided the vector $\iota$ in
 
 \subsection{Calibration}
 
-Calibration can be used to detect the deviation of model's predictions from the averaged observed frequency of correctness of answers. This is very useful in our case where we need to find out how a model performs with each time effect function over timing distance between concrete practices of individual students. The choice of RMSE isn't very helpful here because it considers all deviations simply as errors in predictions, i.e. it doesn't show whether the averaged prediction overstates or understates the observed frequency of correct answers. The metric we used in order to calibrate the models is shown in figure~\ref{eq-callibration}.
+Calibration can be used to detect the deviation of model's predictions from the averaged observed frequency of correctness of answers. This is very useful in our case where we need to find out how a model performs with each time effect function over timing distance between concrete practices of individual students. The choice of RMSE isn't very helpful here because it considers all deviations simply as errors in predictions, i.e. it doesn't show whether the model overestimates or underestimates the observed regularity of correct answers. The metric we used in order to calibrate the models is shown in figure~\ref{eq-callibration}.
 
 \begin{equation} \label{eq-callibration}
   \mathit{Correctness} - \mathit{Prediction} = \frac{1}{n} \sum_{i=0}^{n} (y_i - p_i)
 \end{equation}
+
+Using a data set of students who practiced geography actively at least for 5 days and answered more than 50 questions, we compared the calibrations for the models that don't account for timing distances between answers. In Figure~\ref{fig:calibration-time-effect-off}, we can see that these models aren't very well calibrated and the analysis suggests that the decay factor introduced in PFA/G doesn't solve this issue. We also analyzed several previously mentioned time effect functions which we used in the PFA/E/T and PFA/G/T models. The Figure~\ref{fig:calibration-time-effect-on} indicates that this method leads to much better calibrated models.
+
+\begin{figure}[htbp]
+  \centering
+  \begin{subfigure}{.49\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{img/calibration-time-effect-off}
+    \caption{}
+    \label{fig:calibration-time-effect-off}
+  \end{subfigure}
+  \begin{subfigure}{.49\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{img/calibration-time-effect-on}
+    \caption{}
+    \label{fig:calibration-time-effect-on}
+  \end{subfigure}
+  \label{fig:calibration1}
+  \caption{Visualization of calibrations for the plain models (left) and their extended versions with selected time effect functions (right). We learned the parameters of the staircase function from data as was described in chapter~\ref{staircase-function}, the polynomials were estimated using greedy search algorithm.}
+\end{figure}
+
+The graphs in Figure~\ref{fig:calibration2} show the comparison of simple time effect functions. The parameters of each model are depicted in Table~\ref{table:calibration2-parameters}.
+
+\begin{table}
+  \centering
+  \caption{Parameters of calibrated models.}
+  \begin{tabular}{ p{2cm}S[table-format=1.3]S[table-format=1.3]
+                         S[table-format=1.3]S[table-format=1.3]
+                         S[table-format=1.3]S[table-format=1.3] }
+   \toprule[\heavyrulewidth]
+   & \multicolumn{6}{c}{Time Effect Function} \\
+   \cmidrule(r){2-7}
+   & \multicolumn{2}{c}{\textbf{log} $= a - c \cdot \log{(t)}$}
+   & \multicolumn{2}{c}{\textbf{exp} $= a \cdot e^{-c \sqrt{t}}$}
+   & \multicolumn{2}{c}{\textbf{poly} $= a / t^c$} \\
+   \cmidrule(r){2-7}
+   & \multicolumn{1}{c}{$a$}
+   & \multicolumn{1}{c}{$c$}
+   & \multicolumn{1}{c}{$a$}
+   & \multicolumn{1}{c}{$c$}
+   & \multicolumn{1}{c}{$a$}
+   & \multicolumn{1}{c}{$c$} \\
+   \midrule[\heavyrulewidth]
+   \textbf{PFA/E/T} & 1.802 & 0.119 & 1.642 & 0.011 & 2.507 & 0.166 \\
+   \textbf{PFA/G/T} & 0.789 & 0.046 & 0.501 & 0.002 & 1.196 & 0.153 \\
+   \bottomrule[\heavyrulewidth]
+  \end{tabular}
+  \label{table:calibration2-parameters}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{subfigure}{.49\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{img/calibration-pfaet}
+    \caption{}
+    \label{fig:calibration-pfaet}
+  \end{subfigure}
+  \begin{subfigure}{.49\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{img/calibration-pfagt}
+    \caption{}
+    \label{fig:calibration-pfagt}
+  \end{subfigure}
+  \caption{Visualization of calibrations for the PFA/E/T model (left) and PFA/G/T model (right) with several tested time effect functions.}
+  \label{fig:calibration2}
+\end{figure}
 
 \subsection{Evaluation}
 \label{evaluation}
