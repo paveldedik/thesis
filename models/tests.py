@@ -16,6 +16,50 @@ import matplotlib.pyplot as plt
 from . import tools
 
 
+def get_test_result(test_set, model):
+    """Returns model's performance result on test data.
+
+    :param test_set: Test set data.
+    :param model: Model used for evaluation.
+    """
+    test_values = pd.DataFrame({
+        'observed': test_set['is_correct'],
+        'predicted': test_set.apply(model.predict, axis=1),
+    })
+    test_values = test_values[
+        np.isfinite(test_values['predicted'])
+    ]
+    return PerformanceResult(
+        test_values['observed'],
+        test_values['predicted'],
+    )
+
+
+def get_train_result(train_set, model):
+    """Returns model's performance result on train data.
+
+    :param test_set: Train set data.
+    :param model: Model used for evaluation.
+    """
+    predictions = pd.DataFrame.from_dict(
+        {'predicted': model.predictions},
+    )
+    train_set = pd.concat(
+        [train_set.set_index(['id']), predictions], axis=1
+    )
+    train_values = pd.DataFrame({
+        'observed': train_set['is_correct'],
+        'predicted': train_set['predicted'],
+    })
+    train_values = train_values[
+        np.isfinite(train_values['predicted'])
+    ]
+    return PerformanceResult(
+        train_values['observed'],
+        train_values['predicted'],
+    )
+
+
 class PerformanceResult(object):
     """Represents estimated performance of a model.
 
@@ -76,6 +120,33 @@ class PerformanceResult(object):
             sk.metrics.roc_curve(self.observed, self.predicted, pos_label=1)
         return plt.plot(fpr, tpr)
 
+    def plot_dist(self):
+        """Plots the distribution of true positives, true negatives,
+        false positives and false negatives.
+        """
+        positives = []
+        negatives = []
+
+        joined = pd.concat([self.observed, self.predicted], axis=1)
+        p = joined[self.observed == 1]
+        n = joined[self.observed == 0]
+
+        intervals = zip(np.arange(0, 0.99, 0.01), np.arange(0.01, 1, 0.01))
+
+        for lower, upper in intervals:
+            pc = len(p[(p['predicted'] > lower) & (p['predicted'] < upper)])
+            nc = len(n[(n['predicted'] > lower) & (n['predicted'] < upper)])
+            positives.append(pc)
+            negatives.append(nc)
+
+        X = [np.mean(interval) for interval in intervals]
+        p1 = plt.plot(X, positives)
+        p2 = plt.plot(X, negatives)
+
+        plt.legend((p1[0], p2[0]), ('Positive samples', 'Negative samples'))
+        plt.xlabel('Threshold')
+        plt.ylabel('Number of samples')
+
     def __str__(self):
         return self.__repr__()
 
@@ -118,35 +189,9 @@ class PerformanceTest(object):
         self.model.train(self.train_set)
 
         if self.test_set is not None:
-            self.test_values = pd.DataFrame({
-                'observed': self.test_set['is_correct'],
-                'predicted': self.test_set.apply(self.model.predict, axis=1),
-            })
-            self.test_values = self.test_values[
-                np.isfinite(self.test_values['predicted'])
-            ]
-            self.test_result = PerformanceResult(
-                self.test_values['observed'],
-                self.test_values['predicted'],
-            )
+            self.test_result = get_test_result(self.test_set, self.model)
         if self.train_set is not None:
-            predictions = pd.DataFrame.from_dict(
-                {'predicted': self.model.predictions},
-            )
-            self.train_set = pd.concat(
-                [self.train_set.set_index(['id']), predictions], axis=1
-            )
-            self.train_values = pd.DataFrame({
-                'observed': self.train_set['is_correct'],
-                'predicted': self.train_set['predicted'],
-            })
-            self.train_values = self.train_values[
-                np.isfinite(self.train_values['predicted'])
-            ]
-            self.train_result = PerformanceResult(
-                self.train_values['observed'],
-                self.train_values['predicted'],
-            )
+            self.train_result = get_train_result(self.train_set, self.model)
 
     @property
     def results(self):

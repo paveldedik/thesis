@@ -9,6 +9,7 @@ Evaluation Models
 from __future__ import division
 
 from copy import copy
+from itertools import izip
 from collections import defaultdict
 
 import numpy as np
@@ -29,6 +30,53 @@ __all__ = (
     'PFAGong',
     'PFAGongTiming',
 )
+
+
+#: Dictionary of the most commonly used time effect functions in this thesis.
+time_effect_funcs = {}
+
+
+def register_time_effect(name):
+    """Registers new time effect functions."""
+    def register(time_effect):
+        time_effect_funcs[name] = time_effect
+    return register
+
+
+@register_time_effect('log')
+def time_effect_log(t, a=1.8, c=0.123):
+    return a - c * np.log(t)
+
+
+@register_time_effect('poly')
+def time_effect_div(t, a=2, c=0.2):
+    return a / (t+1) ** c
+
+
+@register_time_effect('exp')
+def time_effect_exp(t, a=1.6, c=0.01):
+    return a * np.exp(-c * np.sqrt(t))
+
+
+def init_time_effect(obj, name):
+    """Prepares time effect function based on name. Initializes
+    the given object with default parameters `a` and `c`.
+
+    :param obj: Object to initialize with time effect function.
+    :param name: Name of the time effect function.
+    """
+    time_effect_fun = time_effect_funcs[name]
+    defaults = time_effect_fun.func_defaults
+
+    if getattr(obj, 'a', None) is None:
+        setattr(obj, 'a', defaults[0])
+    if getattr(obj, 'c', None) is None:
+        setattr(obj, 'c', defaults[1])
+
+    def time_effect(t):
+        return time_effect_fun(t, obj.a, obj.c)
+
+    obj.time_effect = time_effect
 
 
 class Question(object):
@@ -558,7 +606,7 @@ class PFAExtTiming(PFAExt):
         answered incorrectly.
     :type delta: float
     :param time_effect_fun: Time effect function.
-    :type time_effect_fun: callable
+    :type time_effect_fun: callable or string
     """
     ABBR = 'PFA/E/T'
 
@@ -566,8 +614,13 @@ class PFAExtTiming(PFAExt):
         kwargs.setdefault('gamma', 2.3)
         kwargs.setdefault('delta', -0.9)
 
-        time_effect = lambda t: 80 / t
-        self.time_effect = kwargs.pop('time_effect_fun', time_effect)
+        time_effect = kwargs.pop('time_effect_fun', 'poly')
+
+        if isinstance(time_effect, basestring):
+            self.a, self.b = kwargs.pop('a', None), kwargs.pop('c', None)
+            init_time_effect(self, time_effect)
+        else:
+            self.time_effect = time_effect
 
         super(PFAExtTiming, self).__init__(*args, **kwargs)
 
@@ -766,16 +819,21 @@ class PFAGongTiming(PFAGong):
         answers incorrectly.
     :type delta: float
     :param time_effect_fun: Time effect function.
-    :type time_effect_fun: callable
+    :type time_effect_fun: callable or string
     """
     ABBR = 'PFA/G/T'
 
     def __init__(self, *args, **kwargs):
-        time_effect = lambda t: 1.1 - 0.08 * np.log(t)
-        self.time_effect = kwargs.pop('time_effect_fun', time_effect)
-
         kwargs.setdefault('gamma', 1.7)
         kwargs.setdefault('delta', 0.5)
+
+        time_effect = kwargs.pop('time_effect_fun', 'poly')
+
+        if isinstance(time_effect, basestring):
+            self.a, self.b = kwargs.pop('a', None), kwargs.pop('c', None)
+            init_time_effect(self, time_effect)
+        else:
+            self.time_effect = time_effect
 
         super(PFAGong, self).__init__(*args, **kwargs)
 
@@ -789,10 +847,10 @@ class PFAGongTiming(PFAGong):
         """
         correct_weights = [
             max(ans.is_correct * self.time_effect(diff), 0) for ans, diff
-            in zip(item.practices, item.get_diffs(question.inserted))
+            in izip(item.practices, item.get_diffs(question.inserted))
         ]
         incorrect_weights = [
             (1 - ans.is_correct) * self.time_effect(diff) for ans, diff
-            in zip(item.practices, item.get_diffs(question.inserted))
+            in izip(item.practices, item.get_diffs(question.inserted))
         ]
         return sum(correct_weights), sum(incorrect_weights)
