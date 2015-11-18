@@ -18,8 +18,9 @@ import matplotlib.cm as cm
 from scipy import optimize
 
 from . import tools
-from .tests import PerformanceTest
-from .models import EloModel, PFAExt, PFAExtSpacing, PFAExtStaircase, PFAGong
+from .tests import PerformanceTest, get_train_result
+from .models import (EloModel, PFAExt, PFAExtSpacing, PFAExtStaircase,
+                     PFAGong, PFAModel, PFAGongTiming)
 
 
 class GridResult(object):
@@ -442,6 +443,8 @@ class RandomSearch(object):
 class NaiveDescent(object):
     """Encapsulates the modified gradient descent (which is not in fact
     based on the partial derivatives of a function) for various models.
+    Note that this method doesn't really work even when the number of
+    parameters is very small (like two parameters small).
 
     :param data: Data with answers in a DataFrame.
     """
@@ -564,7 +567,7 @@ class NaiveDescent(object):
             staircase = {interval: staircase_value}
 
             pfa = PFAExtStaircase(elo, gamma=gamma, delta=delta,
-                               staircase=staircase)
+                                  staircase=staircase)
             pfa_test = PerformanceTest(pfa, self.data)
 
             pfa_test.run()
@@ -605,7 +608,8 @@ class NaiveDescent(object):
 
 class GreedySearch(object):
     """Similar to the gradient descent method but searches for
-    the optimum of a selected objective function.
+    the optimum of a selected objective function. The objective
+    function is set to RMSE by default and cannot be changed.
 
     :param data: Data with answers in a DataFrame.
     """
@@ -614,7 +618,7 @@ class GreedySearch(object):
         self.data = data
 
     def search(self, model_fun, init_parameters, init_epsilons,
-               altitude_ratio=1, precision=0.001, maxiter=50):
+               altitude_change=100, precision=0.001, maxiter=50):
         """Finds optimal parameters for given model function.
 
         :param model_fun: Callable that trains the model on the given
@@ -622,9 +626,9 @@ class GreedySearch(object):
         :param init_parameters: Dictionary of parameters to fit.
         :param init_epsilons: Dictionary of initial values for the
             evaluation of the parameter's neigbourhood.
-        :param altitude_ratio: The ratio of the change in altitude.
+        :param altitude_change: The ratio of the change in altitude.
             Higher value means that the change in altitude (epsilon)
-            is bigger with each iteration. Default is :num:`1`.
+            is bigger with each iteration. Default is :num:`100`.
         :param precision: The algorithm stops iterating when the precision
             gets below this value. Default is :num:`0.001`.
         :param maxiter: Maximum number of iteration. Default is :num:`50`.
@@ -654,7 +658,7 @@ class GreedySearch(object):
                 best = min(altitudes, key=lambda x: altitudes[x])
                 new_parameters[name] = best
 
-                change = (altitude - altitudes[best]) * altitude_ratio
+                change = (altitude - altitudes[best]) * altitude_change
                 epsilons[name] -= epsilons[name] * change
 
             old_parameters = parameters
@@ -667,6 +671,178 @@ class GreedySearch(object):
                 break
 
         return parameters
+
+
+class GreedySearch2(object):
+    """Similar to the gradient descent method but searches for
+    the optimum by selecting the most favorable option in the neighborhood.
+    Note that this optimization algorithm seems to be very dependent
+    on the step size of each parameter. The problem is that we cannot
+    be sure which value is the best. All parameters should probably be
+    set to the same value, otherwise the results may not be very reliable.
+
+    :param data: Data with answers in a DataFrame.
+    """
+
+    def __init__(self, data):
+        self.data = data
+
+    def search(self, model_factory, init_parameters, init_epsilons,
+               init_learn_rate=0.1, number_of_iter=10, echo_iterations=True):
+        """Finds optimal parameters for given model.
+
+        :param model_factory: Callable that creates the model on the given
+            parameters.
+        :param init_parameters: Dictionary of parameters to fit.
+        :param init_epsilons: How much increment each parameter when
+            checking the neighborhood.
+        :param init_learn_rate: Initial learning rate Default is :num:`0.01`.
+        :param number_of_iter: Number of iteration. Default is :num:`10`.
+        :param echo_iterations: Whether to output the values of parameters
+            in each iteration. Default is :obj:`True`.
+        """
+        print_format = '{:10.5f} {:10.5f} {:10.5f}'
+
+        def pretty_echo(*args):
+            if not echo_iterations:
+                return
+            string = print_format.format(*args)
+            tools.echo(string, clear=False)
+
+        def measure_factory(model, answer):
+            def get_distance(param, value):
+                old_value = getattr(model, param)
+
+                setattr(model, param, value)
+                prediction = model.predict(answer)
+
+                setattr(model, param, old_value)
+                return abs(answer.is_correct - prediction)
+            return get_distance
+
+        epsilons = dict(init_epsilons)
+        parameters = [dict(init_parameters)]
+
+        for i in range(1, number_of_iter + 1):
+            model = model_factory(**parameters[i-1])
+            learn_rate = init_learn_rate / (i / 2)
+
+            def update(answer):
+                get_distance = measure_factory(model, answer)
+
+                for param, value in parameters[i-1].items():
+                    dist = get_distance(param, value)
+                    best = value
+
+                    posit = value + (epsilons[param] * learn_rate)
+                    negat = value - (epsilons[param] * learn_rate)
+
+                    posit_dist = get_distance(param, posit)
+                    negat_dist = get_distance(param, negat)
+
+                    if posit_dist < negat_dist and posit_dist < dist:
+                        best += epsilons[param] * posit_dist
+                    elif negat_dist < posit_dist and negat_dist < dist:
+                        best -= epsilons[param] * negat_dist
+
+                    parameters[i-1][param] = best
+
+                for param, value in parameters[i-1].items():
+                    setattr(model, param, value)
+
+                model.update(answer)
+
+            self.data.apply(update, axis=1)
+
+            parameters.append({})
+            for param in parameters[i-1]:
+                parameters[i][param] = getattr(model, param)
+
+            result = get_train_result(self.data, model)
+            pretty_echo(model.gamma, model.delta, result.rmse)
+
+        return parameters[-1]
+
+    def search_pfa(self, init_gamma=2, init_delta=0,
+                   init_gamma_eps=0.001, init_delta_eps=0.001, **kwargs):
+        """Finds optimal parameters for the `PFAGong` model.
+
+        :param init_gamma: Initial gamma value.
+        :param init_delta: Initial delta value.
+        :param init_gamma_eps: Initial gamma step size.
+        :param init_delta_eps: Initial delta step size.
+        """
+        def model_factory(gamma, delta):
+            return PFAModel(EloModel(), gamma=gamma, delta=delta)
+
+        return self.search(
+            model_factory,
+            init_parameters={
+                'gamma': init_gamma, 'delta': init_delta
+            },
+            init_epsilons={
+                'gamma': init_gamma_eps, 'delta': init_gamma_eps
+            },
+            **kwargs
+        )
+
+    def search_pfag(self, init_gamma=2, init_delta=0, init_decay=0.8,
+                    init_gamma_eps=0.001, init_delta_eps=0.001,
+                    init_decay_eps=0.001, **kwargs):
+        """Finds optimal parameters for the `PFAGong` model.
+
+        :param init_gamma: Initial gamma value.
+        :param init_delta: Initial delta value.
+        :param init_decay: Initial decay value.
+        :param init_gamma_eps: Initial gamma step size.
+        :param init_delta_eps: Initial delta step size.
+        :param init_decay_eps: Initial decay step size.
+        """
+        def model_factory(gamma, delta, decay):
+            elo = EloModel()
+            return PFAGong(elo, gamma=gamma, delta=delta, decay=decay)
+
+        return self.search(
+            model_factory,
+            init_parameters={
+                'gamma': init_gamma, 'delta': init_delta,
+                'decay': init_decay
+            },
+            init_epsilons={
+                'gamma': init_gamma_eps, 'delta': init_gamma_eps,
+                'decay': init_decay_eps
+            },
+            **kwargs
+        )
+
+    def search_pfagt(self, init_gamma=2, init_delta=0, time_effect_fun='poly',
+                     init_gamma_eps=0.001, init_delta_eps=0.001, **kwargs):
+        """Finds optimal parameters for the `PFAGong` model.
+
+        :param init_gamma: Initial gamma value.
+        :param init_delta: Initial delta value.
+        :param init_gamma_eps: Initial gamma step size.
+        :param init_delta_eps: Initial delta step size.
+        :param time_effect_name: Time effect function identifier.
+            Can be either poly`, `log` or `exp`.
+        """
+
+        def model_factory(gamma, delta, a, c):
+            return PFAGongTiming(EloModel(), gamma=gamma, delta=delta,
+                                 time_effect_fun=time_effect_fun, a=a, c=c)
+
+        return self.search(
+            model_factory,
+            init_parameters={
+                'gamma': init_gamma, 'delta': init_delta,
+                'a': 3.0, 'c': 0.3,
+            },
+            init_epsilons={
+                'gamma': init_gamma_eps, 'delta': init_gamma_eps,
+                'a': 0.001, 'c': 0.001,
+            },
+            **kwargs
+        )
 
 
 class GradientDescent(object):
@@ -765,10 +941,19 @@ class GradientDescent(object):
 
         :param model_fun: Callable that trains the model using the given
             parameters.
-        :param parameters: Dictionary of parameters to fit.
+        :param init_parameters: Dictionary of parameters to fit.
         :param init_learn_rate: Initial learning rate Default is :num:`0.01`.
         :param number_of_iter: Number of iteration. Default is :num:`10`.
         :param log_metadata: Whether to log metadata information.
+        :param echo_iterations: Whether to output the values of parameters
+            in each iteration. Default is :obj:`True`.
+        :param random_factor: Can be used for making random increments
+            or decrements of parameters. Note that our experiments
+            didn't reveal any improvement when random factor is used.
+        :param random_chance: Another parameter that affects random
+            change of parameters. If the value is set to :num:`1000`
+            it means that with the probability 1/1000 the parameter
+            is incremented/decremented according to random_factor.
         """
         print_format = '{:10.5f} {:10.5f} {:10.5f}'
 
