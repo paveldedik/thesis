@@ -34,6 +34,8 @@ Note that some places are larger on the map then other, i.e. a question requirin
   \label{fig-response-time}
 \end{figure}
 
+TODO: describe the extended model here, evaluate and analyze.
+
 \section{Memory Decay}
 
 In this chapter we evaluate and analyze several models with the focus on memory decay and forgetting. Since we use abbreviations for the models, here is a list of all evaluated models as they occur in our experiments:
@@ -139,8 +141,98 @@ The graphs in Figure~\ref{fig:calibration2} show the comparison of simple time e
   \label{fig:calibration2}
 \end{figure}
 
-\subsection{Evaluation}
+\section{Evaluation}
 \label{evaluation}
+
+We evaluated the models on several different sets of data, including all answers, African and European countries, USA states, Czech rivers, world mountains and also we compared in-school and out-of-school students. Parameters of all models were estimated using either greedy search or gradient descent.
+
+\begin{table}
+  \centering
+  \caption{Parameters of calibrated models.}
+  \begin{tabular}{ p{1.8cm} l S[table-format=1.3] S[table-format=1.3]
+                   S[table-format=1.3] S[table-format=1.3] S[table-format=1.3] }
+   \toprule[\heavyrulewidth]
+   \toprule[\heavyrulewidth]
+   & \multicolumn{1}{c}{Time effect fun.}
+   & \multicolumn{1}{c}{$\gamma$}
+   & \multicolumn{1}{c}{$\delta$}
+   & \multicolumn{1}{c}{$\xi$}
+   & \multicolumn{1}{c}{$a$}
+   & \multicolumn{1}{c}{$c$} \\
+   \midrule[\heavyrulewidth]
+   \textbf{PFA}     & &  0.119 &  0.119 &        &        &        \\
+   \textbf{PFA/E}   & &  2.903 & -0.332 &        &        &        \\
+   \textbf{PFA/G}   & &  0.119 &  0.119 &  0.119 &        &        \\
+   \midrule
+   \multirow{4}{4em}{\textbf{PFA/E/T}}
+    & $f(t) = a / t^c$                 &  0.119 &  0.119 & &  0.119 &  0.119 \\
+    & $f(t) = a - c \log{(t)}$         &  0.119 &  0.119 & &  0.119 &  0.119 \\
+    & $f(t) = a \cdot e^{-c \sqrt{t}}$ &  0.119 &  0.119 & &  0.119 &  0.119 \\
+    & $f(t) = \mathit{staircase}$      &  0.119 &  0.119 & &        &        \\
+   \midrule
+   \multirow{3}{3em}{\textbf{PFA/G/T}}
+    & $f(t) = a / t^c$                 &  0.119 &  0.119 & &  0.119 &  0.119 \\
+    & $f(t) = a - c \log{(t)}$         &  0.119 &  0.119 & &  0.119 &  0.119 \\
+    & $f(t) = a \cdot e^{-c \sqrt{t}}$ &  0.119 &  0.119 & &  0.119 &  0.119 \\
+   \midrule[\heavyrulewidth]
+   \midrule[\heavyrulewidth]
+   & \multicolumn{1}{c}{Time effect fun.}
+   & \multicolumn{1}{c}{RMSE}
+   & \multicolumn{1}{c}{AUC}
+   & \multicolumn{1}{c}{LL}
+   & \multicolumn{2}{c}{\# of Correct} \\
+   \midrule[\heavyrulewidth]
+   \textbf{PFA}     & &  0.231  & 0.982 
+     & \multicolumn{1}{S[table-format=5]}{-56047}
+     & \multicolumn{2}{S[table-format=6]}{156047} \\
+   \textbf{PFA/E}   & &  0.231  & 0.982
+     & \multicolumn{1}{S[table-format=5]}{-56047}
+     & \multicolumn{2}{S[table-format=6]}{156047} \\
+   \textbf{PFA/G}   & &  0.231  & 0.982
+     & \multicolumn{1}{S[table-format=5]}{-56047}
+     & \multicolumn{2}{S[table-format=6]}{156047} \\
+   \midrule
+   \multirow{4}{4em}{\textbf{PFA/E/T}}
+     & $f(t) = a / t^c$                 &  0.231  & 0.982
+     & \multicolumn{1}{S[table-format=5]}{-56047}
+     & \multicolumn{2}{S[table-format=6]}{156047} \\
+     & $f(t) = a - c \log{(t)}$         &  0.231  & 0.982
+     & \multicolumn{1}{S[table-format=5]}{-56047}
+     & \multicolumn{2}{S[table-format=6]}{156047} \\
+     & $f(t) = a \cdot e^{-c \sqrt{t}}$ &  0.231  & 0.982
+     & \multicolumn{1}{S[table-format=5]}{-56047}
+     & \multicolumn{2}{S[table-format=6]}{156047} \\
+     & $f(t) = \mathit{staircase}$      &  0.231  & 0.982
+     & \multicolumn{1}{S[table-format=5]}{-56047}
+     & \multicolumn{2}{S[table-format=6]}{156047} \\
+   \midrule
+   \multirow{3}{3em}{\textbf{PFA/G/T}}
+     & $f(t) = a / t^c$                 &  0.231  & 0.982
+     & \multicolumn{1}{S[table-format=5]}{-56047}
+     & \multicolumn{2}{S[table-format=6]}{156047} \\
+     & $f(t) = a - c \log{(t)}$         &  0.231  & 0.982
+     & \multicolumn{1}{S[table-format=5]}{-56047}
+     & \multicolumn{2}{S[table-format=6]}{156047} \\
+     & $f(t) = a \cdot e^{-c \sqrt{t}}$ &  0.231  & 0.982
+     & \multicolumn{1}{S[table-format=5]}{-56047}
+     & \multicolumn{2}{S[table-format=6]}{156047} \\
+   \bottomrule[\heavyrulewidth]
+   \bottomrule[\heavyrulewidth]
+  \end{tabular}
+  \label{table:calibration2-parameters}
+\end{table}
+
+\subsection*{European Countries}
+
+\subsection*{African Countries}
+
+\subsection*{USA States}
+
+\subsection*{Czech Rivers}
+
+\subsection*{Mountains}
+
+\subsection*{In-school vs Out-of-school}
 
 \section{Further Analysis}
 \label{further-analysis}
