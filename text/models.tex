@@ -40,13 +40,13 @@ Equations~\ref{eq-pfa-gong-time-s},~\ref{eq-pfa-gong-time-f} show the incorporat
 
 As was discussed in the chapter~\ref{pfa}, the problem arises with multiple-choice questions. Another difficulty is the choice of a time effect function that fits the data well. The function should theoretically represent the rate at witch the effect of learning decays with the passage of time.
 
-\section{Fitting Parameters}
+\section{Parameter Estimation}
 
 The goal of the fitting procedure is to find the optimal parameters that perform well on new samples (in our case predict the student's ability to answer a question correctly). In this chapter we describe some metrics commonly used for the evaluation of predictive performance (i.e. the fitness of parameters in the model) and the principal algorithms that are suitable for parameter estimation in our case.
 
 \subsection{Metrics}
 
-In our case we are not only interested in the correctness of student's answers, our aim is to predict the probability of correct answer as it may indicate how well the student knows the answer. The information of student's knowledge is crucial if we don't want the student to be demotivated by overly difficult or simple questions.
+In our case we are not only interested in the correctness of student's answers, our aim is to predict the probability of correct answer as it may indicate how well the student knows the answer. The information of student's knowledge is crucial if we don't want the student to be demotivated by overly difficult or simple questions. For this purpose the most suitable metrics are Root Mean Squared Error (see~Equation~\ref{rmse}) and Log Likelihood (see~Equation~\ref{ll})~\cite{Pelanek2015a}.
 
 \begin{equation} \label{rmse}
   RMSE = \sqrt{\frac{\sum_{i=1}^n (p_i - y_i)^2}{n}}
@@ -56,7 +56,35 @@ In our case we are not only interested in the correctness of student's answers, 
   LL = \sum_{i=1}^n y_i \log(p_i) + (1 - y_i) \log(1 - p_i)
 \end{equation}
 
-TODO: Describe advantages and disadvantage of each metrics. Which techniques are suitable for our applications (RMSE, LL). Use this paper:~\cite{Pelanek2015a}.
+In other domains such as information retrieval or pattern recognition another type of metrics is commonly used which is based on qualitative understanding of errors~\cite{Pelanek2015a} instead of their probabilistic value. An advantage of this type of metrics is that it can be easily used in multi-classification tasks. These metrics, however depend on a chosen threshold, e.g. in case the threshold is set to $0.5$ the predictions $0.51$ and $0.98$ are classified as positive while predictions $0.49$ and $0.04$ are classified as negative.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Confusion matrix.}
+  \begin{tabular}{ l l c c }
+   \toprule[\heavyrulewidth]
+   & & \multicolumn{2}{c}{\textbf{Predicted Outcome}} \\
+   & & Positive & Negative \\
+   \midrule[\heavyrulewidth]
+   \multirow{2}{5em}{\textbf{Observed Value}}
+   & Positive & True Positive (TP) & False Negative (FN) \\
+   & Negative & False Positive (FP) & True Negative (TN) \\
+   \bottomrule[\heavyrulewidth]
+  \end{tabular}
+  \label{table:confusion-matrix}
+\end{table}
+
+The Table~\ref{table:confusion-matrix} shows the confusion matrix of binary classifier (i.e. the mislabeling of classes). Once the confusion of classes is calculated, we can derivate for example precision (see~Equation~\ref{precision}) and accuracy (see~Equation~\ref{accuracy}).
+
+\begin{equation} \label{precision}
+  \mathit{Precision} = \frac{TP}{TP + FP}
+\end{equation}
+
+\begin{equation} \label{accuracy}
+  \mathit{Accuracy} = \frac{TP + TN}{TP + FP + TN + FN}
+\end{equation}
+
+Even though the precision and accuracy aren't very fit in our case as we are more interested in probabilistic understanding of errors, another commonly used metric based on marking predictions as true/false positives/negatives is Area Under the ROC Curve (AUC). In this metric, we measure the performance across all possible thresholds, the result is a number between $0.5$ and $1$ where $1$ represents perfect predictions of the classifier.
 
 \subsection{Grid Search}
 
