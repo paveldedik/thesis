@@ -830,7 +830,7 @@ class PFAGongTiming(PFAGong):
         time_effect = kwargs.pop('time_effect_fun', 'poly')
 
         if isinstance(time_effect, basestring):
-            self.a, self.b = kwargs.pop('a', None), kwargs.pop('c', None)
+            self.a, self.c = kwargs.pop('a', None), kwargs.pop('c', None)
             init_time_effect(self, time_effect)
         else:
             self.time_effect = time_effect

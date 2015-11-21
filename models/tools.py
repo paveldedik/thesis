@@ -496,7 +496,7 @@ def to_place_name(place_id, places=None):
     :rtype: string
     """
     places = places or load_places().T.to_dict()
-    return unicode(places[place_id]['name']).decode('utf-8')
+    return unicode(places[place_id]['name'].decode('utf-8'))
 
 
 def connect_points(points):
