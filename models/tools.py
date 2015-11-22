@@ -261,7 +261,8 @@ def log_likelihood(y_true, y_pred):
     :param y_pred: Vector containing *predicted* values.
     :type y_true: list, :class:`numpy.array` or :class:`pandas.Series`
     """
-    return (y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred)).sum()
+    left, right = y_true * np.log(y_pred), (1 - y_true) * np.log(1 - y_pred)
+    return (left[np.isfinite(left)] + right[np.isfinite(right)]).sum()
 
 
 def sigmoid(x):

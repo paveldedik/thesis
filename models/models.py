@@ -29,6 +29,7 @@ __all__ = (
     'PFAExtSpacing',
     'PFAGong',
     'PFAGongTiming',
+    'PFATiming',
 )
 
 
@@ -58,7 +59,7 @@ def time_effect_exp(t, a=1.6, c=0.01):
     return a * np.exp(-c * np.sqrt(t))
 
 
-def init_time_effect(obj, name):
+def init_time_effect(obj, name, parameters=('a', 'c')):
     """Prepares time effect function based on name. Initializes
     the given object with default parameters `a` and `c`.
 
@@ -68,15 +69,18 @@ def init_time_effect(obj, name):
     time_effect_fun = time_effect_funcs[name]
     defaults = time_effect_fun.func_defaults
 
-    if getattr(obj, 'a', None) is None:
-        setattr(obj, 'a', defaults[0])
-    if getattr(obj, 'c', None) is None:
-        setattr(obj, 'c', defaults[1])
+    a, c = parameters
+
+    if getattr(obj, a, None) is None:
+        setattr(obj, a, defaults[0])
+    if getattr(obj, c, None) is None:
+        setattr(obj, c, defaults[1])
 
     def time_effect(t):
-        return time_effect_fun(t, obj.a, obj.c)
+        a_val, c_val = getattr(obj, a), getattr(obj, c)
+        return time_effect_fun(t, a_val, c_val)
 
-    obj.time_effect = time_effect
+    return time_effect
 
 
 class Question(object):
@@ -618,7 +622,7 @@ class PFAExtTiming(PFAExt):
 
         if isinstance(time_effect, basestring):
             self.a, self.b = kwargs.pop('a', None), kwargs.pop('c', None)
-            init_time_effect(self, time_effect)
+            self.time_effect = init_time_effect(self, time_effect)
         else:
             self.time_effect = time_effect
 
@@ -831,7 +835,7 @@ class PFAGongTiming(PFAGong):
 
         if isinstance(time_effect, basestring):
             self.a, self.c = kwargs.pop('a', None), kwargs.pop('c', None)
-            init_time_effect(self, time_effect)
+            self.time_effect = init_time_effect(self, time_effect)
         else:
             self.time_effect = time_effect
 
@@ -851,6 +855,63 @@ class PFAGongTiming(PFAGong):
         ]
         incorrect_weights = [
             (1 - ans.is_correct) * self.time_effect(diff) for ans, diff
+            in izip(item.practices, item.get_diffs(question.inserted))
+        ]
+        return sum(correct_weights), sum(incorrect_weights)
+
+
+class PFATiming(PFAGong):
+    """Performance Factor Analysis combining some aspects of both
+    the Yue Gong's PFA and the ACT-R model.
+
+    :param gamma: The significance of the update when the student
+        answers correctly.
+    :type gamma: float
+    :param delta: The significance of the update when the student
+        answers incorrectly.
+    :type delta: float
+    :param time_effect_good: Time effect function for correct answers.
+    :type time_effect_good: callable or string
+    :param time_effect_bad: Time effect function for wrong answers.
+    :type time_effect_bad: callable or string
+    """
+    ABBR = 'PFA/T'
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('gamma', 1)
+        kwargs.setdefault('delta', 1)
+
+        time_effect_good = kwargs.pop('time_effect_good', 'poly')
+        time_effect_bad = kwargs.pop('time_effect_bad', 'poly')
+
+        if isinstance(time_effect_good, basestring):
+            self.a, self.c = kwargs.pop('a', None), kwargs.pop('c', None)
+            self.time_effect_good = init_time_effect(
+                self, time_effect_good, parameters=('a', 'c'))
+        else:
+            self.time_effect_good = time_effect_good
+
+        if isinstance(time_effect_bad, basestring):
+            self.a, self.c = kwargs.pop('b', None), kwargs.pop('d', None)
+            self.time_effect_bad = init_time_effect(
+                self, time_effect_bad, parameters=('a', 'c'))
+        else:
+            self.time_effect_bad = time_effect_bad
+
+    def get_weights(self, item, question):
+        """Returns weights of previous answers to the given item.
+
+        :param item: *Item* (i.e. practiced place by a user).
+        :type item: :class:`Item`
+        :param question: Asked question.
+        :type question: :class:`pandas.Series` or :class:`Question`
+        """
+        correct_weights = [
+            max(ans.is_correct * self.time_effect_good(diff), 0) for ans, diff
+            in izip(item.practices, item.get_diffs(question.inserted))
+        ]
+        incorrect_weights = [
+            (1 - ans.is_correct) * self.time_effect_bad(diff) for ans, diff
             in izip(item.practices, item.get_diffs(question.inserted))
         ]
         return sum(correct_weights), sum(incorrect_weights)
