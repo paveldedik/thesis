@@ -155,9 +155,9 @@ Radek Pelánek invented a better, more complicated way of parameter fitting~\cit
 In chapter~\ref{memory} we mentioned that forgetting usually respects the power law, which is often true in cases where the students have no prior knowledge of the practiced material. For our purpose, we have chosen the following functions with parameter $t$ representing the time of the last presentation and two parameters $a$ and $b$:
 
 \begin{itemize}
-  \item $f(t) = a - c \cdot \log(t)$
-  \item $f(t) = a \cdot e^{-c \sqrt{t}}$
-  \item $f(t) = a / t^c$
+  \item $f_{\mathit{log}}(t) = a - c \cdot \log(t)$
+  \item $f_{\mathit{exp}}(t) = a \cdot e^{-c \sqrt{t}}$
+  \item $f_{\mathit{poly}}(t) = a / t^c$
 \end{itemize}
 
 Figures of each of these time effect functions with logarithmically scaled $x$-axis are depicted on Figure~\ref{fig-time-effect-functions}.
@@ -172,10 +172,10 @@ Figures of each of these time effect functions with logarithmically scaled $x$-a
 \subsection{The Staircase Function}
 \label{staircase-function}
 
-If we want to approximate the exact shape of time effect function, we need to define a staircase function with fixed intervals $\iota$. In each interval $(\iota_i, \iota_{i+1}]$, we preserve a learned value $a_i$ which represents an increase in memory activation. The formal definition of the staircase function $f(t)$ is formalized in Equation~\ref{eq-staircase}.
+If we want to approximate the exact shape of time effect function, we need to define a staircase function with fixed intervals $\iota$. In each interval $(\iota_i, \iota_{i+1}]$, we preserve a learned value $a_i$ which represents an increase in memory activation. The formal definition of the staircase function $f_{\mathit{staircase}}$ is formalized in Equation~\ref{eq-staircase}.
 
 \begin{equation} \label{eq-staircase}
-  f(t) = \begin{cases}
+  f_{\mathit{staircase}}(t) = \begin{cases}
             a_1, & \text{if } \iota_0 < t \leq \iota_1 \\
             a_2, & \text{if } \iota_1 < t \leq \iota_2 \\
                  & \hspace{1em} \dots \\
@@ -193,7 +193,7 @@ Applying simple linear algebra, we can further modify the staircase function so 
 \end{equation}
 
 \begin{equation} \label{eq-staircase-linear}
-  f(t) = \begin{cases}
+  f_{\mathit{staircase}}(t) = \begin{cases}
             a_1, & \text{if } \hat{\iota}_0 < t \leq \hat{\iota}_1 \\
             (t - \hat{\iota}_1) \frac{a_2 - a_1}{\hat{\iota}_2 - \hat{\iota}_1} + a_1, & \text{if } \hat{\iota}_1 < t \leq \hat{\iota}_2 \\
             \hspace{9em} \dots \\
