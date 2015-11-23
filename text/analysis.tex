@@ -1,12 +1,16 @@
 \chapter{Evaluation and Analysis}
 
-In the first part of this section we briefly depict the nature of the data set used for evaluation of the models and discuss some specifics of the implementation. In the next part we present the results of our analysis.
+In the first part of this section we briefly depict the nature of the data set used for evaluation of our models and discuss some specifics of the implementation. In the second part we evaluate the models using various data sets. In the last part we present the results of further analysis we performed on the data set using the methods discussed in chapter~\textit{evaluation}.
+
+\section{Slepemapy.cz}
+
+For the analysis we used data from the online system for practicing geography \url{http://www.slepemapy.cz}~\cite{Papousek2014}. This system provides adaptive educational environment for learning of geography facts. Since it is adaptive, the selection of questions is based on student's knowledge, rather than statically programmed by an expert. The system has target probability 75\%, i.e. the questions which are expected to be too hard or too easy for the student are penalized by a \textit{scoring function}. The scoring function is responsible for the selection of question to be practiced~\cite{Stanislav2015thesis}. The adaptability of the system should be taken into consideration as it may affect the results of our analysis.
 
 \section{Data Set}
 
-For the analysis we used data from the online system for practicing geography\footnote{\url{http://www.slepemapy.cz}}~\cite{Papousek2014}. The data set contains more than 10~million answers from thousands of unique users~\cite{Papousek2015}. The data were filtered to contain only students with at least 50 answers and usually divided into 5 data sets, each containing at least 30 thousand answers. The answers of students who registered before the oldest question in the data set was answered were removed since it could temper with the results (considering we are interested primarily in models based on timing information).
+The data set contains more than 10~million answers from thousands of unique users~\cite{Papousek2015}. The data were filtered to contain only students with at least 50 answers and usually divided into 5 data sets, each containing at least 30 thousand answers. The answers of students who registered before the oldest question in the data set was answered were removed since it could temper with the results (considering we are interested primarily in models based on timing information).
 
-The used data set contains genuinely very different students with distinct prior knowledge, some students are still in school and practice geography in classes, other students already finished school and want to revive their forgotten knowledge (this is further analyzed in chapter~\ref{further-analysis}). There are also tremendous differences between continents, regions and types of places, all of which vary in the easiness of learning, some are harder to retain and are forgotten faster.
+The used data set contains genuinely very different students with distinct prior knowledge, some students are still in school and practice geography in classes, other students already finished school and want to revive their forgotten knowledge (this is further analyzed in chapter~\ref{further-analysis}). There are also tremendous differences between continents, regions and other types of places, all of which vary in the easiness of learning, some are harder to retain and are forgotten faster.
 
 \section{Toolchain}
 
@@ -23,16 +27,16 @@ The models were implemented in Python programming language. Experiments were per
 
 The response time of student to a question indicates how much well the item is learned. If the student answered quickly, almost automatically, it is very likely they either know the place very well or don't at all, depending on the correctness of their answer. On the other hand when the response is longer, the student is probably familiar with the item and might even recall the correct answer.
 
-The Figure~\ref{fig-response-time} demonstrates the relationship between students' response time and the probability of recall. If the student's answer was suspiciously fast (response time is lower than 800 milliseconds), it usually means they are guessing. If the response time is between 1500 and 2000 milliseconds, it may indicate the student knows the correct answer.
-
-Note that some places are larger on the map then other, i.e. a question requiring the student to select Russia on the map has generally lower response time than a question requiring to select Andorra.
-
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{img/response-time}
   \caption{Relation between students' response time and probability of recall. Each box represents probabilities from all countries that belong in the relevant interval of response times.}
   \label{fig-response-time}
 \end{figure}
+
+The Figure~\ref{fig-response-time} demonstrates the relationship between students' response time and the probability of recall. If the student's answer was suspiciously fast (response time is lower than 800 milliseconds), it usually means they are guessing. If the response time is between 1500 and 2000 milliseconds, it may indicate the student knows the correct answer.
+
+Note that some places are larger on the map then other, i.e. a question requiring the student to select Russia on the map has generally lower response time than a question requiring to select Andorra.
 
 TODO: describe the extended model here, evaluate and analyze.
 
@@ -169,7 +173,7 @@ We evaluated the models on several different sets of data, including all answers
     & $f_{\mathit{poly}}$      &  2.004 & -0.713 & &  2.931 &  0.27  \\
     & $f_{\mathit{log}}$       &  1.906 & -0.806 & &  1.789 &  0.128 \\
     & $f_{\mathit{exp}}$       &  2.006 & -0.757 & &  1.005 &  0.009 \\
-    & $f_{\mathit{staircase}}$ &  1.814 &  0.827 & &        &        \\
+    & $f_{\mathit{staircase}}$ &  1.814 & -0.827 & &        &        \\
    \midrule
    \multirow{3}{3em}{\textbf{PFA/G/T}}
     & $f_{\mathit{poly}}$      &  1.973 &  0.244 & &  2.007 &  0.231 \\
@@ -223,28 +227,44 @@ We evaluated the models on several different sets of data, including all answers
   \label{table:results-all-answers}
 \end{table}
 
-\subsection{European Countries}
+\subsection{Countries and USA States}
 
-\subsection{African Countries}
+Most answers in our data set are from the citizens of the Czech Republic, i.e. Europeans, who generally have much better knowledge of the countries in Europe than for example the countries in Africa. Very important aspect of learning the places' locations is their context. It is way easier to encode and retain the locations that are neighbors with an already known place.
 
-\subsection{USA States}
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{img/africa-europe-usa-states}
+  \caption{Learned values of the staircase function for African countries, European countries and USA states.}
+  \label{fig:africa-europe-usa-states}
+\end{figure}
 
-\subsection{Czech Rivers}
+In Figure~\ref{fig:africa-europe-usa-states} we observe the differences between learned values of the staircase function when the data set is separated in three by the type of place -- African countries, European countries and USA states. The learned values suggest that the rate of forgetting (or more precisely the change in memory activation) is very similar in all examined types of places when the timing distance between current and the last practice is lower than one day, however the African countries and USA states are forgotten faster after longer periods of time.
 
-\subsection{Mountains}
+\subsection{Mountains, Rivers and Lakes}
 
 \section{Further Analysis}
 \label{further-analysis}
 
-\subsection{In-school vs Out-of-school}
+\subsection{At School vs At Home}
+
+An interesting question is how much students' motivation affects the speed of learning or the rate of forgetting. Figure~\ref{fig:at-home-vs-at-school} shows the learned parameters of a staircase function on two different data sets. The first data set labeled as ``At School'' contained only the answers from groups of 10 or more students with the same IP address (the assumption is that these students practice geography in classrooms). The second data set labeled as ``At Home'' contained all the other answers of students.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{img/at-home-vs-at-school}
+  \caption{Comparison of students who practice geography at school (i.e. in classrooms) and students who practice at home (i.e. on their own initiative).}
+  \label{fig:at-home-vs-at-school}
+\end{figure}
+
+The learned values of the staircase function and the parameters $\gamma$, $\delta$ indicate that students who practice geography at school learn indeed slower and forget the learned material faster then the students who are motivated by some other means. Note that the difference in the rate of forgetting between both types of students may be caused by teaching methods (more material is learned in shorter periods of time). Since the system we analyze is adaptive and selects questions based on student's knowledge, we believe this is not the only cause.
 
 \subsection{Confusion Network}
 
-It is natural to mix up places that are geographically very close, have similar names or other reasons. Students typically know the approximate geographic position of Norway but might have confused it's exact position with Finland or Sweden as can be seen in Figure~\ref{confusion-network}. If a students chooses Finland when the highlighted place is actually Norway, it usually doesn't mean that they have no knowledge of the place. In such cases it seems reasonable to take this into account and perhaps even decrease the student's knowledge less significantly.
+It is natural to mix up the places that are geographically very close, have similar names or seem somehow similar for entirely different reasons. For example, students typically know the approximate geographical location of the Nordic countries, however they might struggle when determining its exact location, often they confuse Norway with Sweden as can be seen in Figure~\ref{fig:confusion-network}. If a students chooses Finland when the highlighted place is actually Norway, it usually doesn't mean that they have no knowledge of the country's location. In such cases it seems reasonable to perhaps slightly increase student's knowledge of the place.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{img/confusion-network}
   \caption{Confusion network of European countries. The edges between countries represent confusion of students. Dark blue edge means that the two connected countries are confused by students quite often while light blue indicates that the countries are still sometimes confused but at least less often.}
-  \label{confusion-network}
+  \label{fig:confusion-network}
 \end{figure}
