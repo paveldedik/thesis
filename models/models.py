@@ -23,6 +23,7 @@ __all__ = (
     'EloModel',
     'EloResponseTime',
     'PFAModel',
+    'PFAResponseTime',
     'PFAExt',
     'PFAExtTiming',
     'PFAExtStaircase',
@@ -597,6 +598,53 @@ class PFAExt(PFAModel):
             item.inc_knowledge(self.gamma * (1 - prediction))
         else:
             item.inc_knowledge(self.delta * prediction)
+
+
+class PFAResponseTime(PFAExt):
+    """An extended version of the PFAExt model which alters student's
+    knowledge by respecting past response times.
+
+    :param gamma: The significance of the update when the student
+        answered correctly.
+    :type gamma: float
+    :param delta: The significance of the update when the student
+        answered incorrectly.
+    :type delta: float
+    :param zeta: The significance of response times.
+    :type zeta: float
+    """
+    ABBR = 'PFA/E/RT'
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('gamma', 1.5)
+        kwargs.setdefault('delta', -1.4)
+
+        self.zeta = kwargs.pop('zeta', 1.9)
+
+        super(PFAResponseTime, self).__init__(*args, **kwargs)
+
+    def update(self, answer):
+        """Performes update of current knowledge of a user based on the
+        given answer.
+
+        :param answer: Answer to a question.
+        :type answer: :class:`pandas.Series` or :class:`Answer`
+        """
+        item = self.items[answer.user_id, answer.place_id]
+
+        if not item.practices:
+            self.prior.update(answer)
+
+        prediction = self.predict(answer)
+        self.predictions[answer.id] = prediction
+
+        item.add_practice(answer)
+        level = tools.automaticity_level(answer.response_time) / self.zeta
+
+        if answer.is_correct:
+            item.inc_knowledge(self.gamma * (1 - prediction) + level)
+        else:
+            item.inc_knowledge(self.delta * prediction + level)
 
 
 class PFAExtTiming(PFAExt):
