@@ -1,32 +1,32 @@
 \chapter{Models and Methods}
 
-The models presented in chapter~\ref{relevant-models} seem to work well in the context of adaptive systems. But could the performance be further improved by taking into account the timing information of students' answers (i.e. the response times or the breaks between practices)? As was discussed in chapter~\ref{spacing-effect}, the spacing effect is observable in environments where the students have no prior knowledge. We are interested primarily in domains where the prior knowledge varies widely between students.
+The models presented in chapter~\ref{relevant-models} seem to work well either in the context of adaptive systems where we aren't concerned with timing information or have been tested in controlled environment where the students had no prior knowledge of the presented material. In this chapter, we elaborate the methods we used to further improve the performance by taking into account the timing information of students' answers, i.e. the response times or the breaks between presentations (the timing distance). We are interested primarily in domains where the prior knowledge varies widely between students.
 
 \section{Models Based on Timing Information}
 
-In this chapter we discuss several models which aim at modeling students' memory with the usage of timing information of answers. There are several issues to consider beforehand:
+In this section we discuss several models which aim at modeling students' memory with the usage of timing information of answers. There are several issues to consider beforehand:
 
 \begin{itemize}
   \item Students have different skills and thus the rate of retention loss varies.
   \item The difficulty of items varies, some items are forgotten faster and some slower.
-  \item The prior knowledge of each student is different. If the student already has the practiced item in their long term memory, the process of forgetting is much slower.
+  \item The prior knowledge of each student is different. If the student already learned the practiced item and has it stored in their long term memory, the process of forgetting is much slower.
 \end{itemize}
 
 \subsection{The Extended Model}
 \label{pfaet}
 
-One possibility how to incorporate timing information into the PFA model is by changing the memory activation in prediction. The times of previous attempts are passed to a \textit{time effect function} which may increase the probability of recall (see Equation~\ref{eq-pfa-standard-time-p}).
+The PFA Extended model summarized in chapter~\ref{pfae} can be further enhanced when we utilize the timing information by locally changing the memory activation in prediction. The difference in seconds between the times of the current question and the last answer is passed to a \textit{time effect function} (we adapted this term from a related work~\cite{Pelanek2015}). The time effect function increases or decreases the probability of recall or the memory activation depending on the timing distance. The updated equation with a time effect function is depicted in Equation~\ref{eq-pfa-standard-time-p}.
 
 \begin{equation} \label{eq-pfa-standard-time-p}
   P(m) = \frac{1}{1 + e^{-(m + f(t))}}
 \end{equation}
 
-Since this is an extension of the standard PFA model, it is possible to integrate the estimation of prior knowledge as well as the probability of guessing into the model.
+The advantage of this model is that it shares the same properties as the presented PFA Extended model, i.e. it's straightforward to employ Elo model for estimation of prior knowledge as well as to account for the probability of guessing.
 
 \subsection{The Alternative Model}
 \label{pfagt}
 
-Another way of dealing with timing between attempts is by changing the decay factor $\xi$ of the model presented in chapter~\ref{pfa}. The model takes into account the order of questions, yet doesn't consider timing between student's practices of an item. This problem can be resolved by replacing the parameter $\xi$ with some time effect functions.
+Another way of dealing with timing distances between attempts is by changing the decay factor $\xi$ of the model presented in chapter~\ref{pfag}. The model takes into account the order of questions, yet doesn't consider brakes between student's practices of an item. This problem can be resolved by replacing the parameter $\xi$ with a time effect function.
 
 \begin{equation} \label{eq-pfa-gong-time-s}
   s_{i,j} = \sum_{k=1}^{n-1} y_k \cdot f(t_k)
@@ -36,17 +36,27 @@ Another way of dealing with timing between attempts is by changing the decay fac
   f_{i,j} = \sum_{k=1}^{n-1} |y_k - 1| \cdot g(t_k)
 \end{equation}
 
-Equations~\ref{eq-pfa-gong-time-s},~\ref{eq-pfa-gong-time-f} show the incorporation of the time effect function $f$ and $g$ in the model. The parameter $t_k$ represents the number of seconds that passed between the $k$-th practice and the most recent one. The weight of successes and failures is thus dependent on the ages of the prior practices.
+Equations~\ref{eq-pfa-gong-time-s} and~\ref{eq-pfa-gong-time-f} show the incorporation of the time effect function $f$ and $g$ in the model. The parameter $t_k$ represents the number of seconds that passed between the $k$-th practice and the most recent one. The weight of successes and failures is thus dependent on the ages of the prior practices.
 
-As was discussed in the chapter~\ref{pfa}, the problem arises with multiple-choice questions. Another difficulty is the choice of a time effect function that fits the data well. The function should theoretically represent the rate at witch the effect of learning decays with the passage of time.
+As was discussed in the chapter~\ref{pfa}, the problem arises with multiple-choice questions. Another complication is the choice of some good time effect functions that fit the data well. Note that in this model, we often set $\gamma = \delta = 1$, the weight of each success and failure is then entirely dependent on the parameters of the chosen time effect functions instead of $\gamma$ and $\delta$.
 
-\section{Parameter Estimation}
+\subsection{The Response Time}
+\label{pfart}
 
-The goal of the fitting procedure is to find the optimal parameters that perform well on new samples (in our case predict the student's ability to answer a question correctly). In this chapter we describe some metrics commonly used for the evaluation of predictive performance (i.e. the fitness of parameters in the model) and the principal algorithms that are suitable for parameter estimation in our case.
+The response time of student may indicate student's level of learning. If the student answers quickly, it often implies the level of automaticity. We address this phenomenon by increasing the memory activation $m$ after each answered item.
 
-\subsection{Metrics}
+\begin{equation} \label{eq-pfa-extended-rt}
+  m \gets \begin{cases}
+            m + \gamma \cdot (1 - P(m)) + r(t_d), & \text{\textbf{if }} \text{the answer was correct} \\
+            m + \delta \cdot P(m) + r(t_d), & \text{\textbf{otherwise}}
+          \end{cases}
+\end{equation}
 
-In our case we are not only interested in the correctness of student's answers, our aim is to predict the probability of correct answer as it may indicate how well the student knows the answer. The information of student's knowledge is crucial if we don't want the student to be demotivated by overly difficult or simple questions. For this purpose the most suitable metrics are Root Mean Squared Error (see~Equation~\ref{rmse}) and Log Likelihood (see~Equation~\ref{ll})~\cite{Pelanek2015a}.
+Equation~\ref{eq-pfa-extended-rt} shows the adjusted update rule with a unary function $r(t_d)$, the parameter $t_d$ is the difference between the time the item was presented and the time it was answered (i.e. it's the student's delay).
+
+\section{Quantifying the Quality of Predictions}
+
+One way to quantify the quality of model predictions is to use metric functions. A good choice of a metric function is important for accurate evaluation of performance of student models. In our case we aren't interested strictly in the correctness of student's answers, the goal is to precisely assess their knowledge. The information of student's knowledge is crucial if we don't want to demotivate the student by too difficult or simple questions. For this purpose a good choice is the Root Mean Squared Error metric (see~Equation~\ref{rmse}) or the less popular Log Likelihood (see~Equation~\ref{ll})~\cite{Pelanek2015a}.
 
 \begin{equation} \label{rmse}
   RMSE = \sqrt{\frac{\sum_{i=1}^n (p_i - y_i)^2}{n}}
@@ -56,7 +66,9 @@ In our case we are not only interested in the correctness of student's answers, 
   LL = \sum_{i=1}^n y_i \log(p_i) + (1 - y_i) \log(1 - p_i)
 \end{equation}
 
-In other domains such as information retrieval or pattern recognition another type of metrics is commonly used which is based on qualitative understanding of errors~\cite{Pelanek2015a} instead of their probabilistic value. An advantage of this type of metrics is that it can be easily used in multi-classification tasks. These metrics, however depend on a chosen threshold, e.g. in case the threshold is set to $0.5$ the predictions $0.51$ and $0.98$ are classified as positive while predictions $0.49$ and $0.04$ are classified as negative.
+The RMSE metric represents ``error'', its the square root of the sum of all squared differences between predicted values $p_i$ and true values $y_i$ divided by the number of samples in data set. RMSE yields a number between 0 and 1, where 0 represents perfect predictions. LL metric is the logarithm of likelihood, the LL value is a negative number dependent on the size of the data set (the bigger the dataset, the lower LL value is possible). Higher values of LL represent the better predictions.
+
+In domains such as information retrieval or pattern recognition other types of metrics are commonly used which are based on qualitative understanding of errors~\cite{Pelanek2015a} instead of their probabilistic value. An advantage of this type of metrics is that it can be easily used in multi-classification tasks. These metrics, however, depend on a chosen threshold, e.g. in case the threshold is set to $0.5$ the predictions $0.51$ and $0.98$ are classified as positive while predictions $0.49$ and $0.04$ are classified as negative.
 
 \begin{table}[htbp]
   \centering
@@ -84,11 +96,15 @@ The Table~\ref{table:confusion-matrix} shows the confusion matrix of binary clas
   \mathit{Accuracy} = \frac{TP + TN}{TP + FP + TN + FN}
 \end{equation}
 
-Even though the precision and accuracy aren't very fit in our case as we are more interested in probabilistic understanding of errors, another commonly used metric based on marking predictions as true/false positives/negatives is Area Under the ROC Curve (AUC). In this metric, we measure the performance across all possible thresholds, the result is a number between $0.5$ and $1$ where $1$ represents perfect predictions of the classifier.
+Even though the precision and accuracy aren't very fit in our case as we are more interested in probabilistic understanding of errors, another commonly used metric based on marking predictions as true/false positives/negatives is Area Under the ROC Curve (AUC). In this metric, we measure the performance across all possible thresholds. The result is a number between $0.5$ and $1$, where $1$ represents perfect predictions of the classifier. Note that if all predictions are divided by 2, AUC stays the same, this property is sometimes criticized---hence, it should be used with caution~\cite{Pelanek2015a}.
+
+\section{Parameter Estimation}
+
+The goal of the fitting procedure is to find the optimal parameters that perform well on new samples (in our case predict the student's ability to answer a question correctly). In this section we describe some metrics commonly used for the evaluation of predictive performance (i.e. the fitness of parameters in the model) and the principal algorithms that are suitable for parameter estimation in our case.
 
 \subsection{Grid Search}
 
-This technique is used for parameter optimization, it searches a small part of the whole space of all possible values. The most fitted values are estimated using a chosen metric for evaluation (e.g. RMSE). Put together, this method exhaustively generates a grid of all combinations of selected parameter values. The fittest combination has the lowest error. The figure~\ref{fig-grid-search-rmse-auc} portrays an example of the grid search on PFA model with two parameters.
+This technique is used for parameter optimization, it exhaustively generates a grid of all combinations of selected parameter values where each point in the grid is a function value of a chosen metric (e.g. RMSE). The fittest combination of parameters is represented by the best score of the metric (e.g. has lowest error). The figure~\ref{fig-grid-search-rmse-auc} portrays an example of the grid search on PFA model with two parameters $\gamma$ and $\delta$.
 
 \begin{figure}[htbp]
   \centering
@@ -97,29 +113,29 @@ This technique is used for parameter optimization, it searches a small part of t
   \label{fig-grid-search-rmse-auc}
 \end{figure}
 
-The disadvantage of this evaluation method is the high computational complexity which makes it very hard to use especially in cases where the model contains a lot of parameters. Another disadvantage is that when the grid is very high-dimensional we don't have any simple way to plot or visualize the error space.
+The disadvantage of this optimization method is the high computational complexity especially in cases when the model contains a lot of parameters. Also, there is no simple way to plot or visualize a high-dimensional grid.
 
-\subsection{Greedy Search}
-\label{greedy-search}
+\subsection{Hill Climbing}
+\label{hill-climbing}
 
-This method starts from a given position in the parameter space and evaluates the model's error (using some common metric). The model is then evaluated using the parameters from the enclosing neighborhood and the best option is selected. This continues until there is no other parameter value in the neighborhood with a better value. TODO: elaborate, describe the usage of randomness and decreasing size of one step.
+This method starts from a given position in the parameter space and evaluates the score of an objective function (metric function in our case). The model is then trained using the values from the enclosing neighborhood of the parameter space, afterwards the best combination of parameters is selected and the process repeated. This continues until there is no other parameter value in the neighborhood with a better score of the objective function, i.e. we found the local minimum~\cite{Russell2009}. TODO: elaborate, maybe write pseudocode, or at least more formal description.
 
 \subsection{Gradient Descent}
 \label{gradient-descent}
 
-The goal of gradient descent algorithm is to find the best parameters for a function called hypothesis~\cite{Klusasek2014}. Gradient descent is somewhat similar to the greedy search algorithm presented in the previous section~\ref{greedy-search} as it tries to find the lowest value of the cost function $J(\rho)$. The cost function represents the error of any chosen hypothesis $h_{\rho}(x_i) = \rho^T x_i = \sum^n_{j=0} \rho_j x_{i,j}$, where $\rho_j$ is the value of the $j$-th parameter and $x_{i,j}$ the $i$-th value of the $j$-th feature (e.g. the skill of the student $i$).
+Gradient descent is optimization algorithm very similar to hill climbing, the difference is that gradient descent has indication which way to ``climb''. The goal of gradient descent is to find the best parameters for a function called hypothesis~\cite{Klusasek2014}, this is done by finding the lowest value of the cost function $J(\rho)$ (similar to objective function in hill climbing). The cost function represents the error of a chosen hypothesis $h_{\rho}(x_i) = \rho^T x_i = \sum^n_{j=0} \rho_j x_{i,j}$, where $\rho_j$ is the value of the $j$-th parameter and $x_{i,j}$ the $i$-th value of the $j$-th feature (e.g. the skill of the student $i$).
 
 \begin{equation} \label{cost-function}
   J(\rho) = \frac{1}{2m} \sum^m_{i=1} (h_{\rho}(x_i) - y_i)^2
 \end{equation}
 
-The cost function in Equation~\ref{cost-function} is the sum of all squared errors of hypotheses $h_{\rho}$ over all examples from data set of size $m$ divided by $2m$. The goal is to minimize the value of $J(\rho)$ which can be done very efficiently by the estimation of the gradient using the following update rule (TODO: elaborate):
+Formal definition of the cost function is depicted in Equation~\ref{cost-function}, it is the sum of all squared errors of hypotheses $h_{\rho}$ over all examples from data set of size $m$ divided by $2m$. Our is to minimize the value of $J(\rho)$ which can be done efficiently by the estimation of the gradient using the following update rule:
 
 \begin{equation} \label{cost-function-update}
   \rho_j \gets \rho_j - \alpha \frac{\partial}{\partial \rho_j} J(\rho)~~\text{for all } j
 \end{equation}
 
-The partial derivatives help indicate the surface of the cost function, it gives us the information which direction to take in order to reach the closest local minimum. The value of $\alpha$ is the size of one step or a learning rate, if the value is too big the algorithm might not be able to ever reach a local minimum, in contrast if the value is very small, it is less efficient and the computation takes longer. Now we can imagine that the main difference between gradient descent and greedy search is that the latter doesn't have any indication of which turn to take next and how big one step in a direction should be.
+The partial derivatives help indicate the surface of the cost function, it gives us the information which direction to take in order to reach the closest local minimum. The value of $\alpha$ is the size of one step or a learning rate, if the value is too big the algorithm might not be able to ever reach a local minimum, in contrast if the value is very small, it is less efficient and the computation takes longer. Now we can imagine that the main difference between gradient descent and hill climbing is that the latter doesn't have any indication of which turn to take next and how big one step in a direction should be~\cite{Russell2009}.
 
 \begin{figure}[htbp]
   \centering
@@ -132,13 +148,13 @@ The partial derivatives help indicate the surface of the cost function, it gives
 
 In online learning, straightforward way to use optimization methods such as gradient descent doesn't exist. We can, however reuse some aspects of several algorithms used in machine learning and data mining for parameter optimization.
 
-The most obvious and easiest way to implement gradient descent in online learning could average the difference between observation (correctness of student's answer $y_i$) and prediction (model's predicted probability that the user $i$ answers correctly $p_i$). The batch update rule similar to the one used in the original gradient descent would be defined as follows:
+The most obvious and easiest way to implement gradient descent in cases where there is no derivative of the object function could average the difference between observations (correctness of student's answer $y_i$) and predictions (model's predicted probability that the user $i$ answers correctly $p_i$). The batch update rule could be defined as follows:
 
 \begin{equation} \label{online-learning-batch-rule}
  \rho_j \gets \rho_j - \alpha~\frac{1}{n}\sum_{i=0}^n (p_i - y_i)~~\text{for all } j
 \end{equation}
 
-It is very easy to demonstrate that this method doesn't work very well even when the number of parameters is equal to 2. The parameters get easily stuck in the local minimum as can be observed in the Figure~\ref{fig-grid-search-rmse-off}.
+It is easy to demonstrate that this method doesn't work well even when the number of parameters is very low. The parameters get easily stuck in the local minimum as can be observed in the Figure~\ref{fig-grid-search-rmse-off}. Another disadvantage of this technique is that we need to relearn the optimal parameters by repeating the process of evaluation periodically on the whole data set.
 
 \begin{figure}[htbp]
   \centering
@@ -147,12 +163,12 @@ It is very easy to demonstrate that this method doesn't work very well even when
   \label{fig-grid-search-rmse-off}
 \end{figure}
 
-Radek Pelánek invented a better, more complicated way of parameter fitting~\cite{Pelanek2015} that is very practical particularly in our case where we need to find the most optimal and best calibrated time effect function. (TODO: elaborate, properly describe the method and its applications)
+Radek Pelánek in his work~\cite{Pelanek2015} figured out a better, more complicated way of parameter estimation which combines some aspects of gradient descent and is suitable in online learning. The update of parameters happens after arrival of every new data point (i.e. student's answer). This method is very practical particularly in our case where we need to find the most optimal and best calibrated time effect function. TODO: elaborate, properly describe the method and its applications, pseudocode
 
 \section{Time Effect Functions}
 \label{time-effect-functions}
 
-In chapter~\ref{memory} we mentioned that forgetting usually respects the power law, which is often true in cases where the students have no prior knowledge of the practiced material. For our purpose, we have chosen the following functions with parameter $t$ representing the time of the last presentation and two parameters $a$ and $b$:
+In chapter~\ref{memory} we mentioned that forgetting usually respects the power law, which is often true in cases where the students have no prior knowledge of the practiced material. For our purpose, we have chosen the following functions with parameter $t$ representing the time of the last presentation and two parameters $a$ and $c$:
 
 \begin{itemize}
   \item $f_{\mathit{log}}(t) = a - c \cdot \log(t)$
@@ -160,7 +176,7 @@ In chapter~\ref{memory} we mentioned that forgetting usually respects the power 
   \item $f_{\mathit{poly}}(t) = a / t^c$
 \end{itemize}
 
-Figures of each of these time effect functions with logarithmically scaled $x$-axis are depicted on Figure~\ref{fig-time-effect-functions}.
+The shape of each of these time effect functions with logarithmically scaled $x$-axis is depicted on Figure~\ref{fig-time-effect-functions}.
 
 \begin{figure}[htbp]
   \centering
@@ -172,7 +188,7 @@ Figures of each of these time effect functions with logarithmically scaled $x$-a
 \subsection{The Staircase Function}
 \label{staircase-function}
 
-If we want to approximate the exact shape of time effect function, we need to define a staircase function with fixed intervals $\iota$. In each interval $(\iota_i, \iota_{i+1}]$, we preserve a learned value $a_i$ which represents an increase in memory activation. The formal definition of the staircase function $f_{\mathit{staircase}}$ is formalized in Equation~\ref{eq-staircase}.
+If we want to approximate the exact shape of a time effect function, we can define a staircase function with fixed intervals $\iota$. In each interval $(\iota_i, \iota_{i+1}]$, we preserve a learned value $a_i$ which represents an increase in memory activation. The formal definition of the staircase function $f_{\mathit{staircase}}$ is formalized in Equation~\ref{eq-staircase}.
 
 \begin{equation} \label{eq-staircase}
   f_{\mathit{staircase}}(t) = \begin{cases}
