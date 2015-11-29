@@ -7,25 +7,22 @@
   title={Modeling Human Memory for Adaptive Educational Systems},
   keywords={Memory, Learning, Forgetting, Knowledge, Machine Learning, Student Modeling, Performance Factor Analysis}}
 
+\usepackage{color}
 \usepackage{lmodern}
 \usepackage{amssymb}
 \usepackage{amsmath}
+\usepackage{hyperref}
 \usepackage{graphicx}
+\usepackage{appendix}
 \usepackage{enumitem}
 \usepackage{algorithm}
 \usepackage{mathtools}
 \usepackage{subcaption}
-\usepackage{booktabs,multirow}
 \usepackage{etoolbox,siunitx}
+\usepackage{booktabs,multirow}
 \usepackage[noend]{algpseudocode}
-\usepackage{color}
-\usepackage{hyperref}
-
-% To be removed when the thesis is finished.
-\usepackage{lipsum}
 
 \setlist[itemize]{leftmargin=10mm}
-% \hypersetup{colorlinks=true,citecolor=red,urlcolor=red}
 
 \begin{document}
   \input{introduction}
@@ -37,4 +34,8 @@
 
   \bibliography{references}
   \bibliographystyle{IEEEtran}
+
+  \begin{appendices}
+  \input{appendix}
+  \end{appendices}
 \end{document}
