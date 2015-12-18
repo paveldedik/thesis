@@ -2,17 +2,13 @@
 
 In the first part of this chapter we briefly characterize the nature of the data set used for evaluation of our models and discuss some specifics of the implementation. In the second part we evaluate and compare the analyzed models using several data sets. In the last part we summarize the results of further analysis.
 
-\section{Slepemapy.cz}
-
-For the analysis we used data from the online system for practicing geography \url{http://www.slepemapy.cz}~\cite{Papousek2014}. This system provides adaptive educational environment for the learning of geography facts, which involves world countries, cities, rivers, lakes, mountains, islands, Czech regions and many others.
-
-Considering the system is adaptive, the selection of questions is based on student's knowledge, rather than statically programmed by an expert. The system has target probability 75\%, i.e. the questions which are expected to be too hard or too easy for the student are penalized by a \textit{scoring function}. The scoring function is responsible for the selection of question to be practiced~\cite{Stanislav2015thesis}. Note that the adaptability of the system should be taken into consideration as it might have affected the results of our analysis.
-
 \section{Data Set}
 
 The data set contains more than 10~million answers from tens of thousands of unique users, mostly Czech citizens~\cite{Papousek2015}. In our experiments, we filtered the data so that it contains only answers of students who practiced at least 50 items, furthermore the places that were answered by less then 100 students were removed. We often run our experiments only on a portion of the whole data set, in such case the answers of students who registered before the oldest question in that part of the data set was answered were removed since it could temper with the results (considering we are interested primarily in models based on timing information and the students have different prior knowledge).
 
-The used data set contains genuinely very different students with distinct prior knowledge, some students are still in school and practice geography in classes, other students already finished school and want to revive their forgotten knowledge (this is further analyzed in chapter~\ref{further-analysis}). There are also tremendous differences between continents, regions and other types of places, all of which vary in the easiness of learning, some are harder to retain and are forgotten faster.
+Considering the system is adaptive, the selection of questions is based on student's knowledge, rather than statically programmed by an expert. The system has target probability 75\%, i.e. the questions which are expected to be too hard or too easy for the student are penalized by a \textit{scoring function}. The scoring function is responsible for the selection of question to be practiced~\cite{Stanislav2015thesis}. Note that the adaptability of the system should be taken into consideration as it might have affected the results of our analysis.
+
+The used data set further contains genuinely very different students with distinct prior knowledge, some students are still in school and practice geography in classes, other students already finished school and want to revive their forgotten knowledge (this is further analyzed in chapter~\ref{further-analysis}). There are also tremendous differences between continents, regions and other types of places, all of which vary in the easiness of learning, some are harder to retain and are forgotten faster.
 
 \section{Toolchain}
 
