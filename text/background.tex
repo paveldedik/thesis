@@ -1,14 +1,61 @@
 \chapter{Background}
 
-In this chapter we present an overview of the related research with the topic of our thesis. Firstly, we describe how the human brain can acquire new knowledge, the process of retention of information and the retrieval of information from memory. Secondly, we give an overview of the techniques suitable for educational systems with the focus on adaptive learning of facts.
+In this chapter we present an overview of the related research with the topic of our thesis. Firstly, we describe the key aspects of human memory, how it can acquire new information and knowledge, the process of retention of information, and the retrieval of information from memory. Secondly, we give an overview of techniques suitable for educational systems with the focus on adaptive learning of facts.
+
+\section{Human Memory}
+
+The Greek philosopher and mathematician Plato compared human mind to an aviary in which each bird represented a memory~\cite{MichaelW.Eysenck2008}. Today, we have a much better intuition on the human biological storage---the hardware responsible for the storage and organization of data in modern computers. Memory gives humans and other animals the ability to remember, adapt from previous experiences and govern subsequent behavior.
+
+We recognize at least three types of memory as categorized by its capacity and the duration of individual memories:
+
+\begin{description}
+  \item [Sensory memory] Retains sensory information (e.g. auditory and visual inputs from the environment) for less than one second.
+  \item [Short-term memory] Also known as working memory retains information for less than one minute. Short-term memory is very vulnerable to interruption or interference.
+  \item [Long-term memory] Has much more capacity than the short-term memory. Retains information potentially for decades, even life-time.
+\end{description}
+
+The gradual change from short-term memory to long-term memory is called \textit{memory consolidation} and is attributed to \textit{the hippocampal system} located in the temporal lobe of the human brain. The hippocampal system is essential for the formation of associations between various elements of specific events and experiences~\cite{mcclelland1995there}, it was also suggested that it is especially relevant in the formation of memories involving places or locations in the environment~\cite{o1978hippocampus}. On the other hand, the long-term memories are stored in the \textit{neocortical system} in the human brain. This theory is supported by the fact that patients with damaged hippocampus show deficit for material learned shortly before their lesion whereas very remote memories appear to be intact~\cite{mcclelland1995there}.
+
+\subsection{Declarative and Procedural Memory}
+
+\begin{wrapfigure}{r}{0.5\textwidth}
+  \centering
+  \includegraphics[width=0.48\textwidth]{img/semantic-network}
+  \caption{A semantic network from the domain of animals~\cite{semanticnetworkpict}.}
+  \label{fig:semantic-network}
+\end{wrapfigure}
+
+Similarly as we described the various types of memory by acknowledging the length or duration of memories, we can also differentiate memory by the type of information it retains. In 1980, N.~J.~Cohen and Squire introduced the term \textit{declarative memory}. Declarative memory retains the conscious memory, this involves mainly events and facts. Another type of memory is called the \textit{procedural memory} and is the type of memory we are not consciously aware of and which makes humans capable of the acquisition of both the motor and cognitive skills. For example riding a bike or swimming are tasks that are learned and collected as procedural memories~\cite{MichaelW.Eysenck2008}.
+
+The declarative memory can be further categorized into the \textit{episodic memory} and the \textit{semantic memory}. The episodic memories are memories that store information associated with a specific event whereas the semantic memories include the knowledge of the meanings of words, factual information, and encyclopedic memories~\cite{cohen1980preserved}. In the human brain, semantic memories seem to be organized hierarchically, i.e. if we acquire the information, that Husky is a dog, our brain automatically infers that it has fur, four legs, two ears, it must eat to stay alive, and so on~\cite{mcclelland1995there}. This representation of semantic relation between concepts is called a \textit{semantic network}. An example of a semantic network is illustrated on Figure~\ref{fig:semantic-network}.
+
+\section{The Science of Learning}
+\label{science-of-learning}
+
+Throughout the last one hundred years, researchers have been trying to figure out the complex cognitive processes in the human brain, which are responsible for our ability to learn~\cite{RichardE.Mayer2010}. So far, we have viewed human memory from its structural, organizational and functional point of view. In this chapter we aim at the practical viewpoint particularly relevant in education and educational systems. Our objective is to understand how to present material in ways to help people learn, i.e.~increase their motivation, the speed of learning and reduce the need for repetition caused by forgetting.
+
+In a book called \textit{Applying the Science of Learning} by Richard~E.~Mayer, a professor of psychology at the University of California, the science of learning is organized into the following three components:
+
+\begin{itemize}
+  \item The Science of Learning
+  \item The Science of Instruction
+  \item The Science of Assessment
+\end{itemize}
+
+All of these components are to some extent related to our research. However, the science of learning is the most related since it concerns human memory and learning. The science of instruction is about the manipulation of the student's environment in order to foster learning, it's the scientific study of how to help people learn. In educational systems, this is usually done by incorporating \textit{instructional policies}, the strategies or a set of instructions that help students maintain engagement and increase the amount gained knowledge in one session. Instructional policies guide students during learning by e.g. the selection of appropriate questions or the number of options in multiple-choice tests. Lastly, the science of assessment seeks to determine what people know, which is important so that we are able to quantify the effectiveness of different instructional methods~\cite{RichardE.Mayer2010}.
+
+\subsection{Self-regulated Study}
+\label{study}
+
+An important aspect of learning and self-regulated study is the ability to choose the most optimal methods of studying. It is sometimes hard to correctly determine how long to study or what to study and when to consider material learned. Often, people stop studying when they do not fully know the material. For example, the effect of forgetting (i.e. the loss of information) can be reduced more dramatically by the correct type of repetition. Repetition can be \textit{massed} or \textit{spaced}, in a massed presentation an item is typically revised in a short interval many times over with no intervening delay. In contrast, a spaced presentation usually consists of revisions performed across longer periods of time with delayed presentations~\cite{kornell2008learning, pavlik2007optimizing}.
+
+Interesting fact about self-regulated study is that in situations where it is allowed to study without time limit or some different higher pressure situation, people often choose to study the most difficult items, however, under pressure people give high priority to relatively easy items. Although, in both situations, people do not study items that they think they have already learned~\cite{kornell2007promise}.
 
 \section{Student Modeling and Memory}
 
-Throughout the last one hundred years, researchers have been trying to figure out the complex cognitive processes in the human brain, which are responsible for our ability to learn~\cite{RichardE.Mayer2010}. Understanding the process of learning can be very helpful in education and educational systems where we wish to improve the student's representation. This is useful if we want to adapt our system to the needs and knowledge of individual students practicing a particular domain (e.g. the knowledge of animals, Japanese vocabulary or geography). The construction of a quantitative representation, called a \textit{student model}, is known as \textit{student modeling}~\cite{Sison1998}.
+Understanding the process of learning can be very helpful in education and educational systems where we wish to improve the student's representation. This is useful if we want to adapt our system to the needs and knowledge of individual students practicing a particular domain (e.g. the knowledge of animals, Japanese vocabulary or geography). The construction of a quantitative representation, called a \textit{student model}, is known as \textit{student modeling}~\cite{Sison1998}.
 
-The Greek philosopher and mathematician Plato compared human mind to an aviary in which each bird represented a memory~\cite{MichaelW.Eysenck2008}. Today, we have a much better intuition on the human biological storage---the hardware responsible for the storage and organization of data in modern computers. This analogy of computer data storage is much better than the one Plato used and it seems to be very close and accurate depiction of the human memory.
-
-So far, we haven't mentioned learning, which is very closely related to memory and to the topic of our thesis. Learning leads to the creation of memory. The study of learning and memory can be divided even further when we realize that we need some way to observe what the students know by experiments. This section is thus explained in three parts:
+The process of learning is very closely related to the topic of our thesis as it leads to the creation of new memory. The study of learning and memory can be divided even further when we realize that we need some way to observe what students know by experiments. Thus, we cover the relevant research to student modeling and memory in three parts:
 
 \begin{itemize}
   \item Learning
@@ -16,22 +63,14 @@ So far, we haven't mentioned learning, which is very closely related to memory a
   \item Performance
 \end{itemize}
 
-Although this distinction is not very important, it can help the reader better understand the underlying problem discussed in our thesis, the connection between computer science and psychology. In a book released by a professor of psychology at the University of California Richard~E.~Mayer, the science of learning is organized differently, that is into the following three components:
-
-\begin{itemize}
-  \item The science of learning
-  \item The science of instruction
-  \item The science of assessment
-\end{itemize}
-
-All of these components are to some extent related to our research. Nevertheless, the science of learning is the most related since it concerns human memory and learning. The science of instruction is about the manipulation of the student's environment in order to foster learning, it's the scientific study of how to help people learn. In educational systems, this is usually done by incorporating \textit{instructional policies}, the strategies or a set of instructions that help students maintain engagement and increase the amount gained knowledge in one session. Instructional policies guide students during learning by e.g. the selection of appropriate questions or the number of options in multiple-choice tests. Lastly, the science of assessment seeks to determine what people know, which is important so that we are able to quantify the effectiveness of different instructional methods~\cite{RichardE.Mayer2010}.
+Although this distinction is not very important, it can help the reader better understand the underlying problem discussed in our thesis, the connection between computer science and psychology.
 
 \subsection{Learning}
 \label{learning}
 
 Richard E. Mayer formulated learning as a change in what the student knows caused by the student's experience~\cite{RichardE.Mayer2010}. In more psychological terms, learning is the process of encoding, modifying and reinforcing information~\cite{Lewis}. For example the encoding of the location of Portugal can be seen as learning the shape of the country, its neighbor Spain and the surrounding ocean.
 
-A learning curve is the rate of the student's progress in gaining new skill or knowledge by experience in the environment (e.g. by participating in a discussion, reading a book or riding a bike). Generally, the speed of learning is proportional to the product of amount learned and amount to yet learn. This can be written mathematically:
+A learning curve is the rate of the student's progress in gaining new skill or knowledge by experience in the environment (e.g. by participating in a discussion, reading a book or riding a bike). Generally, the speed of learning is proportional to the product of amount learned and amount to yet learn. This principal can be written mathematically as follows:
 
 \begin{equation} \label{learning-differential}
   \frac{dK}{dt} = a \cdot (K_{max} - K)
@@ -42,7 +81,7 @@ The coefficient $a$ in the Equation~\ref{learning-differential} represents the r
 \subsection{Memory}
 \label{memory}
 
-Memory is the biological storage that retains encoded information, e.g. the location of Portugal. We recognize at least three types of memory (the sensory memory, the short-term memory and the long-term memory) all of which don't retain information permanently and decay with time. The long-term memory decay is called \textit{forgetting} and similarly as learning the speed of forgetting is inversely proportional to the volume of remaining material.
+Memory is the biological storage that retains encoded information, e.g. the location of Portugal. The long-term memory decay is called \textit{forgetting} and similarly as learning the speed of forgetting is inversely proportional to the volume of remaining material.
 
 \begin{equation} \label{forgetting-differential}
   \frac{dK}{dt} = -bK
@@ -57,9 +96,7 @@ In Equation~\ref{forgetting-differential} the parameter $p$ represents the rate 
   \label{fig:learning-forgetting-curves}
 \end{figure}
 
-The effect of forgetting (i.e. the loss of information) can be reduced by repetition. Repetition can be massed or spaced, in a massed presentation an item is typically revised in a short interval many times over. In contrast, a spaced presentation usually consists of revisions performed across longer periods of time with pauses between presentations. It is well known that a spaced presentation leads to a better and more stable long-term memory~\cite{RichardE.Mayer2010}. This phenomenon is called the \textit{spacing effect} (see Figure~\ref{fig:spacing-effect}).
-
-It's worth mentioning that our concern is only the factual knowledge which is stored as the declarative memory, that is the conscious knowledge (knowing what) such as the world's countries or the English vocabulary. On the other hand the procedural memory (knowing how) is the memory we aren't consciously aware of and which makes humans capable of the acquisition of both the motor and cognitive skills. For example riding a bike or swimming are tasks that are learned and collected as procedural memories~\cite{MichaelW.Eysenck2008}.
+In chapter~\ref{study} we explained that a spaced presentation leads to a better and more stable long-term memory. This phenomenon is called the spacing effect and is illustrated on Figure~\ref{fig:spacing-effect}. We should also mention that our concern is only the factual knowledge which is stored as declarative memory, that is the conscious knowledge (knowing what) such as the world's countries or the English vocabulary.
 
 \begin{figure}[htbp]
   \centering
@@ -91,7 +128,7 @@ We can further distinguish the following levels of learning as measured by memor
 
 \begin{description}[leftmargin=0cm]
   \item[Familiarity] The student has feeling they knew the item in the past but cannot remember anymore.
-  \item[Recognition] The student recognized the item when presented multiple-choice options but couldn't remember otherwise.
+  \item[Recognition] The student recognized the item when presented multiple-choice options but could not remember otherwise.
   \item[Recall] The student is able to recall the item with some effort. Note that in cognitive science we distinguishe \textit{free recall} and \textit{cued recall}. Free recall is the ability to remember an item without any help (e.g. recalling the name of a country), in the case of cued recall, we are given an information which can help us remember (e.g. first letter of the country we are to remember).
   \item[Automaticity] The student recalls the item instantaneously when presented. Note that the level of automaticity can be measured by the latency of recall.
 \end{description}
@@ -100,6 +137,13 @@ We can further distinguish the following levels of learning as measured by memor
 \label{relevant-models}
 
 In this section we discuss the models relevant to our work. There are two main components that concern us and we can treat them independently, the first is the estimation of probability that a student knows an item before they answer the very first question about the item. The second is the estimation of the current knowledge of a student which combines the prior knowledge and the knowledge they acquired as they practiced~\cite{Papousek2014}. Estimation of current knowledge is significant for the better part of this thesis.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{img/sigmoid-function}
+  \caption{Comparison of sigmoid functions $\sigma_c(m)$ with different values of the parameter $c$.}
+  \label{fig:spacing-effect}
+\end{figure}
 
 \subsection{Elo System}
 \label{elo}
@@ -120,7 +164,7 @@ In the adopted version of Elo system we have the student's skill $\theta_s$ and 
   b_i \gets b_i - K(R - P(R = 1|s,i))
 \end{equation}
 
-The constant parameter $K$ affects the change in the estimates $\theta_s$ and $b_i$. Higher value means faster change after few questions, in contrast lower value makes the change slower. This is a problem in cases where the number of answers varies over time. It's been demonstrated that the use of an uncertainty function $\frac{\alpha}{1 + \beta n}$, which considers the number of answers of students in the system, makes the predictions more stable and increases accuracy~\cite{Vanek2014}.
+The constant parameter $K$ affects the change in the estimates $\theta_s$ and $b_i$. Higher value means faster change after few questions, in contrast lower value makes the change slower. This is a problem in cases where the number of answers varies over time. It has been demonstrated that the use of an uncertainty function $\frac{\alpha}{1 + \beta n}$, which considers the number of answers of students in the system, makes the predictions more stable and increases accuracy~\cite{Vanek2014}.
 
 \subsection{Performance Factor Analysis}
 \label{pfa}
@@ -140,7 +184,7 @@ In Equation~\ref{eq-pfa-standard}, where $m$ is a function of the student's know
 \subsection*{The Elo/Extended Version}
 \label{pfae}
 
-The standard PFA model is defined in terms of knowledge components which is not always needed. The main disadvantage, however, is the inability to consider the order of answers. Another problem with the standard PFA model is that it doesn't take into account the probability of guessing~\cite{Papousek2014}. Both of these issues are solved by the adjustments depicted in Equation~\ref{eq-pfa-extended}.
+The standard PFA model is defined in terms of knowledge components which is not always needed. The main disadvantage, however, is the inability to consider the order of answers. Another problem with the standard PFA model is that it does not take into account the probability of guessing~\cite{Papousek2014}. Both of these issues are solved by the adjustments depicted in Equation~\ref{eq-pfa-extended}.
 
 \begin{equation} \label{eq-pfa-extended}
   m \gets \begin{cases}
@@ -153,7 +197,7 @@ The standard PFA model is defined in terms of knowledge components which is not 
   P(m) = \frac{1}{n} + \left(1 - \frac{1}{n}\right)\frac{1}{1 + e^{-m}}
 \end{equation}
 
-The initial value of $m$ can be estimated from the Elo model which was discussed in chapter~\ref{elo}, i.e. $m = \theta_s - b_i$. The parameter $n$ in the Equation~\ref{eq-pfa-standard-p} matches the number of options in multiple-choice question. The probability of guess is $\frac{1}{n}$ while the probability of slip is $1 - \frac{1}{n}$. Note that this is a simplification as it doesn't consider the possibility that a student answers correctly only by ruling out some portion of the other displayed options (in which case they don't know the correct answer even though there is higher chance of guess)~\cite{Pelanek2015a}. 
+The initial value of $m$ can be estimated from the Elo model which was discussed in chapter~\ref{elo}, i.e. $m = \theta_s - b_i$. The parameter $n$ in the Equation~\ref{eq-pfa-standard-p} matches the number of options in multiple-choice question. The probability of guess is $\frac{1}{n}$ while the probability of slip is $1 - \frac{1}{n}$. Note that this is a simplification as it does not consider the possibility that a student answers correctly only by ruling out some portion of the other displayed options (in which case they do not know the correct answer even though there is higher chance of guess)~\cite{Pelanek2015a}. 
 
 \subsection*{The Decay Factor}
 \label{pfag}
@@ -184,13 +228,13 @@ The problem of this model is that it cannot be straightforwardly adjusted so tha
 \subsection{Models of Forgetting}
 \label{spacing-effect}
 
-All the presented models so far didn't account for the effect of forgetting. Although the use of a decay factor can be seen as a way to penalize past answers, it doesn't consider timing between student's answers to an item. In the ACT-R model~\cite{Pavlik2003}, the memory strength $m$ of a student is formalized in Equation~\ref{eq-actr}.
+All the presented models so far did not account for the effect of forgetting. Although the use of a decay factor can be seen as a way to penalize past answers, it does not consider timing between student's answers to an item. In the ACT-R model~\cite{Pavlik2003}, the memory strength $m$ of a student is formalized in Equation~\ref{eq-actr}.
 
 \begin{equation} \label{eq-actr}
   m_n(t) = \ln{\sum_{i=1}^{n} t_{i}^{-d}}
 \end{equation}
 
-The parameter $t$ is a vector of seconds that passed since each of the $n$ repetitions were performed by the student, we also use the term \textit{timing distance} in the following chapters as it is shorter. The parameter $d$ represents memory decay (the speed of forgetting). Note that the equation is just a simplification of the reality and doesn't take into account many very important aspects of forgetting, e.g. the mentioned spacing effect.
+The parameter $t$ is a vector of seconds that passed since each of the $n$ repetitions were performed by the student, we also use the term \textit{timing distance} in the following chapters as it is shorter. The parameter $d$ represents memory decay (the speed of forgetting). Note that the equation is just a simplification of the reality and does not take into account many very important aspects of forgetting, e.g. the mentioned spacing effect.
 
 An item will be retrieved only if its memory activation is above certain threshold. In ACT-R model, the probability of recall is given by the value of the threshold $\tau$ and the measure of noise $s$: 
 
