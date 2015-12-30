@@ -47,7 +47,7 @@ All of these components are to some extent related to our research. However, the
 \subsection{Self-regulated Study}
 \label{study}
 
-An important aspect of learning and self-regulated study is the ability to choose the most optimal methods of studying. It is sometimes hard to correctly determine how long to study or what to study and when to consider material learned. Often, people stop studying when they do not fully know the material. For example, the effect of forgetting (i.e. the loss of information) can be reduced more dramatically by the correct type of repetition. Repetition can be \textit{massed} or \textit{spaced}, in a massed presentation an item is typically revised in a short interval many times over with no intervening delay. In contrast, a spaced presentation usually consists of revisions performed across longer periods of time with delayed presentations~\cite{kornell2008learning, pavlik2007optimizing}.
+An important aspect of learning and self-regulated study is the ability to choose the most optimal methods of studying. It is sometimes hard to correctly determine how long to study or what to study and when to consider material learned. Often, people stop studying when they do not fully know the material. For example, the effect of forgetting (i.e. the loss of information) can be reduced more dramatically by the correct type of repetition. Repetition can be \textit{massed} or \textit{spaced}, in a massed presentation an item is typically revised in a short interval many times over with no intervening delay. In contrast, a spaced presentation usually consists of revisions performed across longer periods of time with delayed presentations~\cite{kornell2008learning,pavlik2007optimizing}.
 
 Interesting fact about self-regulated study is that in situations where it is allowed to study without time limit or some different higher pressure situation, people often choose to study the most difficult items, however, under pressure people give high priority to relatively easy items. Although, in both situations, people do not study items that they think they have already learned~\cite{kornell2007promise}.
 
@@ -101,7 +101,7 @@ In chapter~\ref{study} we explained that a spaced presentation leads to a better
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{img/spacing-effect}
-  \caption{An example of the spacing effect with two students. The first student $s_1$ attended 3 sessions (at times $t_0$, $t_1$ and $t_2$) and practiced 50 items on each, the second student $s_2$ attended only 1 session at the time $t_0$ where they practiced 150 items.}
+  \caption{Example of the spacing effect. The student $s_1$ attended three sessions at times $t_0$, $t_1$ and $t_2$ and practiced 50 items on each, the student $s_2$ attended one session at the time $t_0$ where they practiced 150 items.}
   \label{fig:spacing-effect}
 \end{figure}
 
@@ -109,7 +109,7 @@ In chapter~\ref{study} we explained that a spaced presentation leads to a better
 
 The performance of students is the determination of what they know. Performance can be estimated from the speed and precision of recall, for example by a multiple-choice test, where the correctness of answers and response time is measured~\cite{Lewis}. Performance can be seen as an instrument that describes the student's knowledge, the understanding of which is important because it helps us guide the instructional policy.
 
-One of the most useful metric of student's performance is the \textit{memory strength} (a measurement of the ability to retrieve an \textit{item} from memory). In our case an item is any factual information that can be learned. Memory strength can be measured indirectly by observing the following attributes of students when an item is practiced:
+One of the most useful metric of student's performance is the \textit{memory activation} (a measurement of the ability to retrieve an \textit{item} from memory). In our case an item is any factual information that can be learned. Memory activation can be measured indirectly by observing the following attributes of students when an item is practiced:
 
 \begin{description}[leftmargin=0cm]
   \item[Probability of recall] Probability of the student recalling the practiced item, this can be measured as the fraction of the number of successful recollections and the number of all presentations.
@@ -117,43 +117,61 @@ One of the most useful metric of student's performance is the \textit{memory str
   \item[Savings in relearning] The number of required revisions of the practiced item in order to fully regain its knowledge~\cite{MichaelW.Eysenck2008}.
 \end{description}
 
-We can further distinguish the following levels of learning as measured by memory strength (portrayed on Figure~\ref{fig:knowledge-levels}):
+We can further distinguish the following levels of learning as measured by memory activation (portrayed on Figure~\ref{fig:knowledge-levels}):
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{img/knowledge-levels}
-  \caption{Levels of learning.}
+  \caption{Levels of learning~\cite{Lewis}. The line indicates a simplified example of the progress of student's knowledge. Study time takes place between the times $t_0$ and $t_1$, this is followed by the post-study time.}
   \label{fig:knowledge-levels}
 \end{figure}
 
 \begin{description}[leftmargin=0cm]
   \item[Familiarity] The student has feeling they knew the item in the past but cannot remember anymore.
   \item[Recognition] The student recognized the item when presented multiple-choice options but could not remember otherwise.
-  \item[Recall] The student is able to recall the item with some effort. Note that in cognitive science we distinguishe \textit{free recall} and \textit{cued recall}. Free recall is the ability to remember an item without any help (e.g. recalling the name of a country), in the case of cued recall, we are given an information which can help us remember (e.g. first letter of the country we are to remember).
+  \item[Recall] The student is able to recall the item with some effort. Note that in cognitive science we distinguish \textit{free recall} and \textit{cued recall}. Free recall is the ability to remember an item without any help (e.g. recalling the name of a country), in the case of cued recall, we are given an information which can help us remember (e.g. first letter of the country we are to remember).
   \item[Automaticity] The student recalls the item instantaneously when presented. Note that the level of automaticity can be measured by the latency of recall.
 \end{description}
 
 \section{Relevant Student Models}
 \label{relevant-models}
 
-In this section we discuss the models relevant to our work. There are two main components that concern us and we can treat them independently, the first is the estimation of probability that a student knows an item before they answer the very first question about the item. The second is the estimation of the current knowledge of a student which combines the prior knowledge and the knowledge they acquired as they practiced~\cite{Papousek2014}. Estimation of current knowledge is significant for the better part of this thesis.
+In this section we discuss the models relevant to our work. There are two main components that concern us and we can treat them independently, the first is the estimation of probability that a student knows an item before they answer the very first question about the item. The second is the estimation of the current knowledge of a student which combines the prior knowledge and the knowledge they acquired as they practiced~\cite{Papousek2014}.
+
+\subsection{The Logistic Function}
+
+We begin with the equation of the sigmoid logistic function, which is used for prediction of correct performance in all of the following models.
+
+\begin{equation} \label{eq-sigmoid}
+  \sigma(m) = \frac{1}{1 + e^{-m}}
+\end{equation}
+
+Equation~\ref{eq-sigmoid} shows the sigmoid function $\sigma : \mathbb{R} \rightarrow \mathbb{R}$ with argument $m$ representing memory activation. If $m = 0$, the probability of correct performance is $0.5$.
+
+In the case of multiple-choice questions we also want to take into account the probability that a student guesses the correct answer. This can be done by introducing the argument $r$ representing the ratio of the number of correct answers and all possible answers, for instance $r = 1/6$ if there are exactly 6 options while only 1 option is correct. The modified version of the sigmoid function is depicted in Equation~\ref{eq-sigmoid-r}.
+
+\begin{equation} \label{eq-sigmoid-r}
+  \sigma(m, r) = r + \left(1 - r\right)\frac{1}{1 + e^{-m}}
+\end{equation}
+
+Note that $\sigma(m, 0) = \sigma(m)$. The shape of such logistic function is shown in Figure~\ref{fig:sigmoid-function}.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{img/sigmoid-function}
-  \caption{Comparison of sigmoid functions $\sigma_c(m)$ with different values of the parameter $c$.}
-  \label{fig:spacing-effect}
+  \caption{Comparison of sigmoid functions $\sigma(m, r)$ with two different values of the argument $r$.}
+  \label{fig:sigmoid-function}
 \end{figure}
 
 \subsection{Elo System}
 \label{elo}
 
-Elo rating system and its extension Glicko is a very popular mathematical model used in competitor-versus-competitor games such as chess where the goal is to rate players with scores according to the number of opponents they defeated or were defeated by while also honoring each player's skill~\cite{Vanek2014}. Recent research has shown that Elo system is also suited for student modeling and it was previously very successfully adopted for the estimation of prior knowledge of students~\cite{Niznan2015}.
+Elo rating system and its extension Glicko are very popular mathematical models~\cite{rotou2015ranking} used in competitor-versus-competitor games such as chess where the goal is to rate players with scores according to the number of opponents they defeated or were defeated by while also honoring each player's skill~\cite{Vanek2014}. Recent research has shown that Elo system is also suited for student modeling and it was previously very successfully adopted for the estimation of prior knowledge of students~\cite{Niznan2015}.
 
-In the adopted version of Elo system we have the student's skill $\theta_s$ and the difficulty of an item $b_i$. Equations~\ref{eq-elo-skill} and~\ref{eq-elo-difficulty} demonstrate an update of the student's skill and the item's difficulty after one answered question. The parameter $R$ is $0$ or $1$ depending on the correctness of the student's answer. The probability that a student $s$ with a given skill $\theta_s$ will answer correctly on the presented question of difficulty $b_i$ is estimated by a logistic function in~Equation~\ref{eq-elo-logistic}.
+In the adopted version of Elo system we have the student's skill $\theta_s$ and the difficulty of an item $d_i$. Equations~\ref{eq-elo-skill} and~\ref{eq-elo-difficulty} demonstrate an update of the student's skill and the item's difficulty after one answered question. The parameter $R$ is $0$ or $1$ depending on the correctness of the student's answer. The probability that a student $s$ with a given skill $\theta_s$ will answer correctly on the presented question of difficulty $d_i$ is estimated by a logistic function in~Equation~\ref{eq-elo-logistic}.
 
 \begin{equation} \label{eq-elo-logistic}
-  P(R = 1|s,i) = \frac{1}{1 + e^{-(\theta_s - b_i)}}
+  P(R = 1|s,i) = \sigma(\theta_s - d_i)
 \end{equation}
 
 \begin{equation} \label{eq-elo-skill}
@@ -161,25 +179,25 @@ In the adopted version of Elo system we have the student's skill $\theta_s$ and 
 \end{equation}
 
 \begin{equation} \label{eq-elo-difficulty}
-  b_i \gets b_i - K(R - P(R = 1|s,i))
+  d_i \gets d_i - K(R - P(R = 1|s,i))
 \end{equation}
 
-The constant parameter $K$ affects the change in the estimates $\theta_s$ and $b_i$. Higher value means faster change after few questions, in contrast lower value makes the change slower. This is a problem in cases where the number of answers varies over time. It has been demonstrated that the use of an uncertainty function $\frac{\alpha}{1 + \beta n}$, which considers the number of answers of students in the system, makes the predictions more stable and increases accuracy~\cite{Vanek2014}.
+The constant parameter $K$ affects the change in the estimates $\theta_s$ and $d_i$. Higher value means faster change after few questions, in contrast lower value makes the change slower. This is a problem in cases where the number of answers varies over time. It has been demonstrated that the use of an uncertainty function $\frac{\alpha}{1 + \beta n}$, which considers the number of answers of students in the system, makes the predictions more stable and increases accuracy~\cite{Vanek2014}.
 
 \subsection{Performance Factor Analysis}
 \label{pfa}
 
-Performance Factor Analysis (PFA) is a student modeling approach based on the Learning Factor Analysis (LFA). PFA model can be seen as the sum of the item's difficulty and all student's answers with estimated weight for successful and unsuccessful answer. The standard PFA equation is formulated with the incorporation of knowledge components (KCs), which may include skills, concepts or facts~\cite{Pavlik2009}. In our work, we use PFA and its extensions for the estimation of current knowledge.
+Performance Factor Analysis (PFA) is a student modeling approach based on the Learning Factor Analysis (LFA)~\cite{Pavlik2009,cen2007over}. Memory activation in the PFA model can be seen as the sum of the item's difficulty and all student's answers with estimated weight for successful and unsuccessful answer. The standard PFA equation is formulated with the incorporation of knowledge components (KCs), which may include skills, concepts, facts, or any fragment of a domain-specific information that should be used to accomplish a task~\cite{vanlehn2006}. In our work, we use PFA and its extensions for the estimation of current knowledge.
 
 \begin{equation} \label{eq-pfa-standard}
-  m(i,j \in KCs,s,f) = \sum_{j \in KCs} \beta_j + \gamma_j s_{i,j} + \delta_j f_{i,j} 
+  m(i,s,f) = \sum_{j \in KCs} \beta_j + \gamma_j s_{i,j} + \delta_j f_{i,j} 
 \end{equation}
 
 \begin{equation} \label{eq-pfa-standard-p}
-  P(m) = \frac{1}{1 + e^{-m}}
+  P(m) = \sigma(m)
 \end{equation}
 
-In Equation~\ref{eq-pfa-standard}, where $m$ is a function of the student's knowledge of item $i$, the parameter $\beta_j$ is the difficulty of the knowledge component $j$. The counts of current successes and failures of the practiced item $i$ and the knowledge component $j$ are represented by the parameters $s_{i,j}$ and $f_{i,j}$, where $\gamma_j$ and $\delta_j$ describe the weight of each success and failure.
+In Equation~\ref{eq-pfa-standard}, where $m$ is a function of the student's knowledge of item $i$, the parameter $\beta_j$ is the difficulty of the knowledge component $j$. The counts of current successes and failures of the practiced item $i$ and the knowledge component $j$ are represented by $s_{i,j}$ (number of successes) and $f_{i,j}$ (number of failures), where $\gamma_j$ and $\delta_j$ give a weight to each success and failure. An item is retrieved only if its memory activation $m$ is above certain value, e.g. if $m = 0$, we can calculate from Equation~\ref{eq-pfa-standard-p} that the probability of correct performance is $0.5$.
 
 \subsection*{The Elo/Extended Version}
 \label{pfae}
@@ -194,15 +212,17 @@ The standard PFA model is defined in terms of knowledge components which is not 
 \end{equation}
 
 \begin{equation} \label{eq-pfa-standard-p}
-  P(m) = \frac{1}{n} + \left(1 - \frac{1}{n}\right)\frac{1}{1 + e^{-m}}
+  P(m) = \sigma\left(m,\frac{1}{n}\right)
 \end{equation}
 
-The initial value of $m$ can be estimated from the Elo model which was discussed in chapter~\ref{elo}, i.e. $m = \theta_s - b_i$. The parameter $n$ in the Equation~\ref{eq-pfa-standard-p} matches the number of options in multiple-choice question. The probability of guess is $\frac{1}{n}$ while the probability of slip is $1 - \frac{1}{n}$. Note that this is a simplification as it does not consider the possibility that a student answers correctly only by ruling out some portion of the other displayed options (in which case they do not know the correct answer even though there is higher chance of guess)~\cite{Pelanek2015a}. 
+The initial value of $m$ can be estimated from the Elo model which was discussed in chapter~\ref{elo}, i.e. $m = \theta_s - d_i$. The variable $n$ in the Equation~\ref{eq-pfa-standard-p} represents the number of options in multiple-choice question. The probability of guess is thus $\frac{1}{n}$. Note that this is a simplification as it does not consider the possibility that a student answers correctly only by ruling out some portion of the other displayed options (in which case they do not know the correct answer even though there is higher chance of guess)~\cite{Pelanek2015a}.
+
+To get a better idea of how this model works, suppose that a new student $s$ decides to practice autonomous communities of Spain. Before the first question about any item is presented, the memory activations of all items in the system are estimated from the Elo model, i.e. $m = \theta_s - d_i$ for each student $s$ and item $i$. Now, the system can select an appropriate question for the student, this is often based on the probability of correct performance $P(m)$. After the student $s$ answers the presented question, the memory activation $m$ of the autonomous community $i$ is locally updated for the student $s$ depending on correctness of their answer. In the next repetition of the same item, the updated memory activation of the student is used again for the estimation of correct performance and updated subsequently. This process is repeated for each answered item.
 
 \subsection*{The Decay Factor}
 \label{pfag}
 
-Another variation of the original PFA model was proposed by Yue Gong~\cite{Gong2011}. The idea of the model is based on the fact that we expect the student who answered in total of four presentations two times correctly in the last two presentations to perform better than the student who answered correctly in the first two presentations. The extended model introduces a decay factor $\xi$ that changes the behavior of the parameters $s_{i,j}$ and $f_{i,j}$ by penalizing the older answers. The modifications are illustrated in Equations~\ref{eq-pfa-gong-s} and \ref{eq-pfa-gong-f}.
+Another variation of the original PFA model was proposed by Yue Gong~\cite{Gong2011}. The idea of the model is based on the fact that we expect the student who answered in four presentations two times correctly in the last two presentations to perform better than the student who answered correctly in the first two presentations. The extended model introduces a decay factor $\xi$ that changes the behavior of the parameters $s_{i,j}$ and $f_{i,j}$ by penalizing the older answers. The modifications are shown in Equations~\ref{eq-pfa-gong-s} and \ref{eq-pfa-gong-f}.
 
 \begin{equation} \label{eq-pfa-gong-s}
   s_{i,j} = \sum_{k=1}^{n} y_k \cdot \xi^{n-k}
@@ -212,7 +232,7 @@ Another variation of the original PFA model was proposed by Yue Gong~\cite{Gong2
   f_{i,j} = \sum_{k=1}^{n} |y_k - 1| \cdot \xi^{n-k}
 \end{equation}
 
-The parameter $y_k$ represents the correctness of the $k$-th question. For example suppose that a student was presented with a question in five trials, suppose that the student answered incorrectly in the first three trials and answered correctly in the last two. Now for the given value of $\xi = 0.8$ we can calculate the values of $s_{i,j}$ and $f_{i,j}$. Equation~\ref{eq-pfa-gong-example} demonstrates the result of such scenario, it is evident that the weight of all successes surpasses the weight of all failures. 
+The variable $y_k$ represents the correctness of the $k$-th question. For example, suppose that a student was presented with a question in five trials, suppose that the student answered incorrectly in the first three trials and answered correctly in the last two. Now for the given value of $\xi = 0.8$ we can calculate the values of $s_{i,j}$ and $f_{i,j}$. Equation~\ref{eq-pfa-gong-example} demonstrates the result of such scenario where we see that the weight of all successes surpasses the weight of all failures.
 
 \begin{equation} \label{eq-pfa-gong-example}
   \begin{split}
@@ -228,18 +248,18 @@ The problem of this model is that it cannot be straightforwardly adjusted so tha
 \subsection{Models of Forgetting}
 \label{spacing-effect}
 
-All the presented models so far did not account for the effect of forgetting. Although the use of a decay factor can be seen as a way to penalize past answers, it does not consider timing between student's answers to an item. In the ACT-R model~\cite{Pavlik2003}, the memory strength $m$ of a student is formalized in Equation~\ref{eq-actr}.
+So far, all the presented models did not account for the effect of forgetting. Although the use of a decay factor can be seen as a way to penalize past answers, it does not consider intervals of time between repetitions of an item. In the ACT-R (Adaptive Character of Thought--Rational) modeling system~\cite{Pavlik2003}, the memory activation $m$ of a student is a function of prior practices. This function does not account for correctness of prior answers or their difficulty, it considers only counts and times of past repetitions.
 
 \begin{equation} \label{eq-actr}
-  m_n(t) = \ln{\sum_{i=1}^{n} t_{i}^{-d}}
+  m(\mathbf{t}) = \ln{\sum_{i=1}^{n} t_{i}^{-d}}
 \end{equation}
 
-The parameter $t$ is a vector of seconds that passed since each of the $n$ repetitions were performed by the student, we also use the term \textit{timing distance} in the following chapters as it is shorter. The parameter $d$ represents memory decay (the speed of forgetting). Note that the equation is just a simplification of the reality and does not take into account many very important aspects of forgetting, e.g. the mentioned spacing effect.
+The memory activation function used in ACT-R model is shown in Equation~\ref{eq-actr}, the argument $\mathbf{t}$ is a vector of seconds that passed since each of the $n$ repetitions were performed by a student. The parameter $d$ represents memory decay (the speed of forgetting). Note that the equation is just a simplification of the reality and does not take into account many very important aspects of forgetting, e.g. the mentioned spacing effect.
 
 An item will be retrieved only if its memory activation is above certain threshold. In ACT-R model, the probability of recall is given by the value of the threshold $\tau$ and the measure of noise $s$: 
 
 \begin{equation} \label{eq-actr-p}
-  P(m) = \frac{1}{1 + e^{\frac{\tau - m}{s}}}
+  P(m) = \sigma\left(\frac{\tau - m}{s}\right)
 \end{equation}
 
 Philip~I.~Pavlik and John~R.~Anderson~\cite{Pavlik2005} developed an extended version of the equation in which the decay is a function of the activation at the time the item was presented. The Equations~\ref{eq-pavlik-decay} and~\ref{eq-pavlik-activation} demonstrate the replacement of the parameter $d$ with a recurrent function $d_i$ that depends on the past timing distances between presentations.
@@ -248,17 +268,17 @@ Philip~I.~Pavlik and John~R.~Anderson~\cite{Pavlik2005} developed an extended ve
   d_i = ce^{m_{i-1}} + a
 \end{equation}
 \begin{equation} \label{eq-pavlik-activation}
-  m_n(t) = \ln{\sum_{i=1}^{n} t_{i}^{-d_i}}
+  m(\mathbf{t}) = \ln{\sum_{i=1}^{n} t_{i}^{-d_i}}
 \end{equation}
 
 The parameter $c$ affects the impact of the spacing effect while the parameter $a$ affects the slope of the decay. Since $m_0 = -\infty$, the value of $d_i$ is always equal to $a$ at the first student's practice of an item. Instinctively, when $c = 0$, the result of the equation is equivalent with the Equation~\ref{eq-actr}. Because the computation is recursive and a bit complex, we present the pseudo-code of the algorithm computing the memory activation function (see Algorithm~\ref{alg-memory-activation}). Note that the time complexity of the function is $\mathcal{O}\left(\frac{n(n-1)}{2}\right)$.
 
 \begin{algorithm}
-  \caption{The function $\textsc{MemoryActivation}: \mathbb{N}^n \rightarrow \mathbb{R}^n$ takes the vector parameter $t$ in descending order, e.g. $[56800, 56400, 3600, 60, 0]$ (the last zero is the current practice). The result of the computation is a vector $m$ of student's memory activations during each practice.}
+  \caption{The function $\textsc{MemoryActivation}: \mathbb{N}^n \rightarrow \mathbb{R}^n$ takes the vector $\mathbf{t}$ in descending order, e.g. $[56800, 56400, 3600, 60, 0]$ (the last zero is the current practice). The result of the computation is a vector $\mathbf{m}$ of student's memory activations during each practice.}
   \label{alg-memory-activation}
   \begin{algorithmic}[1]
-    \Function{MemoryActivation}{$t$}
-      \State $n \gets size(t)$
+    \Function{MemoryActivation}{$\mathbf{t}$}
+      \State $n \gets size(\mathbf{t})$
       \State $m_0 \gets -\infty$
       \For{$i \gets 2$ \textbf{to} $n$}
         \State $s \gets 0$
@@ -268,7 +288,7 @@ The parameter $c$ affects the impact of the spacing effect while the parameter $
         \EndFor
         \State $m_i \gets \log(s)$
       \EndFor
-      \State \Return $m$
+      \State \Return $\mathbf{m}$
     \EndFunction
   \end{algorithmic}
 \end{algorithm}
