@@ -3,6 +3,7 @@
 The models presented in chapter~\ref{relevant-models} seem to work well either in the context of adaptive systems where we are not concerned with timing information or have been tested in controlled environment where the students had no prior knowledge of the presented material. In this chapter, we elaborate the methods we used to further improve the performance by taking into account the timing information of students' answers, i.e. the response times or the age of previous presentations. We are interested primarily in domains where the prior knowledge varies widely between students.
 
 \section{Models Based on Timing Information}
+\label{models-timing}
 
 In this section we discuss several models which aim at modeling students' memory with the usage of timing information of answers.
 
@@ -52,7 +53,7 @@ The response time of student may indicate student's level of learning. If the st
           \end{cases}
 \end{equation}
 
-Equation~\ref{eq-pfa-extended-rt} shows the adjusted update rule with unary functions $r_{\mathit{succ}}$ for correct answer and $r_{\mathit{fail}}$ for incorrect answer---this distinction is necessary since the response time and the probability of correct performance depends on the performance in previous trials~\cite{papouvsekanalysis}. The function argument $t_d$ is the difference between the time the item was presented and the time it was answered (i.e. it is the student's delay).
+Equation~\ref{eq-pfa-extended-rt} shows the adjusted update rule with unary functions $r_{\mathit{succ}}$ for correct answer and $r_{\mathit{fail}}$ for incorrect answer---this distinction is necessary since it has been shown that the response time and the probability of correct performance depends on the performance in previous trials~\cite{papouvsekanalysis}. The function argument $t_d$ is the difference between the time the item was presented and the time it was answered (i.e. it is the student's delay).
 
 \section{Quantifying the Quality of Predictions}
 \label{metrics}
@@ -107,7 +108,7 @@ The goal of the fitting procedure is to find the optimal parameters that perform
 \subsection{Grid Search}
 \label{grid-search}
 
-This technique is used for parameter optimization, it exhaustively generates a grid of all combinations of selected parameter values where each point in the grid is a function value of a chosen objective metric (e.g. RMSE). The fittest combination of parameters is represented by the best score of the metric (e.g. has lowest error). The figure~\ref{fig-grid-search-rmse-auc} illustrates a result of the grid search algorithm performed on PFA model with two parameters $\gamma$ and $\delta$.
+This technique is used for parameter optimization, it exhaustively generates a grid of all combinations of selected parameter values where each point in the grid is a function value of a chosen objective metric (e.g. RMSE). The fittest combination of parameters is represented by the best score of the metric (e.g. has lowest error). The Figure~\ref{fig-grid-search-rmse-auc} illustrates a result of the grid search algorithm performed on PFA model with two parameters $\gamma$ and $\delta$.
 
 \begin{figure}[htbp]
   \centering
@@ -169,10 +170,10 @@ Radek Pelánek in his work~\cite{Pelanek2015} figured out a bit more complicated
 The Algorithm~\ref{alg-gradient-descent} shows an update of parameters in PFA model with two parameters $\gamma$ and $\delta$. The update is performed whenever a question is answered by a student. To understand the idea of this method, we can examine four possible situations:
 
 \begin{itemize}
-  \item $A$ was correct and $P(m) > 0.5$ -- memory activation $m$ is low and should be increased (e.g. by raising $\gamma$ or $\delta$)
-  \item $A$ was correct and $P(m) \leq 0.5$ -- memory activation $m$ is very low and should be considerably increased (e.g. by raising $\gamma$ or $\delta$)
-  \item $A$ was incorrect and $P(m) \leq 0.5$ -- memory activation $m$ is high and should be decreased (e.g. by lowering $\gamma$ or $\delta$)
-  \item $A$ was incorrect and $P(m) > 0.5$ -- memory activation $m$ is very high and should be considerably decreased (e.g. by lowering $\gamma$ or $\delta$)
+  \item $A$ was correct and $P(m) > 0.5$ -- memory activation $m$ is low and should be increased (e.g. by increasing $\gamma$ or $\delta$)
+  \item $A$ was correct and $P(m) \leq 0.5$ -- memory activation $m$ is very low and should be greatly increased (e.g. by increasing $\gamma$ or $\delta$)
+  \item $A$ was incorrect and $P(m) \leq 0.5$ -- memory activation $m$ is high and should be decreased (e.g. by decreasing $\gamma$ or $\delta$)
+  \item $A$ was incorrect and $P(m) > 0.5$ -- memory activation $m$ is very high and should be greatly decreased (e.g. by decreasing $\gamma$ or $\delta$)
 \end{itemize}
 
 The process of updating the parameters is repeated for all answers, i.e. it tries to approximate the optimal combination of parameter values by minimizing discrepancy in the above situations.
@@ -203,18 +204,27 @@ The process of updating the parameters is repeated for all answers, i.e. it trie
   \end{algorithmic}
 \end{algorithm}
 
+The process of change of parameters in PFA model using this method is visualized in Figure~\ref{gradient-descent-iterations}. We can also notice that with each iteration of the algorithm, the parameters are updated while error in predictions as measured by RMSE generally decreases.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{img/gradient-descent-iterations}
+  \caption{Iterations of the algorithm based on gradient descent for parameter estimation in PFA model. The figure on left shows the progress of $\gamma$ and $\delta$ with each new answer. The figure on right indicates the improvement of predictive ability of the model by measuring RMSE each time 500 places are answered by students.}
+  \label{gradient-descent-iterations}
+\end{figure}
+
 \section{Time Effect Functions}
 \label{time-effect-functions}
 
-In chapter~\ref{memory} we mentioned that forgetting usually respects the power law, which is often true in cases where the students have no prior knowledge of the practiced material. For our purpose, we have chosen the following functions with parameter $t$ representing the time of the last presentation and two parameters $a$ and $c$:
+The goal of a time effect function is to locally increase student's memory activation $m$ of the practiced item while taking into account the time a previous trial of the item was performed. A time effect function thus increases memory activation based on the age of the last answer. For our purpose, we have chosen the following functions with parameter $t$ representing the time of the last presentation and two parameters $a$ and $c$:
 
 \begin{itemize}
   \item $f_{\mathit{log}}(t) = a - c \cdot \log(t)$
   \item $f_{\mathit{exp}}(t) = a \cdot e^{-c \sqrt{t}}$
-  \item $f_{\mathit{poly}}(t) = a / t^c$
+  \item $f_{\mathit{pow}}(t) = a / t^c$
 \end{itemize}
 
-The shape of each of these time effect functions with logarithmically scaled $x$-axis is depicted on Figure~\ref{fig-time-effect-functions}.
+These functions were chosen as simple candidates with only a few parameters, other candidates we experimented with were just similar variations and didn't improve the performance of our models in any significant way. The shape of each of these time effect functions with logarithmically scaled $x$-axis is depicted on Figure~\ref{fig-time-effect-functions}.
 
 \begin{figure}[htbp]
   \centering
@@ -237,7 +247,7 @@ If we want to approximate the exact shape of a time effect function, we can defi
          \end{cases}
 \end{equation}
 
-Applying simple linear algebra, we can further modify the staircase function so that the memory activation between two points is a linear function, this makes a better approximation of the learned values. The definition of the adjusted function is described in Equations~\ref{eq-staircase-iota-prime-definiton} and~\ref{eq-staircase-linear}, where $T$ is a set of all timing distances of all answers.
+Applying simple linear algebra, we can further modify the staircase function so that the memory activation between two points is a linear function, this makes a better approximation of the learned values. The definition of the adjusted function is described in Equations~\ref{eq-staircase-iota-prime-definiton} and~\ref{eq-staircase-linear}, where $T$ is a set of ages of all answers in seconds.
 
 \begin{equation} \label{eq-staircase-iota-prime-definiton}
 \begin{split}

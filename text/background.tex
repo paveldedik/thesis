@@ -278,7 +278,7 @@ The parameter $c$ affects the impact of the spacing effect while the parameter $
   \label{alg-memory-activation}
   \begin{algorithmic}[1]
     \Function{MemoryActivation}{$\mathbf{t}$}
-      \State $n \gets size(\mathbf{t})$
+      \State $n \gets \mathit{dimension}(\mathbf{t})$
       \State $m_0 \gets -\infty$
       \For{$i \gets 2$ \textbf{to} $n$}
         \State $s \gets 0$

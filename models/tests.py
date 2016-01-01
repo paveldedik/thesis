@@ -16,12 +16,15 @@ import matplotlib.pyplot as plt
 from . import tools
 
 
-def get_test_result(test_set, model):
+def get_test_result(test_set, model, filter_fun=None):
     """Returns model's performance result on test data.
 
     :param test_set: Test set data.
     :param model: Model used for evaluation.
     """
+    if callable(filter_fun):
+        test_set = filter_fun(test_set)
+
     test_values = pd.DataFrame({
         'observed': test_set['is_correct'],
         'predicted': test_set.apply(model.predict, axis=1),
@@ -35,7 +38,7 @@ def get_test_result(test_set, model):
     )
 
 
-def get_train_result(train_set, model):
+def get_train_result(train_set, model, filter_fun=None):
     """Returns model's performance result on train data.
 
     :param test_set: Train set data.
@@ -45,8 +48,11 @@ def get_train_result(train_set, model):
         {'predicted': model.predictions},
     )
     train_set = pd.concat(
-        [train_set.set_index(['id']), predictions], axis=1
+        [train_set.set_index(['id']), predictions],
+        axis=1, join='inner',
     )
+    if callable(filter_fun):
+        train_set = filter_fun(train_set)
     train_values = pd.DataFrame({
         'observed': train_set['is_correct'],
         'predicted': train_set['predicted'],
@@ -183,22 +189,17 @@ class PerformanceTest(object):
         else:
             self.train_set, self.test_set = data, None
 
-    def run(self):
+    def run(self, filter_results_fun=None):
         """Prepares training set, test set and trains the model.
         """
         self.model.train(self.train_set)
+        return self
 
-        if self.test_set is not None:
-            self.test_result = get_test_result(self.test_set, self.model)
-        if self.train_set is not None:
-            self.train_result = get_train_result(self.train_set, self.model)
-
-    @property
-    def results(self):
-        """Dictionary that contains results of test set
-        and train set.
+    def get_results(self, filter_results_fun=None):
+        """Returns results of the performance test.
         """
-        return {
-            'test': getattr(self, 'test_result', None),
-            'train': getattr(self, 'train_result', None),
-        }
+        if self.test_set is not None:
+            return get_test_result(self.test_set, self.model,
+                                   filter_fun=filter_results_fun)
+        return get_train_result(self.train_set, self.model,
+                                filter_fun=filter_results_fun)

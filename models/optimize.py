@@ -864,8 +864,12 @@ class GradientDescent(object):
             self.random_factor = kwargs.pop('random_factor')
             self.random_chance = kwargs.pop('random_chance', 1000)
 
+            self.iterations = 0
             if self.log_metadata:
                 self.metadata['diffs'] = []
+                self.metadata['gammas'] = []
+                self.metadata['deltas'] = []
+                self.metadata['rmse'] = []
                 if self.log_staircase:
                     self.metadata['staircase_items'] = defaultdict(lambda: 0)
                     self.metadata['staircase_times'] = defaultdict(list)
@@ -913,8 +917,16 @@ class GradientDescent(object):
                 item.inc_knowledge(self.delta * shift)
                 item.delta_effect += shift
 
+            self.iterations += 1
+
             if self.log_metadata:
                 self.metadata['diffs'].append(shift)
+                self.metadata['gammas'].append(self.gamma)
+                self.metadata['deltas'].append(self.delta)
+                if self.iterations % 500 == 0:
+                    rmse = np.sqrt(sum(x**2 for x in self.metadata['diffs']) /
+                                   len(self.metadata['diffs']))
+                    self.metadata['rmse'].append((self.iterations, rmse))
                 if self.log_staircase and has_practices:
                     interval = self.staircase.get_interval(seconds)
                     self.metadata['staircase_items'][interval] += 1

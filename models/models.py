@@ -50,7 +50,7 @@ def time_effect_log(t, a=1.8, c=0.123):
     return a - c * np.log(t)
 
 
-@register_time_effect('poly')
+@register_time_effect('pow')
 def time_effect_div(t, a=2, c=0.2):
     return a / (t+1) ** c
 
@@ -873,13 +873,13 @@ class PFAGongTiming(PFAGong):
     :param time_effect_fun: Time effect function.
     :type time_effect_fun: callable or string
     """
-    ABBR = 'PFA/G/T'
+    ABBR = 'PFA/G/T old'
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('gamma', 1.7)
         kwargs.setdefault('delta', 0.5)
 
-        time_effect = kwargs.pop('time_effect_fun', 'poly')
+        time_effect = kwargs.pop('time_effect_fun', 'pow')
 
         if isinstance(time_effect, basestring):
             self.a, self.c = kwargs.pop('a', None), kwargs.pop('c', None)
@@ -923,14 +923,14 @@ class PFATiming(PFAGong):
     :param time_effect_bad: Time effect function for wrong answers.
     :type time_effect_bad: callable or string
     """
-    ABBR = 'PFA/T'
+    ABBR = 'PFA/G/T'
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('gamma', 1)
-        kwargs.setdefault('delta', 1)
+        kwargs.setdefault('gamma', 1)  # these parameters should not be
+        kwargs.setdefault('delta', 1)  # modified, i.e. kept equal to 1
 
-        time_effect_good = kwargs.pop('time_effect_good', 'poly')
-        time_effect_bad = kwargs.pop('time_effect_bad', 'poly')
+        time_effect_good = kwargs.pop('time_effect_good', 'pow')
+        time_effect_bad = kwargs.pop('time_effect_bad', 'pow')
 
         if isinstance(time_effect_good, basestring):
             self.a, self.c = kwargs.pop('a', None), kwargs.pop('c', None)
@@ -940,11 +940,13 @@ class PFATiming(PFAGong):
             self.time_effect_good = time_effect_good
 
         if isinstance(time_effect_bad, basestring):
-            self.a, self.c = kwargs.pop('b', None), kwargs.pop('d', None)
+            self.b, self.d = kwargs.pop('b', None), kwargs.pop('d', None)
             self.time_effect_bad = init_time_effect(
-                self, time_effect_bad, parameters=('a', 'c'))
+                self, time_effect_bad, parameters=('b', 'd'))
         else:
             self.time_effect_bad = time_effect_bad
+
+        super(PFAGong, self).__init__(*args, **kwargs)
 
     def get_weights(self, item, question):
         """Returns weights of previous answers to the given item.
@@ -955,7 +957,7 @@ class PFATiming(PFAGong):
         :type question: :class:`pandas.Series` or :class:`Question`
         """
         correct_weights = [
-            max(ans.is_correct * self.time_effect_good(diff), 0) for ans, diff
+            ans.is_correct * self.time_effect_good(diff) for ans, diff
             in izip(item.practices, item.get_diffs(question.inserted))
         ]
         incorrect_weights = [

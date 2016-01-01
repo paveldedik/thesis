@@ -176,19 +176,19 @@ def unknown_answers(data):
     return data[mask].reset_index(drop=True)
 
 
-def add_spacing(data):
-    """Appends the given data set with spacing information of earch item.
+def add_last_trial_age(data):
+    """Appends the given data set with the age of last trial of each item.
 
     :param data: The object containing data.
     :type data: :class:`pandas.DataFrame`.
     """
     answers = {}
-    data['spacing'] = np.nan
+    data['last_trial_age'] = np.nan
 
     def set_spacing(row):
         index = (row.user_id, row.place_id)
         if index in answers:
-            data.loc[row.name, 'spacing'] = \
+            data.loc[row.name, 'last_trial_age'] = \
                 time_diff(row.inserted, answers[index])
         answers[index] = row.inserted
 
