@@ -1,3 +1,7 @@
 \chapter{Conclusion}
 
-TODO.
+In the first part of the thesis we summarized the key aspects of human memory, learning, and forgetting. We discussed applications and properties of adaptive educational systems, basics of student modeling and the most relevant models relevant in the context of our thesis, mainly the Elo model successfully used for estimation of prior knowledge of students and the Performance Factor Analysis (PFA) model used for the estimation of current knowledge the students acquired while interacting with the system. We also studied extensions of the PFA model and the models used in the ACT-R modeling system.
+
+The primary objective of our thesis was to explore the family of PFA models and design their extensions while accounting for the key aspect of human memory---forgetting. We described several models based on previous extensions and introduced a \textit{time effect function} which penalizes the age of past attempts of an item. The evaluation of models was performed using the data from the adaptive system Outline Maps for practicing geography. Our evaluation showed that both models that focus on forgetting of students outperform their baseline models. We also analyzed students' response times for the possibility that it may indicate the level of student's knowledge, and the values of model's parameters depending on the domain of the used data set (the type of place, purpose of practice, etc.).
+
+We suggested the usage of the extended PFA model with a staircase function in production, which is computationally very efficient and does not require periodic estimations of parameters. Other models do not perform so well especially in environments where the test of student's knowledge involves answer to a multiple-choice question.

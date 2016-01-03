@@ -815,11 +815,11 @@ class PFAGong(PFAModel):
         :type question: :class:`pandas.Series` or :class:`Question`
         """
         correct_weights = [
-            ans.is_correct * self.decay ** t for t, ans
+            ans.is_correct * self.decay ** k for k, ans
             in tools.reverse_enumerate(item.practices)
         ]
         incorrect_weights = [
-            (1 - ans.is_correct) * self.decay ** t for t, ans
+            (1 - ans.is_correct) * self.decay ** k for k, ans
             in tools.reverse_enumerate(item.practices)
         ]
         return sum(correct_weights), sum(incorrect_weights)

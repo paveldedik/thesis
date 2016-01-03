@@ -21,7 +21,7 @@ The advantage of this model is that it easy to employ Elo model for estimation o
 \subsection{The Alternative Model}
 \label{pfagt}
 
-Another way of dealing with timing distances between trials is by changing the decay factor $\xi$ of the model presented in chapter~\ref{pfag}. The model takes into account the order of questions, yet does not consider the ages of student's previous practices. This problem can be resolved by replacing the parameter $\xi$ with time effect functions for .
+Another way of dealing with timing distances between trials is by changing the idea of the model with a decay factor $\xi$ presented in chapter~\ref{pfag}. The model takes into account the order of questions, yet does not consider the ages of student's previous practices. This problem can be resolved by replacing $\xi^{n-k}$ with two time effect functions for correct and incorrect performances.
 
 \begin{equation} \label{eq-pfag-time-s}
   s_{i,j} = \sum_{k=1}^{n-1} y_k \cdot f_{\mathit{succ}}(t_k)
@@ -149,6 +149,7 @@ The partial derivatives help indicate the surface of the cost function, it gives
 \end{figure}
 
 \subsection{Approximating the Gradient}
+\label{approx-gradient}
 
 In this chapter we discuss possible approximations of the gradient descent to optimize parameters of the PFA model and its variations. The most obvious and easiest way to implement approximate gradient could average the difference between correctness of student's answer $y_i$ and model's predicted probability $p_i$ that the item $i$ is answered correctly. The batch update rule would be defined as follows:
 
