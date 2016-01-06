@@ -1,14 +1,14 @@
 \chapter{Discussion}
 
-In this chapter we review results of our experiments and discuss applications of the analyzed models in other systems. We also give tips on how to further improve performance of the models.
+In this chapter, we review results of our experiments and discuss applications of the analyzed models in other systems. We also give tips on how to perhaps further improve performance of our models and which aspects of human memory could be considered in future research.
 
 \section{Results}
 
-In chapter~\ref{analysis} we analyzed several models based on timing information (taking into account either ages of past trials of items or past response times of students). Most promising results in the context of learning geography facts shows the PFA/E/T model with a staircase time effect function, although the power function proves to be almost as equally good choice. Main advantage of the staircase function is that the parameters are easy to learn for the purpose of online learning, i.e. there is no need to periodically run parameter optimization procedure since the parameters are slightly adjusted with each new answer.
+In chapter~\ref{analysis}, we analyzed several models based on timing information (taking into account either ages of past trials of items or past response times of students). Most promising results in the context of learning geography facts shows the PFA/E/T model with a staircase time effect function, although the power function proves to be almost as equally a good choice. Main advantage of the staircase function is that the parameters are easy to learn for the purpose of online learning, i.e. there is no need to periodically run parameter optimization procedure since the parameters are slightly adjusted with each new answer.
 
 The PFA/G/T model suffers from the inability to account for multiple-choice questions. It might be interesting to analyze the models on data from adaptive systems where questions with multiple-choice options are not used---this is not possible using the data set described in section~\ref{data-set} since the system adaptively selects number of options in multiple choice tests, i.e. filtering out all multiple-choice questions creates data set with skewed difficulties and abilities of students.
 
-The PFA/E/RT model that considers past response times of students shows in most cases only a very small improvement. Very interesting results provides the PFA/G model with values of the decay factor lower then 0.5, this may indicate that the past trials of items do not actually influence model's performance in our context as much as we thought and could be perhaps even disregarded.
+The PFA/E/RT model that considers past response times of students shows in most cases only a very small improvement. However, very interesting results provides the PFA/G model with values of the decay factor lower then 0.5, this may indicate that the past trials of items do not actually influence model's performance in the context of learning geography facts as much as we thought. When we compare the PFA/G model and the PFA/G/T model, it seems that penalizing old trials based on order of answers leads in most cases to a better performance than the penalty of trials based on timing information.
 
 \section{Applications and Recommendations}
 
