@@ -22,3 +22,8 @@
 # BibTeX
 *.bbl
 *.blg
+
+# Description and Declaration
+declaration.pdf
+description.pdf
+thesis-printable.pdf
