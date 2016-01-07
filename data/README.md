@@ -1,0 +1,1 @@
+Download the data from the official websites of the Adaptive Learning group ([www.fi.muni.cz/adaptivelearning](http://www.fi.muni.cz/adaptivelearning/?a=data)), decompress the files here and adjust the configuration variables located in models/config.py.
